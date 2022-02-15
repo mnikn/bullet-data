@@ -235,6 +235,7 @@
     "electron-log": "^4.4.4",
     "electron-updater": "^4.6.5",
     "history": "^5.2.0",
+    "lodash": "^4.17.21",
     "prop-types": "^15.8.1",
     "react": "^17.0.2",
     "react-beautiful-dnd": "^13.1.0",

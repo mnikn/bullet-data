@@ -5,19 +5,32 @@ contextBridge.exposeInMainWorld('electron', {
     myPing() {
       ipcRenderer.send('ipc-example', 'ping');
     },
+    readFile(filePath) {
+      ipcRenderer.send('readFile', filePath);
+    },
+    openFileDialog() {
+      ipcRenderer.send('openFileDialog');
+    },
+    writeFile(filePath, data) {
+      ipcRenderer.send('writeFile', {
+        filePath,
+        data,
+      });
+    },
+    saveFileDialog(arg) {
+      ipcRenderer.send('saveFileDialog', arg);
+    },
     on(channel, func) {
-      const validChannels = ['ipc-example'];
-      if (validChannels.includes(channel)) {
-        // Deliberately strip event as it includes `sender`
-        ipcRenderer.on(channel, (event, ...args) => func(...args));
-      }
+      ipcRenderer.on(channel, (event, ...args) => func(...args));
     },
     once(channel, func) {
-      const validChannels = ['ipc-example'];
-      if (validChannels.includes(channel)) {
-        // Deliberately strip event as it includes `sender`
-        ipcRenderer.once(channel, (event, ...args) => func(...args));
-      }
+      ipcRenderer.once(channel, (event, ...args) => func(...args));
+    },
+    removeListener(channel, func) {
+      ipcRenderer.removeListener(channel, func);
+    },
+    removeAllListeners(channel) {
+      ipcRenderer.removeAllListeners(channel);
     },
   },
 });

@@ -9,7 +9,8 @@
  * `./src/main.js` using webpack. This gives us some performance wins.
  */
 import path from 'path';
-import { app, BrowserWindow, shell, ipcMain } from 'electron';
+import fs from 'fs';
+import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 import { autoUpdater } from 'electron-updater';
 import log from 'electron-log';
 import MenuBuilder from './menu';
@@ -29,6 +30,44 @@ ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
   event.reply('ipc-example', msgTemplate('pong'));
+});
+
+ipcMain.on('readFile', async (event, arg) => {
+  if (fs.existsSync(arg)) {
+    const content = fs.readFileSync(arg).toString();
+    event.reply('readFile', { filePath: arg, data: content });
+  } else {
+    event.reply('readFile', { filePath: arg, data: null });
+  }
+});
+
+ipcMain.on('writeFile', async (event, arg) => {
+  fs.writeFileSync(arg.filePath, arg.data);
+  event.reply('writeFile');
+});
+
+ipcMain.on('openFileDialog', async (arg) => {
+  const data = dialog.showOpenDialogSync(mainWindow, {});
+  let res: any = data;
+  if (Array.isArray(data)) {
+    res = data?.map((item: string) => {
+      return { path: item, data: fs.readFileSync(item).toString() };
+    });
+  } else {
+    res = fs.readFileSync(res).toString();
+  }
+  mainWindow.webContents.send('openFileDialog', { res, arg });
+});
+
+ipcMain.on('saveFileDialog', async (event, arg) => {
+  const path = dialog.showSaveDialogSync(mainWindow, {});
+  if (path) {
+    fs.writeFileSync(path, arg.data);
+    mainWindow.webContents.send('saveFileDialog', {
+      res: { path },
+      arg: { action: arg?.action },
+    });
+  }
 });
 
 if (process.env.NODE_ENV === 'production') {

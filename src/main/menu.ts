@@ -4,6 +4,7 @@ import {
   shell,
   BrowserWindow,
   MenuItemConstructorOptions,
+  ipcMain,
 } from 'electron';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
@@ -198,15 +199,49 @@ export default class MenuBuilder {
         label: '&File',
         submenu: [
           {
-            label: '&Open',
+            label: '&New',
+            accelerator: 'Ctrl+Shift+N',
+            click: () => {
+              this.mainWindow.webContents.send('newFile');
+            }
+          },
+          {
+            label: '&Save',
+            accelerator: 'Ctrl+S',
+            click: () => {
+              this.mainWindow.webContents.send('saveFile');
+            }
+          },
+          {
+            label: '&Load',
             accelerator: 'Ctrl+O',
+            click: () => {
+              ipcMain.emit('openFileDialog', { action: 'load' });
+            }
+          },
+          {
+            label: '&Import Data',
+            accelerator: 'Ctrl+Shift+O',
+          },
+          {
+            label: '&Export Data',
+            accelerator: 'Ctrl+Shift+E',
           },
           {
             label: '&Close',
-            accelerator: 'Ctrl+W',
+            accelerator: 'Ctrl+Shift+W',
             click: () => {
               this.mainWindow.close();
             },
+          },
+        ],
+      },
+      {
+        label: '&Edit',
+        submenu: [
+          {
+            label: '&Add Item',
+            accelerator: 'Ctrl+N',
           },
         ],
       },
