@@ -33,17 +33,18 @@ ipcMain.on('ipc-example', async (event, arg) => {
 });
 
 ipcMain.on('readFile', async (event, arg) => {
-  if (fs.existsSync(arg)) {
-    const content = fs.readFileSync(arg).toString();
-    event.reply('readFile', { filePath: arg, data: content });
+  if (fs.existsSync(arg.filePath)) {
+    const content = fs.readFileSync(arg.filePath).toString();
+    event.reply('readFile', { filePath: arg.filePath, data: content, arg });
   } else {
-    event.reply('readFile', { filePath: arg, data: null });
+    event.reply('readFile', { filePath: arg.filePath, data: null, arg });
   }
 });
 
 ipcMain.on('writeFile', async (event, arg) => {
+  console.log(arg);
   fs.writeFileSync(arg.filePath, arg.data);
-  event.reply('writeFile');
+  event.reply('writeFile', { arg });
 });
 
 ipcMain.on('openFileDialog', async (arg) => {
@@ -63,10 +64,12 @@ ipcMain.on('saveFileDialog', async (event, arg) => {
   const path = dialog.showSaveDialogSync(mainWindow, {});
   if (path) {
     fs.writeFileSync(path, arg.data);
-    mainWindow.webContents.send('saveFileDialog', {
+    const data = {
       res: { path },
       arg: { action: arg?.action },
-    });
+    };
+    console.log(data, arg);
+    mainWindow.webContents.send('saveFileDialog', data);
   }
 });
 

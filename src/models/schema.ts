@@ -11,16 +11,19 @@ export enum SchemaFieldType {
 export const DEFAULT_CONFIG = {
   OBJECT: {
     colSpan: 12,
+    enableWhen: null,
     initialExpand: true,
   },
   ARRAY: {
     colSpan: 12,
     defaultValue: [],
+    enableWhen: null,
     initialExpand: false,
   },
   STRING: {
     colSpan: 3,
     defaultValue: '',
+    enableWhen: null,
     type: 'singleline', // singleline | multiline
     minLen: 1,
     maxLen: 10,
@@ -28,15 +31,18 @@ export const DEFAULT_CONFIG = {
   },
   NUMBER: {
     colSpan: 3,
+    enableWhen: null,
     defaultValue: 0,
     minLen: 1,
     maxLen: 10,
   },
   BOOLEAN: {
+    enableWhen: null,
     colSpan: 1,
     defaultValue: false,
   },
   SELECT: {
+    enableWhen: null,
     colSpan: 3,
     defaultValue: '',
     options: [],
@@ -46,10 +52,12 @@ export const DEFAULT_CONFIG = {
 export abstract class SchemaField {
   public config: {
     colSpan: number;
+    enableWhen: string | null;
     defaultValue?: any;
     [key: string]: any;
   } = {
     colSpan: 3,
+    enableWhen: null
   };
 
   setup(config: any) {

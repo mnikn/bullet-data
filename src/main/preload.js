@@ -8,6 +8,24 @@ contextBridge.exposeInMainWorld('electron', {
     readFile(filePath) {
       ipcRenderer.send('readFile', filePath);
     },
+    readJsonFile(arg, callback) {
+      ipcRenderer.once('readFile', (_, res) => {
+        if (res.arg.action === arg.action) {
+          callback(res);
+        }
+      });
+      ipcRenderer.send('readFile', arg);
+    },
+    writeJsonFile(arg, callback) {
+      ipcRenderer.once('writeFile', (_, res) => {
+        if (res.arg.action === arg.action) {
+          if (callback) {
+            callback(res);
+          }
+        }
+      });
+      ipcRenderer.send('writeFile', arg);
+    },
     openFileDialog() {
       ipcRenderer.send('openFileDialog');
     },
@@ -17,7 +35,14 @@ contextBridge.exposeInMainWorld('electron', {
         data,
       });
     },
-    saveFileDialog(arg) {
+    saveFileDialog(arg, callback) {
+      ipcRenderer.once('saveFileDialog', (_, res) => {
+        if (res.arg.action === arg.action) {
+          if (callback) {
+            callback(res);
+          }
+        }
+      });
       ipcRenderer.send('saveFileDialog', arg);
     },
     on(channel, func) {

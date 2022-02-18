@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import get from 'lodash/get';
+import throttle from 'lodash/throttle';
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import {
   Card,
   CardContent,
@@ -34,6 +36,16 @@ import {
 } from 'models/schema';
 import SchemaConfig from './schema_config';
 import { VALUE_PATH } from 'constatnts/storage_key';
+import useDebounce from 'utils/use_debounce';
+
+const DEFAULT_SCHEMA_CONFIG = {
+  summary: '#{{_index}}',
+  schema: {
+    type: 'object',
+    fields: {},
+    config: DEFAULT_CONFIG.OBJECT,
+  },
+};
 
 const ExpandMore = styled((props: any) => {
   const { expand, ...other } = props;
@@ -46,6 +58,39 @@ const ExpandMore = styled((props: any) => {
     duration: theme.transitions.duration.shortest,
   }),
 }));
+
+const grid = 6;
+
+const HIDDEN_ID = '$$__index';
+
+const getItemStyle = (isDragging, draggableStyle) => ({
+  // some basic styles to make the items look a bit nicer
+  userSelect: 'none',
+  padding: grid * 2,
+  margin: `0 0 ${grid}px 0`,
+
+  // change background colour if dragging
+  background: isDragging ? 'lightgreen' : '#e7ebf0',
+
+  // styles we need to apply on draggables
+  ...draggableStyle,
+});
+
+const getListStyle = (isDraggingOver) => ({
+  background: isDraggingOver ? 'lightblue' : '#e7ebf0',
+  padding: grid,
+  width: 250,
+});
+
+function getConfigPath(valuePath: string) {
+  if (!valuePath) {
+    return '';
+  }
+  const p1 = valuePath.split('.json')[0];
+  const fileName = p1.split('\\')[p1.split('\\').length - 1];
+  const baseUrl = p1.split(fileName)[0];
+  return baseUrl + `.${fileName}.config.json`;
+}
 
 function buildSchema(json: any): SchemaField {
   switch (json.type) {
@@ -85,7 +130,6 @@ function buildSchema(json: any): SchemaField {
       }
       const instance = new SchemaFieldArray(buildSchema(data));
       instance.setup(json.config);
-      console.log(instance);
       return instance;
     }
     case SchemaFieldType.String: {
@@ -274,25 +318,86 @@ const Item = ({
   );
 };
 
-const fileName = 'test';
-const baseUrl = 'D:\\test_data\\';
 const Home = () => {
   const [list, setList] = useState<SchemaField[]>([]);
-  const [valueList, setValueList] = useState<any[]>([]);
+  const [valueList, setActualValueList] = useState<any[]>([]);
   const [schemaConfigOpen, setSchemaConfigOpen] = useState(false);
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
 
   const [schema, setSchema] = useState<SchemaField | null>(null);
 
+  const setValueListRef = useRef(
+    throttle((newValue) => setActualValueList(newValue), 1000)
+  );
+  const setValueList = setValueListRef.current;
+
   useEffect(() => {
-    const configPath = baseUrl + fileName + '.config.json';
-    window.electron.ipcRenderer.on('readFile', (val) => {
-      if (val.filePath === configPath && val.data) {
-        setSchemaConfig(JSON.parse(val.data));
+    /* const configPath = baseUrl + fileName + '.config.json'; */
+
+    const valuePath = localStorage.getItem(VALUE_PATH);
+    if (valuePath) {
+      const configUrl = getConfigPath(valuePath);
+      if (configUrl) {
+        /* window.electron.ipcRenderer.once('readFile', (val) => {
+         *   console.log(val);
+         *   if (val.filePath === configUrl && val.data) {
+         *     setSchemaConfig(JSON.parse(val.data));
+         *   } else {
+         *     setSchemaConfig(DEFAULT_SCHEMA_CONFIG);
+         *   }
+         * }); */
+        window.electron.ipcRenderer.readJsonFile(
+          {
+            filePath: configUrl,
+            action: 'read-config',
+          },
+          (val) => {
+            setSchemaConfig(JSON.parse(val.data));
+          }
+        );
+      } else {
+        setSchemaConfig(DEFAULT_SCHEMA_CONFIG);
       }
-    });
-    window.electron.ipcRenderer.readFile(configPath);
+    } else {
+      setSchemaConfig(DEFAULT_SCHEMA_CONFIG);
+    }
   }, []);
+
+  const save = useCallback(() => {
+    const valuePath = localStorage.getItem(VALUE_PATH);
+    const data = valueList.map((item) => {
+      delete item[HIDDEN_ID];
+      return item;
+    }, []);
+    if (valuePath) {
+      const configPath = getConfigPath(valuePath);
+      window.electron.ipcRenderer.writeJsonFile({
+        action: 'save-value-file',
+        filePath: valuePath,
+        data: JSON.stringify(data, null, 2),
+      });
+      window.electron.ipcRenderer.writeJsonFile({
+        action: 'save-config-file',
+        filePath: configPath,
+        data: JSON.stringify(schemaConfig, null, 2),
+      });
+    } else {
+      window.electron.ipcRenderer.saveFileDialog(
+        {
+          action: 'save-value-file',
+          data: JSON.stringify(data, null, 2),
+        },
+        () => {
+          localStorage.setItem(VALUE_PATH, val2.res.path);
+          window.electron.ipcRenderer.writeJsonFile({
+            action: 'save-config-file',
+            filePath: configPath,
+            data: JSON.stringify(schemaConfig, null, 2),
+          });
+        }
+      );
+    }
+  }, [valueList, schemaConfig]);
 
   useEffect(() => {
     if (!schema) {
@@ -303,44 +408,48 @@ const Home = () => {
       return;
     }
 
-    const readFile = (val) => {
-      if (val.filePath === valuePath) {
+    window.electron.ipcRenderer.readJsonFile(
+      {
+        filePath: valuePath,
+        action: 'save-value',
+      },
+      (val) => {
         const data = JSON.parse(val.data);
         const formatData = data.map((item) => {
           return validateValue(item, schema);
         });
         console.log(formatData);
-        setValueList(formatData);
+        const finalData = formatData.map((item, i) => {
+          item[HIDDEN_ID] = i;
+          return item;
+        }, []);
+        setValueList(finalData);
       }
-    };
-    window.electron.ipcRenderer.on('readFile', readFile);
-    window.electron.ipcRenderer.readFile(valuePath);
-
-    return () => {
-      window.electron.ipcRenderer.removeListener('readFile', readFile);
-    };
+    );
   }, [schema]);
 
+  /* useEffect(() => {
+   *   const storeData = () => {
+   *     save();
+   *     return;
+   *   };
+
+   *   window.addEventListener('beforeunload', save);
+
+   *   const timer = setInterval(storeData, 1 * 60 * 1000);
+   *   return () => {
+   *     clearInterval(timer);
+   *     window.removeEventListener('beforeunload', save);
+   *   };
+   * }, [save]);
+   */
   useEffect(() => {
-    const storeData = () => {
-      /* window.electron.ipcRenderer.emit('saveFile'); */
-      return;
-    };
-
-    window.addEventListener('beforeunload', storeData);
-
     setList((prev) => {
       if (prev.length !== valueList.length) {
         return valueList.map(() => schema);
       }
       return prev;
     });
-
-    const timer = setInterval(storeData, 1 * 60 * 1000);
-    return () => {
-      clearInterval(timer);
-      window.removeEventListener('beforeunload', storeData);
-    };
   }, [valueList]);
 
   const onItemChange = (v: any, i: number) => {
@@ -356,14 +465,39 @@ const Home = () => {
 
   const onSchemaConfigSubmit = (v: any) => {
     setSchema(null);
-    const configPath = baseUrl + fileName + '.config.json';
-    window.electron.ipcRenderer.once('writeFile', (val) => {
-      window.location.reload();
-    });
-    window.electron.ipcRenderer.writeFile(
-      configPath,
-      JSON.stringify(v, null, 2)
-    );
+    if (!localStorage.getItem(VALUE_PATH)) {
+      window.electron.ipcRenderer.saveFileDialog(
+        {
+          action: 'save-schema-config-changed',
+          data: JSON.stringify(valueList, null, 2),
+        },
+        (res) => {
+          localStorage.setItem(VALUE_PATH, res.res.path);
+          window.electron.ipcRenderer.writeJsonFile(
+            {
+              action: 'save-config-file-on-schema-submit',
+              filePath: getConfigPath(res.res.path),
+              data: JSON.stringify(v, null, 2),
+            },
+            () => {
+              window.location.reload();
+            }
+          );
+        }
+      );
+    } else {
+      const configPath = getConfigPath(localStorage.getItem(VALUE_PATH));
+      window.electron.ipcRenderer.writeJsonFile(
+        {
+          action: 'save-config-file',
+          filePath: configPath,
+          data: JSON.stringify(v, null, 2),
+        },
+        () => {
+          window.location.reload();
+        }
+      );
+    }
   };
 
   useEffect(() => {
@@ -373,35 +507,12 @@ const Home = () => {
   }, [schemaConfig]);
 
   useEffect(() => {
-    window.electron.ipcRenderer.on('openFileDialog', (val) => {
-      console.log(val);
-    });
-  }, []);
-
-  useEffect(() => {
-    const saveFile = (val) => {
-      const valuePath = localStorage.getItem(VALUE_PATH);
-      if (valuePath) {
-        window.electron.ipcRenderer.writeFile(
-          valuePath,
-          JSON.stringify(valueList, null, 2)
-        );
-      } else {
-        window.electron.ipcRenderer.once('saveFileDialog', (val2) => {
-          localStorage.setItem(VALUE_PATH, val2.res.path);
-        });
-        window.electron.ipcRenderer.saveFileDialog({
-          action: 'save-file',
-          data: JSON.stringify(valueList, null, 2),
-        });
-      }
-    };
-    window.electron.ipcRenderer.on('saveFile', saveFile);
+    window.electron.ipcRenderer.on('saveFile', save);
 
     return () => {
       window.electron.ipcRenderer.removeAllListeners('saveFile');
     };
-  }, [valueList]);
+  }, [save]);
 
   if (!schema) {
     return (
@@ -454,7 +565,7 @@ const Home = () => {
           },
         }}
       />
-      <Stack spacing={2}>
+      <Stack spacing={1}>
         <Button
           style={{ width: '240px', marginLeft: 'auto' }}
           variant="contained"
@@ -464,19 +575,64 @@ const Home = () => {
         >
           Config
         </Button>
-        {list.map((item, i) => {
-          return (
-            <Item
-              key={i}
-              index={i + 1}
-              schema={item}
-              schemaConfig={schemaConfig}
-              value={valueList[i]}
-              onValueChange={(v) => onItemChange(v, i)}
-              onDelete={() => onItemDelete(i)}
-            />
-          );
-        })}
+
+        <DragDropContext
+          onDragEnd={(e) => {
+            const final = valueList.map((item, j) => {
+              if (j === e.source?.index) {
+                return valueList[e.destination?.index];
+              }
+              if (j === e.destination?.index) {
+                return valueList[e.source?.index];
+              }
+              return item;
+            }, []);
+            setValueList(final);
+          }}
+        >
+          <Droppable droppableId="droppable">
+            {(provided, snapshot) => (
+              <div
+                {...provided.droppableProps}
+                ref={provided.innerRef}
+                style={{
+                  ...getListStyle(snapshot.isDraggingOver),
+                  ...{ width: '100%' },
+                }}
+              >
+                {list.map((item, i) => {
+                  const key = String(valueList[i][HIDDEN_ID]);
+                  return (
+                    <Draggable key={key} draggableId={key} index={i}>
+                      {(provided, snapshot) => (
+                        <div
+                          ref={provided.innerRef}
+                          {...provided.draggableProps}
+                          {...provided.dragHandleProps}
+                          style={getItemStyle(
+                            snapshot.isDragging,
+                            provided.draggableProps.style
+                          )}
+                        >
+                          <Item
+                            key={key}
+                            index={i + 1}
+                            schema={item}
+                            schemaConfig={schemaConfig}
+                            value={valueList[i]}
+                            onValueChange={(v) => onItemChange(v, i)}
+                            onDelete={() => onItemDelete(i)}
+                          />
+                        </div>
+                      )}
+                    </Draggable>
+                  );
+                })}
+                {provided.placeholder}
+              </div>
+            )}
+          </Droppable>
+        </DragDropContext>
       </Stack>
 
       <Fab
@@ -491,7 +647,9 @@ const Home = () => {
             return;
           }
           setValueList((prevArr) => {
-            return prevArr.concat(schema.config.defaultValue);
+            const v = schema.config.defaultValue;
+            v[HIDDEN_ID] = prevArr.length;
+            return prevArr.concat(v);
           });
         }}
       >
@@ -500,16 +658,7 @@ const Home = () => {
 
       {schemaConfigOpen && (
         <SchemaConfig
-          initialValue={
-            schemaConfig || {
-              summary: '#{{_index}} {{name}}',
-              schema: {
-                type: 'object',
-                fields: {},
-                config: DEFAULT_CONFIG.OBJECT,
-              },
-            }
-          }
+          initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
           onSubmit={onSchemaConfigSubmit}
           close={() => {
             setSchemaConfigOpen(false);

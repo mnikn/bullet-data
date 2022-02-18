@@ -47,9 +47,16 @@ export const FieldContainer = ({
         });
       }
     };
+
     return (
       <Grid container spacing={{ xs: 2, md: 2 }}>
         {(schema as SchemaFieldObject).fields.map((item, i) => {
+          if (item.data.config.enableWhen) {
+            const fn = eval(item.data.config.enableWhen);
+            if (!fn(value)) {
+              return null;
+            }
+          }
           if (item.data.type === SchemaFieldType.Number) {
             return (
               <Grid item xs={item.data.config.colSpan} key={i}>
@@ -100,7 +107,7 @@ export const FieldContainer = ({
           } else if (item.data.type === SchemaFieldType.Object) {
             return (
               <Grid item xs={item.data.config.colSpan} key={i}>
-                <CollapseCard title={item.name}>
+                <CollapseCard title={item.name} initialExpand={item.data.config.initialExpand}>
                   <FieldContainer
                     schema={item.data}
                     value={value[item.id]}
@@ -122,16 +129,6 @@ export const FieldContainer = ({
           }
           return null;
         })}
-      </Grid>
-    );
-  } else if (schema.type === SchemaFieldType.String) {
-    return (
-      <Grid item xs={schema.config.colSpan}>
-        <FieldString
-          schema={schema as SchemaFieldString}
-          value={value}
-          onValueChange={onValueChange}
-        />
       </Grid>
     );
   }
