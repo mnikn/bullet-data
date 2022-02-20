@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import get from 'lodash/get';
 import throttle from 'lodash/throttle';
+import uniq from 'lodash/uniq';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import {
   Card,
@@ -16,6 +17,7 @@ import {
   CircularProgress,
   CssBaseline,
   GlobalStyles,
+  Select,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
@@ -35,11 +37,12 @@ import {
   SchemaFieldType,
 } from 'models/schema';
 import SchemaConfig from './schema_config';
-import { VALUE_PATH } from 'constatnts/storage_key';
-import useDebounce from 'utils/use_debounce';
+import { FILE_PATH, RECENTE_FILE_PATHS } from 'constatnts/storage_key';
+import Context from './context';
 
 const DEFAULT_SCHEMA_CONFIG = {
   summary: '#{{_index}}',
+  i18n: [],
   schema: {
     type: 'object',
     fields: {},
@@ -156,11 +159,19 @@ function buildSchema(json: any): SchemaField {
   return new SchemaFieldObject();
 }
 
-function validateValue(value: any, schema: SchemaField): any {
+function validateValue(
+  value: any,
+  schema: SchemaField,
+  schemaConfig: any
+): any {
   if (schema.type === SchemaFieldType.Array) {
     if (Array.isArray(value)) {
       return value.map((item) => {
-        return validateValue(item, (schema as SchemaFieldArray).fieldSchema);
+        return validateValue(
+          item,
+          (schema as SchemaFieldArray).fieldSchema,
+          schemaConfig
+        );
       });
     } else {
       return schema.config.defaultValue;
@@ -173,7 +184,9 @@ function validateValue(value: any, schema: SchemaField): any {
         if (objFields.includes(key)) {
           res2[key] = validateValue(
             value[key],
-            (schema as SchemaFieldObject).fields.find((f) => f.id === key)?.data
+            (schema as SchemaFieldObject).fields.find((f) => f.id === key)
+              ?.data,
+            schemaConfig
           );
         }
         return res2;
@@ -182,7 +195,9 @@ function validateValue(value: any, schema: SchemaField): any {
         if (!Object.keys(value).includes(key)) {
           res[key] = validateValue(
             null,
-            (schema as SchemaFieldObject).fields.find((f) => f.id === key)?.data
+            (schema as SchemaFieldObject).fields.find((f) => f.id === key)
+              ?.data,
+            schemaConfig
           );
         }
         return res;
@@ -194,6 +209,15 @@ function validateValue(value: any, schema: SchemaField): any {
   }
 
   if (schema.type === SchemaFieldType.String) {
+    if (schema.config.needI18n) {
+      if (typeof value === 'object') {
+        return value;
+      } else {
+        return schemaConfig.i18n.reduce((res, item) => {
+          return { ...res, [item]: schema.config.defaultValue };
+        }, '');
+      }
+    }
     if (typeof value === 'string') {
       return value;
     } else {
@@ -261,6 +285,7 @@ const Item = ({
     setAnchorEl(null);
   };
 
+  const { currentLang, setCurrentLang } = useContext(Context);
   const summary = schemaConfig.summary.replace(
     /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
     (all) => {
@@ -268,7 +293,11 @@ const Item = ({
       if (item === '_index') {
         return index;
       }
-      return get(value, item, '');
+      const v = get(value, item, '');
+      if (typeof v === 'object') {
+        return v[currentLang];
+      }
+      return v;
     }
   );
 
@@ -278,6 +307,23 @@ const Item = ({
         subheader={summary}
         action={
           <>
+            {schemaConfig.i18n.length > 0 && (
+              <Select
+                labelId="i18n-select-label"
+                id="i18n-select"
+                value={currentLang}
+                label="I18n"
+                onChange={(e) => setCurrentLang(e.target.value)}
+              >
+                {schemaConfig.i18n.map((item2, j) => {
+                  return (
+                    <MenuItem key={j} value={item2}>
+                      {item2}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            )}
             <IconButton aria-label="settings" onClick={handleSettingsClick}>
               <MoreVertIcon />
             </IconButton>
@@ -323,6 +369,7 @@ const Home = () => {
   const [valueList, setActualValueList] = useState<any[]>([]);
   const [schemaConfigOpen, setSchemaConfigOpen] = useState(false);
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
+  const [currentLang, setCurrentLang] = useState<string>('');
 
   const [schema, setSchema] = useState<SchemaField | null>(null);
 
@@ -334,7 +381,7 @@ const Home = () => {
   useEffect(() => {
     /* const configPath = baseUrl + fileName + '.config.json'; */
 
-    const valuePath = localStorage.getItem(VALUE_PATH);
+    const valuePath = localStorage.getItem(FILE_PATH);
     if (valuePath) {
       const configUrl = getConfigPath(valuePath);
       if (configUrl) {
@@ -364,7 +411,7 @@ const Home = () => {
   }, []);
 
   const save = useCallback(() => {
-    const valuePath = localStorage.getItem(VALUE_PATH);
+    const valuePath = localStorage.getItem(FILE_PATH);
     const data = valueList.map((item) => {
       delete item[HIDDEN_ID];
       return item;
@@ -388,7 +435,7 @@ const Home = () => {
           data: JSON.stringify(data, null, 2),
         },
         () => {
-          localStorage.setItem(VALUE_PATH, val2.res.path);
+          localStorage.setItem(FILE_PATH, val2.res.path);
           window.electron.ipcRenderer.writeJsonFile({
             action: 'save-config-file',
             filePath: configPath,
@@ -403,7 +450,7 @@ const Home = () => {
     if (!schema) {
       return;
     }
-    const valuePath = localStorage.getItem(VALUE_PATH);
+    const valuePath = localStorage.getItem(FILE_PATH);
     if (!valuePath) {
       return;
     }
@@ -416,7 +463,7 @@ const Home = () => {
       (val) => {
         const data = JSON.parse(val.data);
         const formatData = data.map((item) => {
-          return validateValue(item, schema);
+          return validateValue(item, schema, schemaConfig);
         });
         console.log(formatData);
         const finalData = formatData.map((item, i) => {
@@ -426,7 +473,7 @@ const Home = () => {
         setValueList(finalData);
       }
     );
-  }, [schema]);
+  }, [schema, schemaConfig]);
 
   /* useEffect(() => {
    *   const storeData = () => {
@@ -465,14 +512,14 @@ const Home = () => {
 
   const onSchemaConfigSubmit = (v: any) => {
     setSchema(null);
-    if (!localStorage.getItem(VALUE_PATH)) {
+    if (!localStorage.getItem(FILE_PATH)) {
       window.electron.ipcRenderer.saveFileDialog(
         {
           action: 'save-schema-config-changed',
           data: JSON.stringify(valueList, null, 2),
         },
         (res) => {
-          localStorage.setItem(VALUE_PATH, res.res.path);
+          localStorage.setItem(FILE_PATH, res.res.path);
           window.electron.ipcRenderer.writeJsonFile(
             {
               action: 'save-config-file-on-schema-submit',
@@ -486,7 +533,7 @@ const Home = () => {
         }
       );
     } else {
-      const configPath = getConfigPath(localStorage.getItem(VALUE_PATH));
+      const configPath = getConfigPath(localStorage.getItem(FILE_PATH));
       window.electron.ipcRenderer.writeJsonFile(
         {
           action: 'save-config-file',
@@ -503,14 +550,50 @@ const Home = () => {
   useEffect(() => {
     if (schemaConfig) {
       setSchema(buildSchema(schemaConfig.schema));
+      if (schemaConfig.i18n.length > 0) {
+        setCurrentLang(schemaConfig.i18n[0]);
+      }
     }
   }, [schemaConfig]);
 
   useEffect(() => {
+    const onOpenFile = (res) => {
+      const path = res.res[0].path;
+      localStorage.setItem(FILE_PATH, path);
+      const recents = JSON.parse(
+        localStorage.getItem(RECENTE_FILE_PATHS) || '[]'
+      ).concat(path);
+      localStorage.setItem(RECENTE_FILE_PATHS, uniq(recents));
+      window.electron.ipcRenderer.addRecentFile({
+        newFilePath: path,
+        all: recents,
+      });
+      window.electron.ipcRenderer.readJsonFile(
+        { filePath: getConfigPath(path), action: 'read-config-file' },
+        (res2) => {
+          console.log(res2);
+          if (!res2.data) {
+            setSchemaConfig(DEFAULT_SCHEMA_CONFIG);
+            setSchemaConfigOpen(true);
+          } else {
+            setSchemaConfig(JSON.parse(res2.data));
+          }
+        }
+      );
+    };
+    const onNewFile = () => {
+      save();
+      localStorage.clear();
+      window.location.reload();
+    };
     window.electron.ipcRenderer.on('saveFile', save);
+    window.electron.ipcRenderer.on('openFile', onOpenFile);
+    window.electron.ipcRenderer.on('newFile', onNewFile);
 
     return () => {
       window.electron.ipcRenderer.removeAllListeners('saveFile');
+      window.electron.ipcRenderer.removeAllListeners('openFile');
+      window.electron.ipcRenderer.removeAllListeners('newFile');
     };
   }, [save]);
 
@@ -528,144 +611,152 @@ const Home = () => {
   }
 
   return (
-    <div
-      style={{
-        backgroundColor: '#e7ebf0',
-        padding: '20px',
+    <Context.Provider
+      value={{
+        currentLang,
+        setCurrentLang,
+        schemaConfig,
       }}
     >
-      <CssBaseline enableColorScheme />
-      <GlobalStyles
-        styles={{
-          scrollBaseColor: 'rgba(0, 0, 0, 0)',
-
-          /* webkit */
-          '*::-webkit-scrollbar': {
-            width: '6px',
-            height: '6px',
-          },
-          '*::-webkit-scrollbar-corner': {
-            backgroundColor: 'transparent',
-          },
-
-          /* firefox */
-          scrollbarWidth: 'thin',
-          scrollbarFaceColor: '#cccccc',
-          scrollbarShadowColor: '#cccccc',
-          scrollbarArrowColor: '#cccccc',
-          scrollbarHighlightColor: '#cccccc',
-          scrollbarDarkshadowColor: '#cccccc',
-          scrollbarTrackColor: 'rgb(245, 245, 245)',
-          /* firefox */
-          scrollbarColor: '#e8e8e8 rgba(0, 0, 0, 0)',
-          /* webkit */
-          '*::-webkit-scrollbar-thumb': {
-            backgroundColor: '#5c5c5c',
-            borderRadius: '3px',
-          },
-        }}
-      />
-      <Stack spacing={1}>
-        <Button
-          style={{ width: '240px', marginLeft: 'auto' }}
-          variant="contained"
-          onClick={() => {
-            setSchemaConfigOpen(true);
-          }}
-        >
-          Config
-        </Button>
-
-        <DragDropContext
-          onDragEnd={(e) => {
-            const final = valueList.map((item, j) => {
-              if (j === e.source?.index) {
-                return valueList[e.destination?.index];
-              }
-              if (j === e.destination?.index) {
-                return valueList[e.source?.index];
-              }
-              return item;
-            }, []);
-            setValueList(final);
-          }}
-        >
-          <Droppable droppableId="droppable">
-            {(provided, snapshot) => (
-              <div
-                {...provided.droppableProps}
-                ref={provided.innerRef}
-                style={{
-                  ...getListStyle(snapshot.isDraggingOver),
-                  ...{ width: '100%' },
-                }}
-              >
-                {list.map((item, i) => {
-                  const key = String(valueList[i][HIDDEN_ID]);
-                  return (
-                    <Draggable key={key} draggableId={key} index={i}>
-                      {(provided, snapshot) => (
-                        <div
-                          ref={provided.innerRef}
-                          {...provided.draggableProps}
-                          {...provided.dragHandleProps}
-                          style={getItemStyle(
-                            snapshot.isDragging,
-                            provided.draggableProps.style
-                          )}
-                        >
-                          <Item
-                            key={key}
-                            index={i + 1}
-                            schema={item}
-                            schemaConfig={schemaConfig}
-                            value={valueList[i]}
-                            onValueChange={(v) => onItemChange(v, i)}
-                            onDelete={() => onItemDelete(i)}
-                          />
-                        </div>
-                      )}
-                    </Draggable>
-                  );
-                })}
-                {provided.placeholder}
-              </div>
-            )}
-          </Droppable>
-        </DragDropContext>
-      </Stack>
-
-      <Fab
-        sx={{
-          position: 'fixed',
-          bottom: 32,
-          right: 32,
-        }}
-        color="primary"
-        onClick={() => {
-          if (!schema) {
-            return;
-          }
-          setValueList((prevArr) => {
-            const v = schema.config.defaultValue;
-            v[HIDDEN_ID] = prevArr.length;
-            return prevArr.concat(v);
-          });
+      <div
+        style={{
+          backgroundColor: '#e7ebf0',
+          padding: '20px',
         }}
       >
-        <AddIcon />
-      </Fab>
+        <CssBaseline enableColorScheme />
+        <GlobalStyles
+          styles={{
+            scrollBaseColor: 'rgba(0, 0, 0, 0)',
 
-      {schemaConfigOpen && (
-        <SchemaConfig
-          initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
-          onSubmit={onSchemaConfigSubmit}
-          close={() => {
-            setSchemaConfigOpen(false);
+            /* webkit */
+            '*::-webkit-scrollbar': {
+              width: '6px',
+              height: '6px',
+            },
+            '*::-webkit-scrollbar-corner': {
+              backgroundColor: 'transparent',
+            },
+
+            /* firefox */
+            scrollbarWidth: 'thin',
+            scrollbarFaceColor: '#cccccc',
+            scrollbarShadowColor: '#cccccc',
+            scrollbarArrowColor: '#cccccc',
+            scrollbarHighlightColor: '#cccccc',
+            scrollbarDarkshadowColor: '#cccccc',
+            scrollbarTrackColor: 'rgb(245, 245, 245)',
+            /* firefox */
+            scrollbarColor: '#e8e8e8 rgba(0, 0, 0, 0)',
+            /* webkit */
+            '*::-webkit-scrollbar-thumb': {
+              backgroundColor: '#5c5c5c',
+              borderRadius: '3px',
+            },
           }}
         />
-      )}
-    </div>
+        <Stack spacing={1}>
+          <Button
+            style={{ width: '240px', marginLeft: 'auto' }}
+            variant="contained"
+            onClick={() => {
+              setSchemaConfigOpen(true);
+            }}
+          >
+            Config
+          </Button>
+
+          <DragDropContext
+            onDragEnd={(e) => {
+              const final = valueList.map((item, j) => {
+                if (j === e.source?.index) {
+                  return valueList[e.destination?.index];
+                }
+                if (j === e.destination?.index) {
+                  return valueList[e.source?.index];
+                }
+                return item;
+              }, []);
+              setValueList(final);
+            }}
+          >
+            <Droppable droppableId="droppable">
+              {(provided, snapshot) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  style={{
+                    ...getListStyle(snapshot.isDraggingOver),
+                    ...{ width: '100%' },
+                  }}
+                >
+                  {list.map((item, i) => {
+                    const key = String(valueList[i][HIDDEN_ID]);
+                    return (
+                      <Draggable key={key} draggableId={key} index={i}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={getItemStyle(
+                              snapshot.isDragging,
+                              provided.draggableProps.style
+                            )}
+                          >
+                            <Item
+                              key={key}
+                              index={i + 1}
+                              schema={item}
+                              schemaConfig={schemaConfig}
+                              value={valueList[i]}
+                              onValueChange={(v) => onItemChange(v, i)}
+                              onDelete={() => onItemDelete(i)}
+                            />
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
+        </Stack>
+
+        <Fab
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            right: 32,
+          }}
+          color="primary"
+          onClick={() => {
+            if (!schema) {
+              return;
+            }
+            setValueList((prevArr) => {
+              const v = schema.config.defaultValue;
+              v[HIDDEN_ID] = prevArr.length;
+              return prevArr.concat(v);
+            });
+          }}
+        >
+          <AddIcon />
+        </Fab>
+
+        {schemaConfigOpen && (
+          <SchemaConfig
+            initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
+            onSubmit={onSchemaConfigSubmit}
+            close={() => {
+              setSchemaConfigOpen(false);
+            }}
+          />
+        )}
+      </div>
+    </Context.Provider>
   );
 };
 

@@ -25,9 +25,10 @@ import {
   SchemaFieldString,
   SchemaFieldType,
 } from 'models/schema';
-import { useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CollapseCard from './components/collapse_card';
+import Context from './context';
 
 export const FieldContainer = ({
   schema,
@@ -107,7 +108,10 @@ export const FieldContainer = ({
           } else if (item.data.type === SchemaFieldType.Object) {
             return (
               <Grid item xs={item.data.config.colSpan} key={i}>
-                <CollapseCard title={item.name} initialExpand={item.data.config.initialExpand}>
+                <CollapseCard
+                  title={item.name}
+                  initialExpand={item.data.config.initialExpand}
+                >
                   <FieldContainer
                     schema={item.data}
                     value={value[item.id]}
@@ -153,6 +157,7 @@ export const FieldNumber = ({
     <TextField
       style={{ width: '100%' }}
       type="number"
+      size="small"
       InputProps={{
         inputProps: {
           max: 100,
@@ -245,18 +250,43 @@ export const FieldString = ({
   value: string;
   onValueChange?: (value: any) => void;
 }) => {
+  const textDomRef = useRef<any>(null);
+  const { currentLang, schemaConfig } = useContext(Context);
   const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (onValueChange) {
-      onValueChange(e.target.value);
+      onValueChange(
+        schema.config.needI18n
+          ? { ...value, [currentLang]: e.target.value }
+          : e.target.value
+      );
     }
   };
+
+  useEffect(() => {
+    if (textDomRef.current) {
+      let dom = textDomRef.current.querySelector('input');
+      if (!dom) {
+        dom = textDomRef.current.querySelector('textarea');
+      }
+      dom.value =
+        schemaConfig.i18n.length > 0 && schema.config.needI18n
+          ? value[currentLang]
+          : value;
+    }
+  }, [currentLang]);
   return (
     <>
       {schema.config.type === 'multiline' && (
         <TextField
-          defaultValue={value}
+          defaultValue={
+            schemaConfig.i18n.length > 0 && schema.config.needI18n
+              ? value[currentLang]
+              : value
+          }
+          ref={textDomRef}
           style={{ width: '100%' }}
           label={label}
+          size="small"
           rows="4"
           multiline
           onChange={onTextChange}
@@ -264,7 +294,13 @@ export const FieldString = ({
       )}
       {schema.config.type === 'singleline' && (
         <TextField
-          defaultValue={value}
+          size="small"
+          ref={textDomRef}
+          defaultValue={
+            schemaConfig.i18n.length > 0 && schema.config.needI18n
+              ? value[currentLang]
+              : value
+          }
           style={{ width: '100%' }}
           label={label}
           onChange={onTextChange}

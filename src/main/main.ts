@@ -47,8 +47,13 @@ ipcMain.on('writeFile', async (event, arg) => {
   event.reply('writeFile', { arg });
 });
 
-ipcMain.on('openFileDialog', async (arg) => {
-  const data = dialog.showOpenDialogSync(mainWindow, {});
+ipcMain.on('openFile', async (arg) => {
+  let data;
+  if (arg?.filePath) {
+    data = fs.readFileSync(arg.filePath).toString();
+  } else {
+    data = dialog.showOpenDialogSync(mainWindow, {});
+  }
   let res: any = data;
   if (Array.isArray(data)) {
     res = data?.map((item: string) => {
@@ -57,7 +62,7 @@ ipcMain.on('openFileDialog', async (arg) => {
   } else {
     res = fs.readFileSync(res).toString();
   }
-  mainWindow.webContents.send('openFileDialog', { res, arg });
+  mainWindow.webContents.send('openFile', { res, arg });
 });
 
 ipcMain.on('saveFileDialog', async (event, arg) => {
@@ -71,6 +76,11 @@ ipcMain.on('saveFileDialog', async (event, arg) => {
     console.log(data, arg);
     mainWindow.webContents.send('saveFileDialog', data);
   }
+});
+
+ipcMain.on('addRecentFile', async (event, arg) => {
+  app.addRecentDocument(arg.newFilePath);
+  fs.writeFileSync(path.join(__dirname, './recent_files.json'), JSON.stringify(arg.all));
 });
 
 if (process.env.NODE_ENV === 'production') {

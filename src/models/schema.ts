@@ -28,6 +28,7 @@ export const DEFAULT_CONFIG = {
     minLen: 1,
     maxLen: 10,
     rows: 4,
+    needI18n: false
   },
   NUMBER: {
     colSpan: 3,

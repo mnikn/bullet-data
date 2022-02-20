@@ -6,6 +6,8 @@ import {
   MenuItemConstructorOptions,
   ipcMain,
 } from 'electron';
+import path from 'path';
+import fs from 'fs';
 
 interface DarwinMenuItemConstructorOptions extends MenuItemConstructorOptions {
   selector?: string;
@@ -194,6 +196,13 @@ export default class MenuBuilder {
   }
 
   buildDefaultTemplate() {
+    const storage = require('electron-localstorage');
+    const recentFiles = fs.existsSync(
+      path.join(__dirname, './recent_files.json')
+    )
+      ? JSON.parse(fs.readFileSync(path.join(__dirname, './recent_files.json')))
+      : [];
+
     const templateDefault = [
       {
         label: '&File',
@@ -203,25 +212,43 @@ export default class MenuBuilder {
             accelerator: 'Ctrl+Shift+N',
             click: () => {
               this.mainWindow.webContents.send('newFile');
-            }
+            },
           },
           {
             label: '&Save',
             accelerator: 'Ctrl+S',
             click: () => {
               this.mainWindow.webContents.send('saveFile');
-            }
+            },
           },
           {
-            label: '&Load',
+            label: '&Oepn File',
             accelerator: 'Ctrl+O',
             click: () => {
-              ipcMain.emit('openFileDialog', { action: 'load' });
-            }
+              ipcMain.emit('openFile', { action: 'open-file' });
+            },
           },
           {
-            label: '&Import Data',
-            accelerator: 'Ctrl+Shift+O',
+            label: 'Open Recent',
+            role: 'recentdocuments',
+            submenu: [
+              ...recentFiles.map((item) => {
+                return {
+                  label: item,
+                  click: () => {
+                    console.log(item);
+                    ipcMain.emit('openFile', {
+                      action: 'open-file',
+                      filePath: item,
+                    });
+                  },
+                };
+              }),
+              {
+                label: 'Clear Recent',
+                role: 'clearrecentdocuments',
+              },
+            ],
           },
           {
             label: '&Export Data',
