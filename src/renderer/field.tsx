@@ -20,6 +20,7 @@ import {
   SchemaField,
   SchemaFieldArray,
   SchemaFieldBoolean,
+    SchemaFieldNumber,
   SchemaFieldObject,
   SchemaFieldSelect,
   SchemaFieldString,
@@ -133,6 +134,26 @@ export const FieldContainer = ({
           }
           return null;
         })}
+      </Grid>
+    );
+  } else if (schema.type === SchemaFieldType.String) {
+    return (
+      <Grid item xs={schema.config.colSpan}>
+        <FieldString
+          schema={schema as SchemaFieldString}
+          value={value}
+          onValueChange={(v) => onValueChange(v)}
+        />
+      </Grid>
+    );
+  } else if (schema.type === SchemaFieldType.Number) {
+    return (
+      <Grid item xs={schema.config.colSpan}>
+        <FieldNumber
+          schema={schema as SchemaFieldNumber}
+          value={value}
+          onValueChange={(v) => onValueChange(v)}
+        />
       </Grid>
     );
   }
@@ -270,7 +291,7 @@ export const FieldString = ({
       }
       dom.value =
         schemaConfig.i18n.length > 0 && schema.config.needI18n
-          ? value[currentLang]
+          ? value[currentLang] || ''
           : value;
     }
   }, [currentLang]);
@@ -280,7 +301,7 @@ export const FieldString = ({
         <TextField
           defaultValue={
             schemaConfig.i18n.length > 0 && schema.config.needI18n
-              ? value[currentLang]
+              ? value[currentLang] || ''
               : value
           }
           ref={textDomRef}
@@ -298,7 +319,7 @@ export const FieldString = ({
           ref={textDomRef}
           defaultValue={
             schemaConfig.i18n.length > 0 && schema.config.needI18n
-              ? value[currentLang]
+              ? value[currentLang] || ''
               : value
           }
           style={{ width: '100%' }}
@@ -362,6 +383,7 @@ export const FieldSelect = ({
         value={value}
         label={label || ''}
         onChange={onChange}
+        size="small"
       >
         {schema.config.options.map((item, i) => {
           return (
