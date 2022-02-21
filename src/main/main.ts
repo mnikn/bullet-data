@@ -42,12 +42,11 @@ ipcMain.on('readFile', async (event, arg) => {
 });
 
 ipcMain.on('writeFile', async (event, arg) => {
-  console.log(arg);
   fs.writeFileSync(arg.filePath, arg.data);
   event.reply('writeFile', { arg });
 });
 
-ipcMain.on('openFile', async (arg) => {
+ipcMain.on('openFile', async (_, arg) => {
   let data;
   if (arg?.filePath) {
     data = fs.readFileSync(arg.filePath).toString();
@@ -60,6 +59,7 @@ ipcMain.on('openFile', async (arg) => {
       return { path: item, data: fs.readFileSync(item).toString() };
     });
   } else {
+    console.log(res);
     res = fs.readFileSync(res).toString();
   }
   mainWindow.webContents.send('openFile', { res, arg });
@@ -73,7 +73,6 @@ ipcMain.on('saveFileDialog', async (event, arg) => {
       res: { path },
       arg: { action: arg?.action },
     };
-    console.log(data, arg);
     mainWindow.webContents.send('saveFileDialog', data);
   }
 });

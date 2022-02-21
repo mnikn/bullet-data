@@ -291,7 +291,7 @@ export const FieldString = ({
       }
       dom.value =
         schemaConfig.i18n.length > 0 && schema.config.needI18n
-          ? value[currentLang] || ''
+          ? value ? value[currentLang] : ''
           : value;
     }
   }, [currentLang]);
@@ -301,7 +301,7 @@ export const FieldString = ({
         <TextField
           defaultValue={
             schemaConfig.i18n.length > 0 && schema.config.needI18n
-              ? value[currentLang] || ''
+              ? value ? value[currentLang] : ''
               : value
           }
           ref={textDomRef}
@@ -319,7 +319,7 @@ export const FieldString = ({
           ref={textDomRef}
           defaultValue={
             schemaConfig.i18n.length > 0 && schema.config.needI18n
-              ? value[currentLang] || ''
+              ? value ? value[currentLang] : ''
               : value
           }
           style={{ width: '100%' }}

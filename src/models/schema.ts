@@ -14,10 +14,18 @@ export const DEFAULT_CONFIG = {
     enableWhen: null,
     initialExpand: true,
   },
+  OBJECT_CONFIG_DEFAULT: {
+    colSpan: 12,
+    initialExpand: true,
+  },
   ARRAY: {
     colSpan: 12,
     defaultValue: [],
     enableWhen: null,
+    initialExpand: false,
+  },
+  ARRAY_CONFIG_DEFAULT: {
+    colSpan: 12,
     initialExpand: false,
   },
   STRING: {
@@ -30,6 +38,12 @@ export const DEFAULT_CONFIG = {
     rows: 4,
     needI18n: false
   },
+  STRING_CONFIG_DEFAULT: {
+    colSpan: 3,
+    defaultValue: '',
+    type: 'singleline',
+    needI18n: false
+  },
   NUMBER: {
     colSpan: 3,
     enableWhen: null,
@@ -37,8 +51,16 @@ export const DEFAULT_CONFIG = {
     minLen: 1,
     maxLen: 10,
   },
+  NUMBER_CONFIG_DEFAULT: {
+    colSpan: 3,
+    defaultValue: 0,
+  },
   BOOLEAN: {
     enableWhen: null,
+    colSpan: 1,
+    defaultValue: false,
+  },
+  BOOLEAN_CONFIG_DEFAULT: {
     colSpan: 1,
     defaultValue: false,
   },
@@ -47,6 +69,11 @@ export const DEFAULT_CONFIG = {
     colSpan: 3,
     defaultValue: '',
     options: [],
+  },
+  SELECT_CONFIG_DEFAULT: {
+    colSpan: 3,
+    options: [],
+    defaultValue: '',
   },
 };
 

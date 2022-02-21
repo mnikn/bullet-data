@@ -6,28 +6,28 @@ import MonacoEditor from 'react-monaco-editor';
 const OBJ_JSON = {
   type: 'object',
   fields: {},
-  config: DEFAULT_CONFIG.OBJECT,
+  config: DEFAULT_CONFIG.OBJECT_CONFIG_DEFAULT,
 };
 const STR_JSON = {
   type: 'string',
-  config: DEFAULT_CONFIG.STRING,
+  config: DEFAULT_CONFIG.STRING_CONFIG_DEFAULT,
 };
 const BOOLEAN_JSON = {
   type: 'boolean',
-  config: DEFAULT_CONFIG.BOOLEAN,
+  config: DEFAULT_CONFIG.BOOLEAN_CONFIG_DEFAULT,
 };
 const NUM_JSON = {
   type: 'number',
-  config: DEFAULT_CONFIG.NUMBER,
+  config: DEFAULT_CONFIG.NUMBER_CONFIG_DEFAULT,
 };
 const SELECT_JSON = {
   type: 'select',
-  config: DEFAULT_CONFIG.SELECT,
+  config: DEFAULT_CONFIG.SELECT_CONFIG_DEFAULT,
 };
 const ARR_JSON = {
   type: 'array',
   fieldSchema: null,
-  config: DEFAULT_CONFIG.ARRAY,
+  config: DEFAULT_CONFIG.ARRAY_CONFIG_DEFAULT,
 };
 
 const SchemaConfig = ({

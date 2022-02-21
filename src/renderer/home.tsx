@@ -210,7 +210,7 @@ function validateValue(
 
   if (schema.type === SchemaFieldType.String) {
     if (schema.config.needI18n) {
-      if (typeof value === 'object') {
+      if (typeof value === 'object' && value !== null) {
         return value;
       } else {
         return schemaConfig.i18n.reduce((res, item) => {
@@ -399,7 +399,11 @@ const Home = () => {
             action: 'read-config',
           },
           (val) => {
-            setSchemaConfig(JSON.parse(val.data));
+            if (val.data) {
+              setSchemaConfig(JSON.parse(val.data));
+            } else {
+              setSchemaConfigOpen(true);
+            }
           }
         );
       } else {
@@ -563,23 +567,23 @@ const Home = () => {
       const recents = JSON.parse(
         localStorage.getItem(RECENTE_FILE_PATHS) || '[]'
       ).concat(path);
-      localStorage.setItem(RECENTE_FILE_PATHS, uniq(recents));
+      localStorage.setItem(RECENTE_FILE_PATHS, JSON.stringify(uniq(recents)));
       window.electron.ipcRenderer.addRecentFile({
         newFilePath: path,
         all: recents,
       });
-      window.electron.ipcRenderer.readJsonFile(
-        { filePath: getConfigPath(path), action: 'read-config-file' },
-        (res2) => {
-          console.log(res2);
-          if (!res2.data) {
-            setSchemaConfig(DEFAULT_SCHEMA_CONFIG);
-            setSchemaConfigOpen(true);
-          } else {
-            setSchemaConfig(JSON.parse(res2.data));
-          }
-        }
-      );
+      window.location.reload();
+      /* window.electron.ipcRenderer.readJsonFile(
+       *   { filePath: getConfigPath(path), action: 'read-config-file' },
+       *   (res2) => {
+       *     console.log(res2);
+       *     if (!res2.data) {
+       *       window.location.reload();
+       *     } else {
+       *       setSchemaConfig(JSON.parse(res2.data));
+       *     }
+       *   }
+       * ); */
     };
     const onNewFile = () => {
       save();
@@ -597,7 +601,7 @@ const Home = () => {
     };
   }, [save]);
 
-  if (!schema) {
+  if (!schema && !schemaConfigOpen) {
     return (
       <CircularProgress
         sx={{
@@ -691,7 +695,7 @@ const Home = () => {
                   }}
                 >
                   {list.map((item, i) => {
-                    const key = String(valueList[i][HIDDEN_ID]);
+                    const key = String(valueList[i]?.[HIDDEN_ID]);
                     return (
                       <Draggable key={key} draggableId={key} index={i}>
                         {(provided, snapshot) => (
