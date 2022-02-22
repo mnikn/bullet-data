@@ -20,7 +20,7 @@ import {
   SchemaField,
   SchemaFieldArray,
   SchemaFieldBoolean,
-    SchemaFieldNumber,
+  SchemaFieldNumber,
   SchemaFieldObject,
   SchemaFieldSelect,
   SchemaFieldString,
@@ -28,6 +28,7 @@ import {
 } from 'models/schema';
 import { useContext, useEffect, useRef, useState } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
+import get from 'lodash/get';
 import CollapseCard from './components/collapse_card';
 import Context from './context';
 
@@ -40,6 +41,7 @@ export const FieldContainer = ({
   value: any;
   onValueChange?: (value: any) => void;
 }) => {
+  const { currentLang } = useContext(Context);
   if (schema.type === SchemaFieldType.Object) {
     const objectValueChange = (v: any, id: string) => {
       if (onValueChange) {
@@ -107,10 +109,24 @@ export const FieldContainer = ({
               </Grid>
             );
           } else if (item.data.type === SchemaFieldType.Object) {
+            const summary = item.data.config.summary.replace(
+              /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
+              (all) => {
+                const word = all.substring(2, all.length - 2);
+                if (word === '_key') {
+                  return item.name;
+                }
+                const v = get(value[item.id], word, '');
+                if (typeof v === 'object') {
+                  return v[currentLang];
+                }
+                return v;
+              }
+            );
             return (
               <Grid item xs={item.data.config.colSpan} key={i}>
                 <CollapseCard
-                  title={item.name}
+                  title={summary}
                   initialExpand={item.data.config.initialExpand}
                 >
                   <FieldContainer
@@ -291,8 +307,10 @@ export const FieldString = ({
       }
       dom.value =
         schemaConfig.i18n.length > 0 && schema.config.needI18n
-          ? value ? value[currentLang] : ''
-          : value;
+          ? value
+            ? value[currentLang]
+            : ''
+          : value || '';
     }
   }, [currentLang]);
   return (
@@ -301,8 +319,10 @@ export const FieldString = ({
         <TextField
           defaultValue={
             schemaConfig.i18n.length > 0 && schema.config.needI18n
-              ? value ? value[currentLang] : ''
-              : value
+              ? value
+                ? value[currentLang]
+                : ''
+              : value || ''
           }
           ref={textDomRef}
           style={{ width: '100%' }}
@@ -319,8 +339,10 @@ export const FieldString = ({
           ref={textDomRef}
           defaultValue={
             schemaConfig.i18n.length > 0 && schema.config.needI18n
-              ? value ? value[currentLang] : ''
-              : value
+              ? value
+                ? value[currentLang]
+                : ''
+              : value || ''
           }
           style={{ width: '100%' }}
           label={label}

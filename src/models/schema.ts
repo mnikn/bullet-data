@@ -12,15 +12,19 @@ export const DEFAULT_CONFIG = {
   OBJECT: {
     colSpan: 12,
     enableWhen: null,
+    nullable: false,
     initialExpand: true,
+    summary: '{{_key}}'
   },
   OBJECT_CONFIG_DEFAULT: {
     colSpan: 12,
     initialExpand: true,
+    summary: '{{_key}}'
   },
   ARRAY: {
     colSpan: 12,
     defaultValue: [],
+    clearable: false,
     enableWhen: null,
     initialExpand: false,
   },
@@ -85,7 +89,7 @@ export abstract class SchemaField {
     [key: string]: any;
   } = {
     colSpan: 3,
-    enableWhen: null
+    enableWhen: null,
   };
 
   setup(config: any) {
