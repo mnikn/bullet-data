@@ -14,12 +14,12 @@ export const DEFAULT_CONFIG = {
     enableWhen: null,
     nullable: false,
     initialExpand: true,
-    summary: '{{_key}}'
+    summary: '{{_key}}',
   },
   OBJECT_CONFIG_DEFAULT: {
     colSpan: 12,
     initialExpand: true,
-    summary: '{{_key}}'
+    summary: '{{_key}}',
   },
   ARRAY: {
     colSpan: 12,
@@ -36,28 +36,39 @@ export const DEFAULT_CONFIG = {
     colSpan: 3,
     defaultValue: '',
     enableWhen: null,
+    required: false,
+    customValidate: null,
+    customValidateErrorText: '',
+    helperText: '',
     type: 'singleline', // singleline | multiline
     minLen: 1,
-    maxLen: 10,
+    maxLen: 20,
     rows: 4,
-    needI18n: false
+    needI18n: false,
   },
   STRING_CONFIG_DEFAULT: {
     colSpan: 3,
     defaultValue: '',
     type: 'singleline',
-    needI18n: false
   },
   NUMBER: {
     colSpan: 3,
     enableWhen: null,
+    required: false,
+    customValidate: null,
+    customValidateErrorText: '',
     defaultValue: 0,
-    minLen: 1,
-    maxLen: 10,
+    helperText: '',
+    suffix: '',
+    prefix: '',
+    min: -Number.MAX_SAFE_INTEGER,
+    max: Number.MAX_SAFE_INTEGER,
+    type: 'int', // int | float | percent
   },
   NUMBER_CONFIG_DEFAULT: {
     colSpan: 3,
     defaultValue: 0,
+    type: 'int',
   },
   BOOLEAN: {
     enableWhen: null,
@@ -72,6 +83,7 @@ export const DEFAULT_CONFIG = {
     enableWhen: null,
     colSpan: 3,
     defaultValue: '',
+    required: false,
     options: [],
   },
   SELECT_CONFIG_DEFAULT: {

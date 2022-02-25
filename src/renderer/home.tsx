@@ -25,6 +25,7 @@ import { styled } from '@mui/material/styles';
 import AddIcon from '@mui/icons-material/Add';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
 import { FieldContainer } from './field';
 import {
@@ -280,6 +281,7 @@ const Item = ({
   onDuplicate,
   onDelete,
   schemaConfig,
+  sx,
 }: {
   schema: SchemaField;
   schemaConfig: any;
@@ -288,6 +290,7 @@ const Item = ({
   index: number;
   onDuplicate: () => void;
   onDelete: () => void;
+  sx?: any;
 }) => {
   const [expanded, setExpanded] = useState<boolean>(
     (schema as SchemaFieldObject).config.initialExpand
@@ -324,7 +327,7 @@ const Item = ({
   );
 
   return (
-    <Card>
+    <Card sx={sx}>
       <CardHeader
         subheader={summary}
         action={
@@ -772,22 +775,34 @@ const Home = () => {
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              {...provided.dragHandleProps}
                               style={getItemStyle(
                                 snapshot.isDragging,
                                 provided.draggableProps.style
                               )}
                             >
-                              <Item
-                                key={key}
-                                index={i + 1}
-                                schema={schema}
-                                schemaConfig={schemaConfig}
-                                value={displayValueList[i]}
-                                onValueChange={(v) => onItemChange(v, i)}
-                                onDuplicate={() => onItemDuplicate(i)}
-                                onDelete={() => onItemDelete(i)}
-                              />
+                              <Stack
+                                spacing={1}
+                                direction="row"
+                                style={{
+                                  width: '100%',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                <span {...provided.dragHandleProps}>
+                                  <DragIndicatorIcon />
+                                </span>
+                                <Item
+                                  sx={{ flexGrow: 1 }}
+                                  key={key}
+                                  index={i + 1}
+                                  schema={schema}
+                                  schemaConfig={schemaConfig}
+                                  value={displayValueList[i]}
+                                  onValueChange={(v) => onItemChange(v, i)}
+                                  onDuplicate={() => onItemDuplicate(i)}
+                                  onDelete={() => onItemDelete(i)}
+                                />
+                              </Stack>
                             </div>
                           )}
                         </Draggable>

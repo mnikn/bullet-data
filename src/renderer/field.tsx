@@ -26,26 +26,16 @@ import {
   SchemaFieldString,
   SchemaFieldType,
 } from 'models/schema';
-import { useContext, useEffect, useRef, useState } from 'react';
+import { useContext, useEffect, useRef, useState, forwardRef } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import get from 'lodash/get';
+import { Base64 } from 'js-base64';
 import CollapseCard from './components/collapse_card';
 import Context from './context';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
-
-const grid = 2;
-const getListStyle = (isDraggingOver) => ({
-  background: isDraggingOver ? 'lightblue' : '#e7ebf0',
-  padding: grid,
-  width: 250,
-});
-
-const getItemStyle = (isDragging, draggableStyle) => ({
-  // some basic styles to make the items look a bit nicer
-  userSelect: 'none',
-  padding: grid * 2,
-  margin: `0 0 ${grid}px 0`,
-});
+import { generateUUID } from 'utils/uuid';
+import NumberFormat from 'react-number-format';
 
 export const FieldContainer = ({
   schema,
@@ -78,20 +68,19 @@ export const FieldContainer = ({
           }
           if (item.data.type === SchemaFieldType.Number) {
             return (
-              <Grid item xs={item.data.config.colSpan} key={i}>
+              <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldNumber
-                  key={i}
                   label={item.name}
                   value={value[item.id]}
+                  schema={item.data as SchemaFieldNumber}
                   onValueChange={(v) => objectValueChange(v, item.id)}
                 />
               </Grid>
             );
           } else if (item.data.type === SchemaFieldType.String) {
             return (
-              <Grid item xs={item.data.config.colSpan} key={i}>
+              <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldString
-                  key={i}
                   label={item.name}
                   schema={item.data as SchemaFieldString}
                   value={value[item.id]}
@@ -101,9 +90,8 @@ export const FieldContainer = ({
             );
           } else if (item.data.type === SchemaFieldType.Boolean) {
             return (
-              <Grid item xs={item.data.config.colSpan} key={i}>
+              <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldBoolean
-                  key={i}
                   label={item.name}
                   schema={item.data as SchemaFieldBoolean}
                   value={value[item.id]}
@@ -113,9 +101,8 @@ export const FieldContainer = ({
             );
           } else if (item.data.type === SchemaFieldType.Select) {
             return (
-              <Grid item xs={item.data.config.colSpan} key={i}>
+              <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldSelect
-                  key={i}
                   label={item.name}
                   schema={item.data as SchemaFieldSelect}
                   value={value[item.id]}
@@ -139,7 +126,7 @@ export const FieldContainer = ({
               }
             );
             return (
-              <Grid item xs={item.data.config.colSpan} key={i}>
+              <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <CollapseCard
                   title={summary}
                   initialExpand={item.data.config.initialExpand}
@@ -155,7 +142,7 @@ export const FieldContainer = ({
           } else if (item.data.type === SchemaFieldType.Array) {
             return (
               <FieldArray
-                key={i}
+                key={item.id}
                 label={item.name}
                 schema={item.data as SchemaFieldArray}
                 value={value[item.id]}
@@ -191,20 +178,83 @@ export const FieldContainer = ({
   return null;
 };
 
+const NumberFormatCustom = forwardRef((props, ref) => {
+  const { onChange, schema, ...other } = props;
+
+  const format = (v) => {
+    /* if (schema.config.type === 'percent') {
+     *   return String(Number(v) * 100) + '%';
+     * } */
+    return v + schema.config.suffix;
+  };
+
+  return (
+    <NumberFormat
+      {...other}
+      getInputRef={ref}
+      onValueChange={(values) => {
+        onChange({
+          target: {
+            name: props.name,
+            value: Number(values.value),
+          },
+        });
+      }}
+      format={format}
+      type="text"
+      defaultValue={props.defaultValue}
+    />
+  );
+});
+
 export const FieldNumber = ({
   label,
   value,
+  schema,
   onValueChange,
 }: {
   label?: string;
   value: number;
+  schema: SchemaFieldNumber;
   onValueChange?: (value: any) => void;
 }) => {
+  const [errorText, setErrorText] = useState<string | null>(null);
   const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const textValue = Number(e.target.value);
+    if (schema.config.required && !textValue) {
+      setErrorText('Number cannot be empty');
+      return;
+    }
+    if (textValue < schema.config.min) {
+      setErrorText(`Number must more than ${schema.config.min}`);
+      return;
+    }
+    if (textValue > schema.config.max) {
+      setErrorText(`Number must less than ${schema.config.max}`);
+      return;
+    }
+    if (schema.config.type === 'int' && !Number.isInteger(textValue)) {
+      setErrorText(`Number must be integer`);
+      return;
+    }
+    if (schema.config.customValidate) {
+      const fn = eval(schema.config.customValidate);
+      if (fn) {
+        const success = fn(textValue);
+        if (!success) {
+          setErrorText(
+            schema.config.customValidateErrorText || 'Custom validate error'
+          );
+          return;
+        }
+      }
+    }
+    setErrorText(null);
     if (onValueChange) {
       onValueChange(Number(e.target.value));
     }
   };
+
   return (
     <TextField
       style={{ width: '100%' }}
@@ -212,10 +262,15 @@ export const FieldNumber = ({
       size="small"
       InputProps={{
         inputProps: {
-          max: 100,
-          min: 10,
+          max: schema.config.max,
+          min: schema.config.min,
+          schema: schema,
         },
+        inputComponent: NumberFormatCustom,
       }}
+      required={schema.config.required}
+      error={!!errorText}
+      helperText={errorText || schema.config.helperText}
       label={label}
       defaultValue={value}
       onChange={onTextChange}
@@ -234,11 +289,50 @@ export const FieldArray = ({
   value: any[];
   onValueChange?: (value: any) => void;
 }) => {
-  const [list, setList] = useState<any[]>(value);
+  const [list, setList] = useState<any[]>(
+    value.map((item) => {
+      return {
+        id: generateUUID(),
+        value: item,
+      };
+    })
+  );
 
   const addItem = () => {
     setList((prev) => {
-      return prev.concat(schema.fieldSchema.config.defaultValue);
+      return prev.concat({
+        id: generateUUID(),
+        value: schema.fieldSchema.config.defaultValue,
+      });
+    });
+  };
+
+  const moveUpItem = (sourceIndex: number) => {
+    setList((prev) => {
+      const targetIndex = Math.max(sourceIndex - 1, 0);
+      return prev.map((item, j) => {
+        if (j === sourceIndex) {
+          return prev[targetIndex];
+        }
+        if (j === targetIndex) {
+          return prev[sourceIndex];
+        }
+        return item;
+      }, []);
+    });
+  };
+  const moveDownItem = (sourceIndex: number) => {
+    setList((prev) => {
+      const targetIndex = Math.min(sourceIndex + 1, prev.length - 1);
+      return prev.map((item, j) => {
+        if (j === sourceIndex) {
+          return prev[targetIndex];
+        }
+        if (j === targetIndex) {
+          return prev[sourceIndex];
+        }
+        return item;
+      }, []);
     });
   };
   const deleteItem = (i: number) => {
@@ -249,13 +343,15 @@ export const FieldArray = ({
 
   useEffect(() => {
     if (onValueChange) {
-      onValueChange(list);
+      onValueChange(list.map((item) => item.value));
     }
   }, [list]);
 
   const onItemChange = (v: any, i: number) => {
     setList((prev) => {
-      return prev.map((item, j) => (j === i ? v : item));
+      return prev.map((item, j) =>
+        j === i ? { id: item.id, value: v } : item
+      );
     });
   };
 
@@ -266,68 +362,35 @@ export const FieldArray = ({
         initialExpand={schema.config.initialExpand}
       >
         <Stack spacing={1}>
-          <DragDropContext
-            onDragEnd={(e) => {
-              const final = list.map((item, j) => {
-                if (j === e.source?.index) {
-                  return list[e.destination?.index];
-                }
-                if (j === e.destination?.index) {
-                  return list[e.source?.index];
-                }
-                return item;
-              }, []);
-              setList(final);
-            }}
-          >
-            <Droppable droppableId="droppable-2">
-              {(provided, snapshot) => (
-                <div
-                  {...provided.droppableProps}
-                  ref={provided.innerRef}
-                  style={{
-                    ...getListStyle(snapshot.isDraggingOver),
-                    ...{ width: '100%' },
-                  }}
-                >
-                  {list.map((item, i) => {
-                    return (
-                      <Draggable key={i} draggableId={String(i)} index={i}>
-                        {(provided, snapshot) => (
-                          <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            style={getItemStyle(
-                              snapshot.isDragging,
-                              provided.draggableProps.style
-                            )}
-                          >
-                            <Stack spacing="2" direction="row" key={i}>
-                              <CollapseCard title={`# ${i + 1}`}>
-                                <FieldContainer
-                                  schema={schema.fieldSchema as SchemaField}
-                                  value={item}
-                                  onValueChange={(v) => onItemChange(v, i)}
-                                />
-                              </CollapseCard>
-                              <IconButton
-                                component="span"
-                                onClick={() => deleteItem(i)}
-                              >
-                                <DeleteIcon />
-                              </IconButton>
-                            </Stack>
-                          </div>
-                        )}
-                      </Draggable>
-                    );
-                  })}
-                  {provided.placeholder}
-                </div>
-              )}
-            </Droppable>
-          </DragDropContext>
+          {list.map((item, i) => {
+            return (
+              <Stack
+                key={item.id}
+                spacing={1}
+                direction="row"
+                style={{ width: '100%', alignItems: 'center' }}
+              >
+                <Stack spacing="2" direction="row" sx={{ flexGrow: 1 }}>
+                  <CollapseCard title={`# ${i + 1}`}>
+                    <FieldContainer
+                      schema={schema.fieldSchema as SchemaField}
+                      value={item.value}
+                      onValueChange={(v) => onItemChange(v, i)}
+                    />
+                  </CollapseCard>
+                  <IconButton component="span" onClick={() => moveUpItem(i)}>
+                    <ArrowUpwardIcon />
+                  </IconButton>
+                  <IconButton component="span" onClick={() => moveDownItem(i)}>
+                    <ArrowDownwardIcon />
+                  </IconButton>
+                  <IconButton component="span" onClick={() => deleteItem(i)}>
+                    <DeleteIcon />
+                  </IconButton>
+                </Stack>
+              </Stack>
+            );
+          })}
           <Button variant="contained" onClick={addItem}>
             Add Item
           </Button>
@@ -350,12 +413,39 @@ export const FieldString = ({
 }) => {
   const textDomRef = useRef<any>(null);
   const { currentLang, schemaConfig } = useContext(Context);
+  const [errorText, setErrorText] = useState<string | null>(null);
   const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const textValue = e.target.value;
+    if (schema.config.required && !textValue) {
+      setErrorText('Text cannot be empty');
+      return;
+    }
+    if (textValue.length < schema.config.minLen) {
+      setErrorText(`Text length must more than ${schema.config.minLen}`);
+      return;
+    }
+    if (textValue.length > schema.config.maxLen) {
+      setErrorText(`Text length must less than ${schema.config.maxLen}`);
+      return;
+    }
+    if (schema.config.customValidate) {
+      const fn = eval(schema.config.customValidate);
+      if (fn) {
+        const success = fn(textValue);
+        if (!success) {
+          setErrorText(
+            schema.config.customValidateErrorText || 'Custom validate error'
+          );
+          return;
+        }
+      }
+    }
+    setErrorText(null);
     if (onValueChange) {
       onValueChange(
         schema.config.needI18n
-          ? { ...value, [currentLang]: e.target.value }
-          : e.target.value
+          ? { ...value, [currentLang]: textValue }
+          : textValue
       );
     }
   };
@@ -389,8 +479,11 @@ export const FieldString = ({
           style={{ width: '100%' }}
           label={label}
           size="small"
-          rows="4"
+          rows={schema.config.rows}
+          error={!!errorText}
           multiline
+          required={schema.config.required}
+          helperText={errorText}
           onChange={onTextChange}
         />
       )}
@@ -407,6 +500,9 @@ export const FieldString = ({
           }
           style={{ width: '100%' }}
           label={label}
+          required={schema.config.required}
+          error={!!errorText}
+          helperText={errorText || schema.config.helperText}
           onChange={onTextChange}
         />
       )}
