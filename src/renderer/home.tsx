@@ -178,14 +178,14 @@ function validateValue(
   if (schema.config.enableWhen) {
     const fn = eval(schema.config.enableWhen);
     if (!fn(totalObjValue)) {
-      return undefined;
+      return schema.config.defaultValue;
     }
   }
   if (schema.type === SchemaFieldType.Array) {
     if (Array.isArray(value)) {
       return value.map((item) => {
         return validateValue(
-          totalObjValue,
+          item,
           item,
           (schema as SchemaFieldArray).fieldSchema,
           schemaConfig
@@ -201,7 +201,7 @@ function validateValue(
       const r1 = Object.keys(value).reduce((res2: any, key) => {
         if (objFields.includes(key)) {
           res2[key] = validateValue(
-            totalObjValue,
+            value,
             value[key],
             (schema as SchemaFieldObject).fields.find((f) => f.id === key)
               ?.data,
@@ -213,7 +213,7 @@ function validateValue(
       const r2 = objFields.reduce((res: any, key) => {
         if (!Object.keys(value).includes(key)) {
           res[key] = validateValue(
-            totalObjValue,
+            value,
             null,
             (schema as SchemaFieldObject).fields.find((f) => f.id === key)
               ?.data,
@@ -378,8 +378,8 @@ const Item = ({
 };
 
 const Home = () => {
-  const [list, setList] = useState<SchemaField[]>([]);
   const [valueList, setActualValueList] = useState<any[]>([]);
+  const [displayValueList, setDisplayValueList] = useState<any[]>([]);
   const [schemaConfigOpen, setSchemaConfigOpen] = useState(false);
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
   const [currentLang, setCurrentLang] = useState<string>('');
@@ -391,6 +391,10 @@ const Home = () => {
     throttle((newValue) => setActualValueList(newValue), 1000)
   );
   const setValueList = setValueListRef.current;
+
+  useEffect(() => {
+    setDisplayValueList(valueList);
+  }, [valueList]);
 
   useEffect(() => {
     const valuePath = localStorage.getItem(FILE_PATH);
@@ -502,15 +506,6 @@ const Home = () => {
     );
   }, [schema, schemaConfig]);
 
-  useEffect(() => {
-    setList((prev) => {
-      if (prev.length !== valueList.length) {
-        return valueList.map(() => schema);
-      }
-      return prev;
-    });
-  }, [valueList]);
-
   const onItemChange = (v: any, i: number) => {
     setValueList((prev) => {
       return prev.map((item, j) => (j === i ? v : item));
@@ -606,6 +601,27 @@ const Home = () => {
     };
   }, [save]);
 
+  const onFilterChange = (filterVal) => {
+    setDisplayValueList(
+      valueList.filter((item) => {
+        const needFilter = Object.keys(filterVal).reduce((res, prop) => {
+          if (!res) {
+            return res;
+          }
+          if (!filterVal[prop].value) {
+            return res;
+          }
+
+          if (filterVal[prop].type === 'string') {
+            return get(item, prop).includes(filterVal[prop].value);
+          }
+          return get(item, prop) === filterVal[prop].value;
+        }, true);
+        return needFilter;
+      })
+    );
+  };
+
   if (!schema && !schemaConfigOpen) {
     return (
       <CircularProgress
@@ -628,7 +644,7 @@ const Home = () => {
       }}
     >
       <>
-        <FilterPanel />
+        <FilterPanel onFilterChange={onFilterChange} />
         <div
           style={{
             backgroundColor: '#e7ebf0',
@@ -726,12 +742,12 @@ const Home = () => {
 
             <DragDropContext
               onDragEnd={(e) => {
-                const final = valueList.map((item, j) => {
+                const final = displayValueList.map((item, j) => {
                   if (j === e.source?.index) {
-                    return valueList[e.destination?.index];
+                    return displayValueList[e.destination?.index];
                   }
                   if (j === e.destination?.index) {
-                    return valueList[e.source?.index];
+                    return displayValueList[e.source?.index];
                   }
                   return item;
                 }, []);
@@ -748,8 +764,8 @@ const Home = () => {
                       ...{ width: '100%' },
                     }}
                   >
-                    {list.map((item, i) => {
-                      const key = String(valueList[i]?.[HIDDEN_ID]);
+                    {displayValueList.map((item, i) => {
+                      const key = String(item[HIDDEN_ID]);
                       return (
                         <Draggable key={key} draggableId={key} index={i}>
                           {(provided, snapshot) => (
@@ -765,9 +781,9 @@ const Home = () => {
                               <Item
                                 key={key}
                                 index={i + 1}
-                                schema={item}
+                                schema={schema}
                                 schemaConfig={schemaConfig}
-                                value={valueList[i]}
+                                value={displayValueList[i]}
                                 onValueChange={(v) => onItemChange(v, i)}
                                 onDuplicate={() => onItemDuplicate(i)}
                                 onDelete={() => onItemDelete(i)}

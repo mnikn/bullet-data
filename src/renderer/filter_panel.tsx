@@ -63,9 +63,9 @@ const CollapseCard = ({
 };
 
 const FilterPanel = ({
-  onFiltersChange,
+  onFilterChange,
 }: {
-  onFiltersChange?: (values) => void;
+  onFilterChange?: (value) => void;
 }) => {
   const [filters, setFilters] = useState<
     {
@@ -74,15 +74,25 @@ const FilterPanel = ({
     }[]
   >([]);
 
+  const [filterValue, setFilterValues] = useState<any>({});
+
+  useEffect(() => {
+    if (onFilterChange) {
+      onFilterChange(filterValue);
+    }
+  }, [filterValue]);
+
   useEffect(() => {
     setFilters([
       {
         label: 'id',
         prop: 'id',
+        type: 'string',
       },
       {
         label: 'content',
         prop: 'sub.content',
+        type: 'string',
       },
     ]);
   }, []);
@@ -113,10 +123,21 @@ const FilterPanel = ({
                 </FormControl>
                 </Grid> */}
 
-            {filters.map((item) => {
+            {filters.map((item, i) => {
               return (
-                <Grid item xs={6}>
-                  <TextField size="small" label={item.label} />
+                <Grid item xs={6} key={i}>
+                  <TextField
+                    size="small"
+                    label={item.label}
+                    onChange={(e) => {
+                      setFilterValues((prev) => {
+                        return {
+                          ...prev,
+                          [item.prop]: { value: e.target.value, type: item.type },
+                        };
+                      });
+                    }}
+                  />
                 </Grid>
               );
             })}

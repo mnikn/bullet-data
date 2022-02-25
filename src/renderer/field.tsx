@@ -31,6 +31,21 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import get from 'lodash/get';
 import CollapseCard from './components/collapse_card';
 import Context from './context';
+import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+
+const grid = 2;
+const getListStyle = (isDraggingOver) => ({
+  background: isDraggingOver ? 'lightblue' : '#e7ebf0',
+  padding: grid,
+  width: 250,
+});
+
+const getItemStyle = (isDragging, draggableStyle) => ({
+  // some basic styles to make the items look a bit nicer
+  userSelect: 'none',
+  padding: grid * 2,
+  margin: `0 0 ${grid}px 0`,
+});
 
 export const FieldContainer = ({
   schema,
@@ -250,23 +265,69 @@ export const FieldArray = ({
         title={label || ''}
         initialExpand={schema.config.initialExpand}
       >
-        <Stack spacing={2}>
-          {list.map((item, i) => {
-            return (
-              <Stack spacing="2" direction="row" key={i}>
-                <CollapseCard title={`# ${i + 1}`}>
-                  <FieldContainer
-                    schema={schema.fieldSchema as SchemaField}
-                    value={item}
-                    onValueChange={(v) => onItemChange(v, i)}
-                  />
-                </CollapseCard>
-                <IconButton component="span" onClick={() => deleteItem(i)}>
-                  <DeleteIcon />
-                </IconButton>
-              </Stack>
-            );
-          })}
+        <Stack spacing={1}>
+          <DragDropContext
+            onDragEnd={(e) => {
+              const final = list.map((item, j) => {
+                if (j === e.source?.index) {
+                  return list[e.destination?.index];
+                }
+                if (j === e.destination?.index) {
+                  return list[e.source?.index];
+                }
+                return item;
+              }, []);
+              setList(final);
+            }}
+          >
+            <Droppable droppableId="droppable-2">
+              {(provided, snapshot) => (
+                <div
+                  {...provided.droppableProps}
+                  ref={provided.innerRef}
+                  style={{
+                    ...getListStyle(snapshot.isDraggingOver),
+                    ...{ width: '100%' },
+                  }}
+                >
+                  {list.map((item, i) => {
+                    return (
+                      <Draggable key={i} draggableId={String(i)} index={i}>
+                        {(provided, snapshot) => (
+                          <div
+                            ref={provided.innerRef}
+                            {...provided.draggableProps}
+                            {...provided.dragHandleProps}
+                            style={getItemStyle(
+                              snapshot.isDragging,
+                              provided.draggableProps.style
+                            )}
+                          >
+                            <Stack spacing="2" direction="row" key={i}>
+                              <CollapseCard title={`# ${i + 1}`}>
+                                <FieldContainer
+                                  schema={schema.fieldSchema as SchemaField}
+                                  value={item}
+                                  onValueChange={(v) => onItemChange(v, i)}
+                                />
+                              </CollapseCard>
+                              <IconButton
+                                component="span"
+                                onClick={() => deleteItem(i)}
+                              >
+                                <DeleteIcon />
+                              </IconButton>
+                            </Stack>
+                          </div>
+                        )}
+                      </Draggable>
+                    );
+                  })}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
+          </DragDropContext>
           <Button variant="contained" onClick={addItem}>
             Add Item
           </Button>
