@@ -12,7 +12,6 @@ export const DEFAULT_CONFIG = {
   OBJECT: {
     colSpan: 12,
     enableWhen: null,
-    nullable: false,
     initialExpand: true,
     summary: '{{_key}}',
   },
@@ -61,9 +60,10 @@ export const DEFAULT_CONFIG = {
     helperText: '',
     suffix: '',
     prefix: '',
+    format: null,
     min: -Number.MAX_SAFE_INTEGER,
     max: Number.MAX_SAFE_INTEGER,
-    type: 'int', // int | float | percent
+    type: 'float', // int | float | percent
   },
   NUMBER_CONFIG_DEFAULT: {
     colSpan: 3,

@@ -27,7 +27,7 @@ import MoreVertIcon from '@mui/icons-material/MoreVert';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 
-import { FieldContainer } from './field';
+import { FieldContainer } from './components/field';
 import {
   DEFAULT_CONFIG,
   SchemaField,
