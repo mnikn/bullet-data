@@ -5,26 +5,37 @@ contextBridge.exposeInMainWorld('electron', {
     myPing() {
       ipcRenderer.send('ipc-example', 'ping');
     },
+    close() {
+      ipcRenderer.send('closed');
+    },
     readFile(filePath) {
       ipcRenderer.send('readFile', filePath);
     },
     readJsonFile(arg, callback) {
-      ipcRenderer.once('readFile', (_, res) => {
-        if (res.arg.action === arg.action) {
-          callback(res);
-        }
+      return new Promise((resolve) => {
+        ipcRenderer.once('readFile', (_, res) => {
+          if (res.arg.action === arg.action) {
+            if (callback) {
+              callback(res);
+            }
+            resolve(res);
+          }
+        });
+        ipcRenderer.send('readFile', arg);
       });
-      ipcRenderer.send('readFile', arg);
     },
     writeJsonFile(arg, callback) {
-      ipcRenderer.once('writeFile', (_, res) => {
-        if (res.arg.action === arg.action) {
-          if (callback) {
-            callback(res);
+      return new Promise((resolve) => {
+        ipcRenderer.once('writeFile', (_, res) => {
+          if (res.arg.action === arg.action) {
+            if (callback) {
+              callback(res);
+            }
+            resolve(res);
           }
-        }
+        });
+        ipcRenderer.send('writeFile', arg);
       });
-      ipcRenderer.send('writeFile', arg);
     },
     openFileDialog() {
       ipcRenderer.send('openFileDialog');
@@ -39,14 +50,17 @@ contextBridge.exposeInMainWorld('electron', {
       });
     },
     saveFileDialog(arg, callback) {
-      ipcRenderer.once('saveFileDialog', (_, res) => {
-        if (res.arg.action === arg.action) {
-          if (callback) {
-            callback(res);
+      return new Promise((resolve) => {
+        ipcRenderer.once('saveFileDialog', (_, res) => {
+          if (res.arg.action === arg.action) {
+            if (callback) {
+              callback(res);
+            }
+            resolve(res);
           }
-        }
+        });
+        ipcRenderer.send('saveFileDialog', arg);
       });
-      ipcRenderer.send('saveFileDialog', arg);
     },
     on(channel, func) {
       ipcRenderer.on(channel, (event, ...args) => func(...args));

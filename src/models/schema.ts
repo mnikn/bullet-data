@@ -1,3 +1,106 @@
+export function validateValue(
+  totalObjValue: any,
+  value: any,
+  schema: SchemaField,
+  schemaConfig: any
+): any {
+  if (schema.config.enableWhen) {
+    const fn = eval(schema.config.enableWhen);
+    if (!fn(totalObjValue)) {
+      return schema.config.defaultValue;
+    }
+  }
+  if (schema.type === SchemaFieldType.Array) {
+    if (Array.isArray(value)) {
+      return value.map((item) => {
+        return validateValue(
+          item,
+          item,
+          (schema as SchemaFieldArray).fieldSchema,
+          schemaConfig
+        );
+      });
+    } else {
+      return schema.config.defaultValue;
+    }
+  }
+  if (schema.type === SchemaFieldType.Object) {
+    if (typeof value === 'object' && value !== null) {
+      const objFields = (schema as SchemaFieldObject).fields.map((t) => t.id);
+      const r1 = Object.keys(value).reduce((res2: any, key) => {
+        if (objFields.includes(key)) {
+          res2[key] = validateValue(
+            value,
+            value[key],
+            (schema as SchemaFieldObject).fields.find((f) => f.id === key)
+              ?.data,
+            schemaConfig
+          );
+        }
+        return res2;
+      }, {});
+      const r2 = objFields.reduce((res: any, key) => {
+        if (!Object.keys(value).includes(key)) {
+          res[key] = validateValue(
+            value,
+            null,
+            (schema as SchemaFieldObject).fields.find((f) => f.id === key)
+              ?.data,
+            schemaConfig
+          );
+        }
+        return res;
+      }, {});
+      return { ...r1, ...r2 };
+    } else {
+      return (schema as SchemaFieldObject).configDefaultValue;
+    }
+  }
+
+  if (schema.type === SchemaFieldType.String) {
+    if (schema.config.needI18n) {
+      if (typeof value === 'object' && value !== null) {
+        return value;
+      } else {
+        return schemaConfig.i18n.reduce((res, item) => {
+          return { ...res, [item]: schema.config.defaultValue };
+        }, '');
+      }
+    }
+    if (typeof value === 'string') {
+      return value;
+    } else {
+      return schema.config.defaultValue;
+    }
+  }
+
+  if (schema.type === SchemaFieldType.Number) {
+    if (typeof value === 'number') {
+      return value;
+    } else {
+      return schema.config.defaultValue;
+    }
+  }
+
+  if (schema.type === SchemaFieldType.Boolean) {
+    if (typeof value === 'boolean') {
+      return value;
+    } else {
+      return schema.config.defaultValue;
+    }
+  }
+
+  if (schema.type === SchemaFieldType.Select) {
+    if (typeof value === 'string') {
+      return value;
+    } else {
+      return schema.config.defaultValue;
+    }
+  }
+
+  return value;
+}
+
 export enum SchemaFieldType {
   Array = 'array',
   Object = 'object',
@@ -13,12 +116,12 @@ export const DEFAULT_CONFIG = {
     colSpan: 12,
     enableWhen: null,
     initialExpand: true,
-    summary: '{{_key}}',
+    summary: '{{___key}}',
   },
   OBJECT_CONFIG_DEFAULT: {
     colSpan: 12,
     initialExpand: true,
-    summary: '{{_key}}',
+    summary: '{{___key}}',
   },
   ARRAY: {
     colSpan: 12,

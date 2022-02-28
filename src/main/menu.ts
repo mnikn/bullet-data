@@ -209,7 +209,7 @@ export default class MenuBuilder {
         submenu: [
           {
             label: '&New',
-            accelerator: 'Ctrl+Shift+N',
+            accelerator: 'Ctrl+N',
             click: () => {
               this.mainWindow.webContents.send('newFile');
             },
@@ -228,31 +228,34 @@ export default class MenuBuilder {
               ipcMain.emit('openFile', { action: 'open-file' });
             },
           },
+          // {
+          //   label: 'Open Recent',
+          //   role: 'recentdocuments',
+          //   submenu: [
+          //     ...recentFiles.map((item) => {
+          //       return {
+          //         label: item,
+          //         click: () => {
+          //           console.log(item);
+          //           ipcMain.emit('openFile', {
+          //             action: 'open-file',
+          //             filePath: item,
+          //           });
+          //         },
+          //       };
+          //     }),
+          //     {
+          //       label: 'Clear Recent',
+          //       role: 'clearrecentdocuments',
+          //     },
+          //   ],
+          // },
           {
-            label: 'Open Recent',
-            role: 'recentdocuments',
-            submenu: [
-              ...recentFiles.map((item) => {
-                return {
-                  label: item,
-                  click: () => {
-                    console.log(item);
-                    ipcMain.emit('openFile', {
-                      action: 'open-file',
-                      filePath: item,
-                    });
-                  },
-                };
-              }),
-              {
-                label: 'Clear Recent',
-                role: 'clearrecentdocuments',
-              },
-            ],
-          },
-          {
-            label: '&Export Data',
-            accelerator: 'Ctrl+Shift+E',
+            label: '&Preview',
+            accelerator: 'Ctrl+P',
+            click: () => {
+              this.mainWindow.webContents.send('previewFile');
+            },
           },
           {
             label: '&Close',
@@ -268,7 +271,10 @@ export default class MenuBuilder {
         submenu: [
           {
             label: '&Add Item',
-            accelerator: 'Ctrl+N',
+            accelerator: 'Ctrl+Shift+A',
+            click: () => {
+              this.mainWindow.webContents.send('addItem');
+            },
           },
         ],
       },
@@ -318,23 +324,11 @@ export default class MenuBuilder {
         label: 'Help',
         submenu: [
           {
-            label: 'Learn More',
-            click() {
-              shell.openExternal('https://electronjs.org');
-            },
-          },
-          {
             label: 'Documentation',
             click() {
               shell.openExternal(
                 'https://github.com/electron/electron/tree/main/docs#readme'
               );
-            },
-          },
-          {
-            label: 'Community Discussions',
-            click() {
-              shell.openExternal('https://www.electronjs.org/community');
             },
           },
           {

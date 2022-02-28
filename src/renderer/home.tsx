@@ -1,33 +1,30 @@
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
-import get from 'lodash/get';
-import throttle from 'lodash/throttle';
-import uniq from 'lodash/uniq';
-import cloneDeep from 'lodash/cloneDeep';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import AddIcon from '@mui/icons-material/Add';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
+import Base64 from 'js-base64';
 import {
+  Alert,
+  Button,
   Card,
   CardContent,
   CardHeader,
+  CircularProgress,
+  Collapse,
+  CssBaseline,
+  Fab,
+  GlobalStyles,
+  IconButton,
   Menu,
   MenuItem,
-  Collapse,
-  Fab,
-  IconButton,
-  Stack,
-  Button,
-  CircularProgress,
-  CssBaseline,
-  GlobalStyles,
   Select,
-  Alert,
+  Stack,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import AddIcon from '@mui/icons-material/Add';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-
-import { FieldContainer } from './components/field';
+import { FILE_PATH } from 'constatnts/storage_key';
+import cloneDeep from 'lodash/cloneDeep';
+import get from 'lodash/get';
+import throttle from 'lodash/throttle';
 import {
   DEFAULT_CONFIG,
   SchemaField,
@@ -38,20 +35,27 @@ import {
   SchemaFieldSelect,
   SchemaFieldString,
   SchemaFieldType,
+  validateValue,
 } from 'models/schema';
-import SchemaConfig from './schema_config';
-import { FILE_PATH, RECENTE_FILE_PATHS } from 'constatnts/storage_key';
-import Context from './context';
+import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import { generateUUID } from 'utils/uuid';
-import FilterPanel from './filter_panel';
+import { FieldContainer } from './components/field';
+import Context from './context';
+import Preview from './preview';
+/* import FilterPanel from './filter_panel'; */
+import SchemaConfig from './schema_config';
+import useSave from './use_save';
 
 const DEFAULT_SCHEMA_CONFIG = {
-  summary: '#{{_index}}',
   i18n: [],
   schema: {
     type: 'object',
     fields: {},
-    config: DEFAULT_CONFIG.OBJECT,
+    config: {
+      ...DEFAULT_CONFIG.OBJECT,
+      summary: '#{{___index}}',
+    },
   },
 };
 
@@ -170,109 +174,6 @@ function buildSchema(json: any): SchemaField {
   return new SchemaFieldObject();
 }
 
-function validateValue(
-  totalObjValue: any,
-  value: any,
-  schema: SchemaField,
-  schemaConfig: any
-): any {
-  if (schema.config.enableWhen) {
-    const fn = eval(schema.config.enableWhen);
-    if (!fn(totalObjValue)) {
-      return schema.config.defaultValue;
-    }
-  }
-  if (schema.type === SchemaFieldType.Array) {
-    if (Array.isArray(value)) {
-      return value.map((item) => {
-        return validateValue(
-          item,
-          item,
-          (schema as SchemaFieldArray).fieldSchema,
-          schemaConfig
-        );
-      });
-    } else {
-      return schema.config.defaultValue;
-    }
-  }
-  if (schema.type === SchemaFieldType.Object) {
-    if (typeof value === 'object' && value !== null) {
-      const objFields = (schema as SchemaFieldObject).fields.map((t) => t.id);
-      const r1 = Object.keys(value).reduce((res2: any, key) => {
-        if (objFields.includes(key)) {
-          res2[key] = validateValue(
-            value,
-            value[key],
-            (schema as SchemaFieldObject).fields.find((f) => f.id === key)
-              ?.data,
-            schemaConfig
-          );
-        }
-        return res2;
-      }, {});
-      const r2 = objFields.reduce((res: any, key) => {
-        if (!Object.keys(value).includes(key)) {
-          res[key] = validateValue(
-            value,
-            null,
-            (schema as SchemaFieldObject).fields.find((f) => f.id === key)
-              ?.data,
-            schemaConfig
-          );
-        }
-        return res;
-      }, {});
-      return { ...r1, ...r2 };
-    } else {
-      return (schema as SchemaFieldObject).configDefaultValue;
-    }
-  }
-
-  if (schema.type === SchemaFieldType.String) {
-    if (schema.config.needI18n) {
-      if (typeof value === 'object' && value !== null) {
-        return value;
-      } else {
-        return schemaConfig.i18n.reduce((res, item) => {
-          return { ...res, [item]: schema.config.defaultValue };
-        }, '');
-      }
-    }
-    if (typeof value === 'string') {
-      return value;
-    } else {
-      return schema.config.defaultValue;
-    }
-  }
-
-  if (schema.type === SchemaFieldType.Number) {
-    if (typeof value === 'number') {
-      return value;
-    } else {
-      return schema.config.defaultValue;
-    }
-  }
-
-  if (schema.type === SchemaFieldType.Boolean) {
-    if (typeof value === 'boolean') {
-      return value;
-    } else {
-      return schema.config.defaultValue;
-    }
-  }
-
-  if (schema.type === SchemaFieldType.Select) {
-    if (typeof value === 'string') {
-      return value;
-    } else {
-      return schema.config.defaultValue;
-    }
-  }
-
-  return value;
-}
-
 const Item = ({
   schema,
   value,
@@ -315,7 +216,7 @@ const Item = ({
     /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
     (all) => {
       const item = all.substring(2, all.length - 2);
-      if (item === '_index') {
+      if (item === '___index') {
         return index;
       }
       const v = get(value, item, '');
@@ -384,11 +285,12 @@ const Home = () => {
   const [valueList, setActualValueList] = useState<any[]>([]);
   const [displayValueList, setDisplayValueList] = useState<any[]>([]);
   const [schemaConfigOpen, setSchemaConfigOpen] = useState(false);
+  const [previewVisible, setPreviewVisible] = useState(false);
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
   const [currentLang, setCurrentLang] = useState<string>('');
-  const [saving, setSaving] = useState<boolean>(false);
-
   const [schema, setSchema] = useState<SchemaField | null>(null);
+
+  const { saving, save } = useSave({ valueList, schema, schemaConfig });
 
   const setValueListRef = useRef(
     throttle((newValue) => setActualValueList(newValue), 1000)
@@ -401,6 +303,9 @@ const Home = () => {
 
   useEffect(() => {
     const valuePath = localStorage.getItem(FILE_PATH);
+    document.querySelector('title').innerText = `General Data Manager ${
+      valuePath ? '--- ' + valuePath : ''
+    }`;
     if (valuePath) {
       const configUrl = getConfigPath(valuePath);
       if (configUrl) {
@@ -424,61 +329,6 @@ const Home = () => {
       setSchemaConfig(DEFAULT_SCHEMA_CONFIG);
     }
   }, []);
-
-  const save = useCallback(() => {
-    setSaving(true);
-    const valuePath = localStorage.getItem(FILE_PATH);
-    const data = cloneDeep(valueList).map((item) => {
-      item[HIDDEN_ID] = undefined;
-      return validateValue(item, item, schema, schemaConfig);
-    }, []);
-    if (valuePath) {
-      const configPath = getConfigPath(valuePath);
-      window.electron.ipcRenderer.writeJsonFile(
-        {
-          action: 'save-value-file',
-          filePath: valuePath,
-          data: JSON.stringify(data, null, 2),
-        },
-        () => {
-          window.electron.ipcRenderer.writeJsonFile(
-            {
-              action: 'save-config-file',
-              filePath: configPath,
-              data: JSON.stringify(schemaConfig, null, 2),
-            },
-            () => {
-              setTimeout(() => {
-                setSaving(false);
-              }, 300);
-            }
-          );
-        }
-      );
-    } else {
-      window.electron.ipcRenderer.saveFileDialog(
-        {
-          action: 'save-value-file',
-          data: JSON.stringify(data, null, 2),
-        },
-        () => {
-          localStorage.setItem(FILE_PATH, val2.res.path);
-          window.electron.ipcRenderer.writeJsonFile(
-            {
-              action: 'save-config-file',
-              filePath: configPath,
-              data: JSON.stringify(schemaConfig, null, 2),
-            },
-            () => {
-              setTimeout(() => {
-                setSaving(false);
-              }, 300);
-            }
-          );
-        }
-      );
-    }
-  }, [valueList, schema, schemaConfig]);
 
   useEffect(() => {
     if (!schema) {
@@ -528,42 +378,23 @@ const Home = () => {
     });
   };
 
-  const onSchemaConfigSubmit = (v: any) => {
+  const onSchemaConfigSubmit = async (v: any) => {
     setSchema(null);
-    if (!localStorage.getItem(FILE_PATH)) {
-      window.electron.ipcRenderer.saveFileDialog(
-        {
-          action: 'save-schema-config-changed',
-          data: JSON.stringify(valueList, null, 2),
-        },
-        (res) => {
-          localStorage.setItem(FILE_PATH, res.res.path.replace);
-          window.electron.ipcRenderer.writeJsonFile(
-            {
-              action: 'save-config-file-on-schema-submit',
-              filePath: getConfigPath(res.res.path),
-              data: JSON.stringify(v, null, 2),
-            },
-            () => {
-              window.location.reload();
-            }
-          );
-        }
-      );
-    } else {
-      const configPath = getConfigPath(localStorage.getItem(FILE_PATH));
-      window.electron.ipcRenderer.writeJsonFile(
-        {
-          action: 'save-config-file',
-          filePath: configPath,
-          data: JSON.stringify(v, null, 2),
-        },
-        () => {
-          window.location.reload();
-        }
-      );
-    }
+    await save(v);
+    window.location.reload();
   };
+
+  const addItem = useCallback(() => {
+    if (!schema) {
+      return;
+    }
+    setValueList((prevArr) => {
+      const v = cloneDeep(schema.config.defaultValue);
+      v[HIDDEN_ID] = generateUUID();
+      console.log(prevArr, v);
+      return prevArr.concat(v);
+    });
+  }, [schema]);
 
   useEffect(() => {
     if (schemaConfig) {
@@ -575,55 +406,70 @@ const Home = () => {
   }, [schemaConfig]);
 
   useEffect(() => {
-    const onOpenFile = (res) => {
-      const path = res.res[0].path;
-      localStorage.setItem(FILE_PATH, path);
-      const recents = JSON.parse(
-        localStorage.getItem(RECENTE_FILE_PATHS) || '[]'
-      ).concat(path);
-      localStorage.setItem(RECENTE_FILE_PATHS, JSON.stringify(uniq(recents)));
-      window.electron.ipcRenderer.addRecentFile({
-        newFilePath: path,
-        all: recents,
-      });
-      window.location.reload();
+    const showPreview = () => {
+      setPreviewVisible(true);
     };
-    const onNewFile = () => {
-      save();
-      localStorage.clear();
-      window.location.reload();
-    };
-    window.electron.ipcRenderer.on('saveFile', save);
-    window.electron.ipcRenderer.on('openFile', onOpenFile);
-    window.electron.ipcRenderer.on('newFile', onNewFile);
-
+    window.electron.ipcRenderer.on('addItem', addItem);
+    window.electron.ipcRenderer.on('previewFile', showPreview);
     return () => {
-      window.electron.ipcRenderer.removeAllListeners('saveFile');
-      window.electron.ipcRenderer.removeAllListeners('openFile');
-      window.electron.ipcRenderer.removeAllListeners('newFile');
+      window.electron.ipcRenderer.removeListener('addItem', addItem);
+      window.electron.ipcRenderer.removeListener('previewFile', showPreview);
     };
-  }, [save]);
+  }, [addItem]);
 
-  const onFilterChange = (filterVal) => {
-    setDisplayValueList(
-      valueList.filter((item) => {
-        const needFilter = Object.keys(filterVal).reduce((res, prop) => {
-          if (!res) {
-            return res;
-          }
-          if (!filterVal[prop].value) {
-            return res;
-          }
+  /* useEffect(() => {
+   *   const onunload = async (e) => {
+   *     e.preventDefault();
+   *     e.returnValue = '';
+   *     const valuePath = localStorage.getItem(FILE_PATH);
+   *     if (valuePath) {
+   *       const currentFileValue = await window.electron.ipcRenderer.readJsonFile(
+   *         {
+   *           filePath: valuePath,
+   *           action: 'save-value',
+   *         }
+   *       );
 
-          if (filterVal[prop].type === 'string') {
-            return get(item, prop).includes(filterVal[prop].value);
-          }
-          return get(item, prop) === filterVal[prop].value;
-        }, true);
-        return needFilter;
-      })
-    );
-  };
+   *       const formatData = (JSON.parse(currentFileValue.data) || []).map(
+   *         (item) => {
+   *           return validateValue(item, item, schema, schemaConfig);
+   *         }
+   *       );
+   *       if (Base64.encode(formatData) !== Base64.encode(valueList)) {
+   *         alert('File has been changed without save. Exit anyway?');
+   *       } else {
+   *         window.electron.ipcRenderer.close();
+   *       }
+   *     } else {
+   *       alert('You have not save file yet. Exit anyway?');
+   *     }
+   *   };
+   *   window.addEventListener('beforeunload', onunload);
+   *   return () => {
+   *     window.removeEventListener('beforeunload', onunload);
+   *   };
+   * }, [save, schema, schemaConfig, valueList]); */
+
+  /* const onFilterChange = (filterVal) => {
+   *   setDisplayValueList(
+   *     valueList.filter((item) => {
+   *       const needFilter = Object.keys(filterVal).reduce((res, prop) => {
+   *         if (!res) {
+   *           return res;
+   *         }
+   *         if (!filterVal[prop].value) {
+   *           return res;
+   *         }
+
+   *         if (filterVal[prop].type === 'string') {
+   *           return get(item, prop).includes(filterVal[prop].value);
+   *         }
+   *         return get(item, prop) === filterVal[prop].value;
+   *       }, true);
+   *       return needFilter;
+   *     })
+   *   );
+   * }; */
 
   if (!schema && !schemaConfigOpen) {
     return (
@@ -647,7 +493,7 @@ const Home = () => {
       }}
     >
       <>
-        <FilterPanel onFilterChange={onFilterChange} />
+        {/* <FilterPanel onFilterChange={onFilterChange} /> */}
         <div
           style={{
             backgroundColor: '#e7ebf0',
@@ -818,20 +664,11 @@ const Home = () => {
           <Fab
             sx={{
               position: 'fixed',
-              bottom: 32,
-              right: 32,
+              bottom: 48,
+              right: 48,
             }}
             color="primary"
-            onClick={() => {
-              if (!schema) {
-                return;
-              }
-              setValueList((prevArr) => {
-                const v = schema.config.defaultValue;
-                v[HIDDEN_ID] = generateUUID();
-                return prevArr.concat(v);
-              });
-            }}
+            onClick={addItem}
           >
             <AddIcon />
           </Fab>
@@ -842,6 +679,17 @@ const Home = () => {
               onSubmit={onSchemaConfigSubmit}
               close={() => {
                 setSchemaConfigOpen(false);
+              }}
+            />
+          )}
+          {previewVisible && (
+            <Preview
+              valueList={cloneDeep(valueList).map((item) => {
+                item[HIDDEN_ID] = undefined;
+                return item;
+              })}
+              close={() => {
+                setPreviewVisible(false);
               }}
             />
           )}

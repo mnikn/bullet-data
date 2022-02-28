@@ -1,10 +1,5 @@
-import {
-  FormControl, InputLabel, MenuItem,
-  Select
-} from '@mui/material';
-import {
-  SchemaFieldSelect
-} from 'models/schema';
+import { FormControl, InputLabel, MenuItem, Select } from '@mui/material';
+import { SchemaFieldSelect } from 'models/schema';
 
 const FieldSelect = ({
   label,
@@ -35,8 +30,11 @@ const FieldSelect = ({
       >
         {schema.config.options.map((item, i) => {
           return (
-            <MenuItem key={i} value={item}>
-              {item}
+            <MenuItem
+              key={i}
+              value={typeof item === 'object' ? item.value : item}
+            >
+              {typeof item === 'object' ? item.name : item}
             </MenuItem>
           );
         })}

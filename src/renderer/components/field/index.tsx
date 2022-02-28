@@ -104,7 +104,7 @@ export const FieldContainer = ({
               /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
               (all) => {
                 const word = all.substring(2, all.length - 2);
-                if (word === '_key') {
+                if (word === '___key') {
                   return item.name;
                 }
                 const v = get(value[item.id], word, '');
