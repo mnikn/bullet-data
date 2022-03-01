@@ -6,7 +6,8 @@ contextBridge.exposeInMainWorld('electron', {
       ipcRenderer.send('ipc-example', 'ping');
     },
     close() {
-      ipcRenderer.send('closed');
+      console.log('gffg');
+      ipcRenderer.send('realClose');
     },
     readFile(filePath) {
       ipcRenderer.send('readFile', filePath);

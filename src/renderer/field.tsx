@@ -1,8 +1,21 @@
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { Button, Grid, IconButton, Stack } from '@mui/material';
-import get from 'lodash/get';
+import {
+  Button,
+  Card,
+  CardContent,
+  CardHeader,
+  Grid,
+  IconButton,
+  Stack,
+  Checkbox,
+  FormControlLabel,
+  TextField,
+  FormGroup,
+  Divider,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+} from '@mui/material';
 import {
   SchemaField,
   SchemaFieldArray,
@@ -13,14 +26,17 @@ import {
   SchemaFieldString,
   SchemaFieldType,
 } from 'models/schema';
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useEffect, useRef, useState, forwardRef } from 'react';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import get from 'lodash/get';
+import { Base64 } from 'js-base64';
+import CollapseCard from './components/collapse_card';
+import Context from './context';
 import { generateUUID } from 'utils/uuid';
-import Context from '../../context';
-import CollapseCard from '../collapse_card';
-import FieldBoolean from './boolean_field';
+import NumberFormat from 'react-number-format';
 import FieldNumber from './number_field';
-import FieldSelect from './select_field';
-import FieldString from './string_field';
 
 export const FieldContainer = ({
   schema,
@@ -55,7 +71,7 @@ export const FieldContainer = ({
             return (
               <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldNumber
-                  label={item.name || item.id}
+                  label={item.name}
                   value={value[item.id]}
                   schema={item.data as SchemaFieldNumber}
                   onValueChange={(v) => objectValueChange(v, item.id)}
@@ -66,7 +82,7 @@ export const FieldContainer = ({
             return (
               <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldString
-                  label={item.name || item.id}
+                  label={item.name}
                   schema={item.data as SchemaFieldString}
                   value={value[item.id]}
                   onValueChange={(v) => objectValueChange(v, item.id)}
@@ -77,7 +93,7 @@ export const FieldContainer = ({
             return (
               <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldBoolean
-                  label={item.name || item.id}
+                  label={item.name}
                   schema={item.data as SchemaFieldBoolean}
                   value={value[item.id]}
                   onValueChange={(v) => objectValueChange(v, item.id)}
@@ -88,7 +104,7 @@ export const FieldContainer = ({
             return (
               <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldSelect
-                  label={item.name || item.id}
+                  label={item.name}
                   schema={item.data as SchemaFieldSelect}
                   value={value[item.id]}
                   onValueChange={(v) => objectValueChange(v, item.id)}
@@ -100,7 +116,7 @@ export const FieldContainer = ({
               /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
               (all) => {
                 const word = all.substring(2, all.length - 2);
-                if (word === '___key') {
+                if (word === '_key') {
                   return item.name;
                 }
                 const v = get(value[item.id], word, '');
@@ -117,7 +133,7 @@ export const FieldContainer = ({
                   initialExpand={item.data.config.initialExpand}
                 >
                   <FieldContainer
-                    schema={item.data || item.id}
+                    schema={item.data}
                     value={value[item.id]}
                     onValueChange={(v) => objectValueChange(v, item.id)}
                   />
@@ -128,7 +144,7 @@ export const FieldContainer = ({
             return (
               <FieldArray
                 key={item.id}
-                label={item.name || item.id}
+                label={item.name}
                 schema={item.data as SchemaFieldArray}
                 value={value[item.id]}
                 onValueChange={(v) => objectValueChange(v, item.id)}
@@ -154,26 +170,6 @@ export const FieldContainer = ({
       <Grid item xs={schema.config.colSpan}>
         <FieldNumber
           schema={schema as SchemaFieldNumber}
-          value={value}
-          onValueChange={(v) => onValueChange(v)}
-        />
-      </Grid>
-    );
-  } else if (schema.type === SchemaFieldType.Select) {
-    return (
-      <Grid item xs={schema.config.colSpan}>
-        <FieldSelect
-          schema={schema as SchemaFieldSelect}
-          value={value}
-          onValueChange={(v) => onValueChange(v)}
-        />
-      </Grid>
-    );
-  } else if (schema.type === SchemaFieldType.Boolean) {
-    return (
-      <Grid item xs={schema.config.colSpan}>
-        <FieldBoolean
-          schema={schema as SchemaFieldBoolean}
           value={value}
           onValueChange={(v) => onValueChange(v)}
         />
@@ -276,10 +272,7 @@ export const FieldArray = ({
                 style={{ width: '100%', alignItems: 'center' }}
               >
                 <Stack spacing="2" direction="row" sx={{ flexGrow: 1 }}>
-                  <CollapseCard
-                    title={`# ${i + 1}`}
-                    initialExpand={schema.config.initialExpand}
-                  >
+                  <CollapseCard title={`# ${i + 1}`}>
                     <FieldContainer
                       schema={schema.fieldSchema as SchemaField}
                       value={item.value}
@@ -305,5 +298,181 @@ export const FieldArray = ({
         </Stack>
       </CollapseCard>
     </Grid>
+  );
+};
+
+export const FieldString = ({
+  label,
+  schema,
+  value,
+  onValueChange,
+}: {
+  label?: string;
+  schema: SchemaFieldString;
+  value: string;
+  onValueChange?: (value: any) => void;
+}) => {
+  const textDomRef = useRef<any>(null);
+  const { currentLang, schemaConfig } = useContext(Context);
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const textValue = e.target.value;
+    if (schema.config.required && !textValue) {
+      setErrorText('Text cannot be empty');
+      return;
+    }
+    if (textValue.length < schema.config.minLen) {
+      setErrorText(`Text length must more than ${schema.config.minLen}`);
+      return;
+    }
+    if (textValue.length > schema.config.maxLen) {
+      setErrorText(`Text length must less than ${schema.config.maxLen}`);
+      return;
+    }
+    if (schema.config.customValidate) {
+      const fn = eval(schema.config.customValidate);
+      if (fn) {
+        const success = fn(textValue);
+        if (!success) {
+          setErrorText(
+            schema.config.customValidateErrorText || 'Custom validate error'
+          );
+          return;
+        }
+      }
+    }
+    setErrorText(null);
+    if (onValueChange) {
+      onValueChange(
+        schema.config.needI18n
+          ? { ...value, [currentLang]: textValue }
+          : textValue
+      );
+    }
+  };
+
+  useEffect(() => {
+    if (textDomRef.current) {
+      let dom = textDomRef.current.querySelector('input');
+      if (!dom) {
+        dom = textDomRef.current.querySelector('textarea');
+      }
+      dom.value =
+        schemaConfig.i18n.length > 0 && schema.config.needI18n
+          ? value
+            ? value[currentLang]
+            : ''
+          : value || '';
+    }
+  }, [currentLang]);
+  return (
+    <>
+      {schema.config.type === 'multiline' && (
+        <TextField
+          defaultValue={
+            schemaConfig.i18n.length > 0 && schema.config.needI18n
+              ? value
+                ? value[currentLang]
+                : ''
+              : value || ''
+          }
+          ref={textDomRef}
+          style={{ width: '100%' }}
+          label={label}
+          size="small"
+          rows={schema.config.rows}
+          error={!!errorText}
+          multiline
+          required={schema.config.required}
+          helperText={errorText}
+          onChange={onTextChange}
+        />
+      )}
+      {schema.config.type === 'singleline' && (
+        <TextField
+          size="small"
+          ref={textDomRef}
+          defaultValue={
+            schemaConfig.i18n.length > 0 && schema.config.needI18n
+              ? value
+                ? value[currentLang]
+                : ''
+              : value || ''
+          }
+          style={{ width: '100%' }}
+          label={label}
+          required={schema.config.required}
+          error={!!errorText}
+          helperText={errorText || schema.config.helperText}
+          onChange={onTextChange}
+        />
+      )}
+    </>
+  );
+};
+
+export const FieldBoolean = ({
+  label,
+  schema,
+  value,
+  onValueChange,
+}: {
+  label?: string;
+  schema: SchemaFieldBoolean;
+  value: boolean;
+  onValueChange?: (value: boolean) => void;
+}) => {
+  const onChange = (e: any) => {
+    if (onValueChange) {
+      onValueChange(e.target.checked);
+    }
+  };
+  return (
+    <FormGroup>
+      <FormControlLabel
+        control={<Checkbox checked={value} />}
+        label={label || ''}
+        onChange={onChange}
+      />
+    </FormGroup>
+  );
+};
+
+export const FieldSelect = ({
+  label,
+  schema,
+  value,
+  onValueChange,
+}: {
+  label?: string;
+  schema: SchemaFieldSelect;
+  value: string;
+  onValueChange?: (value: boolean) => void;
+}) => {
+  const onChange = (e: any) => {
+    if (onValueChange) {
+      onValueChange(e.target.value);
+    }
+  };
+  return (
+    <FormControl fullWidth>
+      <InputLabel id="demo-simple-select-label">{label}</InputLabel>
+      <Select
+        labelId="demo-simple-select-label"
+        id="demo-simple-select"
+        value={value}
+        label={label || ''}
+        onChange={onChange}
+        size="small"
+      >
+        {schema.config.options.map((item, i) => {
+          return (
+            <MenuItem key={i} value={item}>
+              {item}
+            </MenuItem>
+          );
+        })}
+      </Select>
+    </FormControl>
   );
 };

@@ -25,6 +25,7 @@ export default class AppUpdater {
 }
 
 let mainWindow: BrowserWindow | null = null;
+let needClose = false;
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -79,7 +80,19 @@ ipcMain.on('saveFileDialog', async (event, arg) => {
 
 ipcMain.on('addRecentFile', async (event, arg) => {
   app.addRecentDocument(arg.newFilePath);
-  fs.writeFileSync(path.join(__dirname, './recent_files.json'), JSON.stringify(arg.all));
+  fs.writeFileSync(
+    path.join(__dirname, './recent_files.json'),
+    JSON.stringify(arg.all)
+  );
+});
+
+ipcMain.on('realClose', () => {
+  needClose = true;
+  if (!mainWindow) {
+    throw new Error('"mainWindow" is not defined');
+  }
+  console.log('real close');
+  mainWindow.close();
 });
 
 if (process.env.NODE_ENV === 'production') {
@@ -143,8 +156,15 @@ const createWindow = async () => {
     }
   });
 
-  mainWindow.on('closed', () => {
-    mainWindow = null;
+  mainWindow.on('close', (e) => {
+    if (!mainWindow) {
+      throw new Error('"mainWindow" is not defined');
+    }
+    console.log('event close: ', needClose);
+    if (!needClose) {
+      e.preventDefault();
+      mainWindow.webContents.send('close');
+    }
   });
 
   const menuBuilder = new MenuBuilder(mainWindow);

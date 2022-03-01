@@ -126,7 +126,6 @@ export const DEFAULT_CONFIG = {
   ARRAY: {
     colSpan: 12,
     defaultValue: [],
-    clearable: false,
     enableWhen: null,
     initialExpand: false,
   },
@@ -171,7 +170,7 @@ export const DEFAULT_CONFIG = {
   NUMBER_CONFIG_DEFAULT: {
     colSpan: 3,
     defaultValue: 0,
-    type: 'int',
+    type: 'float',
   },
   BOOLEAN: {
     enableWhen: null,

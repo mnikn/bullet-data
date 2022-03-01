@@ -21,11 +21,11 @@ const FieldNumber = ({
   }, [value]);
 
   const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let textValue = 
-      e.target.value
-        .replace(schema.config.suffix, '')
-        .replace(schema.config.prefix, '');
-    if (!textValue.match(/[0-9\.]?/)) {
+    let textValue = e.target.value
+      .replace(schema.config.suffix, '')
+      .replace(schema.config.prefix, '');
+
+    if (!/^[+-]?\d+(\.\d+)?$/.test(textValue)) {
       return;
     }
 

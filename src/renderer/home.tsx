@@ -46,6 +46,7 @@ import Preview from './preview';
 /* import FilterPanel from './filter_panel'; */
 import SchemaConfig from './schema_config';
 import useSave from './use_save';
+import Confimration from './components/confirmation';
 
 const DEFAULT_SCHEMA_CONFIG = {
   i18n: [],
@@ -286,6 +287,7 @@ const Home = () => {
   const [displayValueList, setDisplayValueList] = useState<any[]>([]);
   const [schemaConfigOpen, setSchemaConfigOpen] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
+  const [confirmationVisible, setConfirmationVisbile] = useState(false);
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
   const [currentLang, setCurrentLang] = useState<string>('');
   const [schema, setSchema] = useState<SchemaField | null>(null);
@@ -417,38 +419,53 @@ const Home = () => {
     };
   }, [addItem]);
 
-  /* useEffect(() => {
-   *   const onunload = async (e) => {
-   *     e.preventDefault();
-   *     e.returnValue = '';
-   *     const valuePath = localStorage.getItem(FILE_PATH);
-   *     if (valuePath) {
-   *       const currentFileValue = await window.electron.ipcRenderer.readJsonFile(
-   *         {
-   *           filePath: valuePath,
-   *           action: 'save-value',
-   *         }
-   *       );
+  useEffect(() => {
+    const onClose = async (e) => {
+      const valuePath = localStorage.getItem(FILE_PATH);
+      if (valuePath) {
+        const currentFileValue = await window.electron.ipcRenderer.readJsonFile(
+          {
+            filePath: valuePath,
+            action: 'save-value',
+          }
+        );
 
-   *       const formatData = (JSON.parse(currentFileValue.data) || []).map(
-   *         (item) => {
-   *           return validateValue(item, item, schema, schemaConfig);
-   *         }
-   *       );
-   *       if (Base64.encode(formatData) !== Base64.encode(valueList)) {
-   *         alert('File has been changed without save. Exit anyway?');
-   *       } else {
-   *         window.electron.ipcRenderer.close();
-   *       }
-   *     } else {
-   *       alert('You have not save file yet. Exit anyway?');
-   *     }
-   *   };
-   *   window.addEventListener('beforeunload', onunload);
-   *   return () => {
-   *     window.removeEventListener('beforeunload', onunload);
-   *   };
-   * }, [save, schema, schemaConfig, valueList]); */
+        const formatData = (JSON.parse(currentFileValue.data) || []).map(
+          (item) => {
+            return validateValue(item, item, schema, schemaConfig);
+          }
+        );
+
+        if (
+          JSON.stringify(formatData) !==
+          JSON.stringify(
+            cloneDeep(valueList).map((item) => {
+              item[HIDDEN_ID] = undefined;
+              return item;
+            })
+          )
+        ) {
+          setConfirmationVisbile(true);
+        } else {
+          window.electron.ipcRenderer.close();
+        }
+      } else {
+        setConfirmationVisbile(true);
+      }
+    };
+    window.electron.ipcRenderer.on('close', onClose);
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners('close');
+    };
+  }, [save, schema, schemaConfig, valueList]);
+
+  const onExitConfimration = (confirmation: boolean) => {
+    if (confirmation) {
+      window.electron.ipcRenderer.close();
+    } else {
+      setConfirmationVisbile(false);
+    }
+  };
 
   /* const onFilterChange = (filterVal) => {
    *   setDisplayValueList(
@@ -691,6 +708,14 @@ const Home = () => {
               close={() => {
                 setPreviewVisible(false);
               }}
+            />
+          )}
+          {confirmationVisible && (
+            <Confimration
+              close={() => {
+                setConfirmationVisbile(false);
+              }}
+              onAction={onExitConfimration}
             />
           )}
         </div>
