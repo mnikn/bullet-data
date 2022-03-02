@@ -55,16 +55,18 @@ const useSave = ({ valueList, schema, schemaConfig }) => {
           action: 'save-value-file',
           data: JSON.stringify(data, null, 2),
         });
-        localStorage.setItem(FILE_PATH, val2.res.path);
-        const configPath = getConfigPath(val2.res.path);
-        await window.electron.ipcRenderer.writeJsonFile({
-          action: 'save-config-file',
-          filePath: configPath,
-          data: JSON.stringify(storeSchemaConfig, null, 2),
-        });
-        setTimeout(() => {
-          setSaving(false);
-        }, 300);
+        if (val2?.res?.path) {
+          localStorage.setItem(FILE_PATH, val2.res.path);
+          const configPath = getConfigPath(val2.res.path);
+          await window.electron.ipcRenderer.writeJsonFile({
+            action: 'save-config-file',
+            filePath: configPath,
+            data: JSON.stringify(storeSchemaConfig, null, 2),
+          });
+          setTimeout(() => {
+            setSaving(false);
+          }, 300);
+        }
       }
     },
     [valueList, schema, schemaConfig]

@@ -1,18 +1,18 @@
 # General Data Manager
 
-```
-[English](docs/README_en.md) | [中文](README.md)
-```
+[English](../README.md) | [中文](./README_zh.md)
 
-General Data Manager is aim to customize visualize configuration data.
+General Data Manager 目的是让配置数据管理可视化，能够根据数据格式自定义定制对应的编辑面板。
 
-Currently only the windows platform is supported.
+目前只支持 windows 平台。
 
-## Example
 
-### Simple Data Config
 
-Config：
+## 示例
+
+### 简易数据配置
+
+配置项：
 
 ```json
 {
@@ -103,13 +103,11 @@ Config：
 
 
 
-Screenshot：
+效果：
 
 ![image-20220301155635709](../screenshots/example_weapon.png)
 
-
-
-Example output：
+输出数据示例：
 
 ```json
 [
@@ -129,9 +127,9 @@ Example output：
 
 
 
-### Example Item List
+### 物品列表配置
 
-Config：
+配置项：
 
 ```json
 {
@@ -222,13 +220,11 @@ Config：
 
 
 
-Screenshot：
+效果：
 
 ![image-20220301152952560](../screenshots/exmaple_item.png)
 
-
-
-Example output：
+输出数据示例：
 
 ```json
 [
@@ -286,9 +282,9 @@ Example output：
 
 
 
-### Example Event List
+### 复杂的事件配置
 
-Config：
+配置项：
 
 ```json
 {
@@ -513,13 +509,11 @@ Config：
 
 
 
-Screenshot：
+效果：
 
 ![image-20220301154140204](../screenshots/example_event.png)
 
-
-
-Example output：
+输出数据示例：
 
 ```json
 [
@@ -725,27 +719,31 @@ Example output：
 
 
 
-## Features
+## 功能点
 
-- Visualize configuration data
-- convenient to dynamically modify the structure and format the data according to the configuration information
-- Support custom validation of fields
-- Supports multi-level nesting of fields
-- Supports multilingualization of data
+- 可视化配置数据
+- 动态修改结构方便，根据配置信息格式化数据
+- 支持字段的自定义校验
+- 支持字段的多级嵌套
+- 支持数据的多语言化
 
-## Config Documentation
 
-The configuration items of the fields are configured in `fields`. The key value in `fields` is the key value of the field. The configuration items of the sub-items in the field are as follows:
 
-| field  | feature                                                      | required |
+## 配置项文档
+
+
+
+字段的配置项在 `fields` 里面开始配置，`fields` 中的 key 值为字段的 key 值，field 中子项的配置项如下：
+
+| 配置项 | 功能                                                         | 是否必填 |
 | ------ | ------------------------------------------------------------ | -------- |
-| type   | Defines the type of the field, `string`, `object`, `number`, `array`, `select` | yes      |
-| config | Segment configuration information for the corresponding type | no       |
-| name   | The name of the field displayed on the interface             | no       |
+| type   | 定义字段的类型，`string`，`object`，`number`、`array`、`select` | 是       |
+| config | 对应类型的细分配置信息                                       | 否       |
+| name   | 字段在界面上展示的名字                                       | 否       |
 
 
 
-If the field type is `object`, the configuration item needs to add a new configuration item `fields` to describe which fields the corresponding `object` has, for example:
+如果类型为 `object`，配置项需要新加一个配置项 `fields`，用来描述对应 `object` 拥有哪些字段，示例：
 
 ```json
 {
@@ -778,7 +776,7 @@ If the field type is `object`, the configuration item needs to add a new configu
 
 
 
-If the field type is `array`, a configuration item `fieldSchema` needs to be added to describe the data structure of the corresponding `array` sub-item. Example:
+如果类型为 `array`，配置项需要新加一个配置项 `fieldSchema`，用来描述对应 `array` 子项的数据结构，示例：
 
 ```json
 {
@@ -794,83 +792,85 @@ If the field type is `array`, a configuration item `fieldSchema` needs to be add
 
 
 
-The internationalization configuration needs to add the key of the corresponding language in the topmost i18n array. If the data is empty, the default is no internationalization. Example:
+国际化的配置需要在最上层的 i18n 数组中添加对应语言的 key，数据为空默认是没有国际化。示例：
 
 ```text
-"i18n": ["zh","en"] // Indicates that the two languages zh and en are required
+"i18n": ["zh","en"] // 表示需要 zh、en 这两个语言
 ```
 
 
 
-### Data Type Configuration
+### 数据类型配置信息
 
-Common configuration for all types:
+所有类型的通用配置：
 
-| field        | feature                                                      | default value                                                |
-| ------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| colSpan      | The proportion of the width of the data in the card (total width 12) | Type is object, array is 12, string, number is 3             |
-| defaultValue | Default value of field                                       | Default value for the field type                             |
-| enableWhen   | The data determines whether it exists according to the conditions, js function | None, example: "enableWhen": "(obj) => obj.name === 'good'", where obj is the object where the current field is located |
+| 配置项       | 功能                                  | 默认值                                                       |
+| ------------ | ------------------------------------- | ------------------------------------------------------------ |
+| colSpan      | 该项数据在卡片中的宽度占比(总宽度 12) | 类型为 object、array 是 12，string、number 是 3              |
+| defaultValue | 该项数据的默认值                      | 对应类型的默认值                                             |
+| enableWhen   | 该项数据根据条件确定是否存在，js 函数 | 无，示例："enableWhen": "(obj) => obj.name === 'good'"，其中 obj 为当前字段所在的对象 |
+
+
 
 object:
 
-| field         | feature                                                      | default value                                                |
-| ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| summary       | The content of the card title, which supports data formatting, and refers to the property value through {{your_property}} | "{{___key}}", \_\_\_key is a special mark, indicating the current field name |
-| initialExpand | Whether to expand data by default                            | true                                                         |
+| 配置项        | 功能                                                         | 默认值                                                 |
+| ------------- | ------------------------------------------------------------ | ------------------------------------------------------ |
+| summary       | 卡片标题内容，可支持数据格式化，通过 {{your_property}} 来引用属性值 | "{{___key}}"，\_\_\_key 为特殊标记，表示当前的字段名称 |
+| initialExpand | 是否默认展开数据                                             | true                                                   |
 
 
 
 array:
 
-| field         | feature                                                      | default value                                                |
+| 配置项        | 功能                                                         | 默认值                                                       |
 | ------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| summary       | The title content of the sub-item card, which can support data formatting, and refer to the property value through {{your_property}} | "{{___index}}", \_\_\_index is a special mark, indicating the serial number of the current child |
-| initialExpand | Whether to expand data by default                            | false                                                        |
+| summary       | 子项卡片标题内容，可支持数据格式化，通过 {{your_property}} 来引用属性值 | "{{___index}}"，\_\_\_index 为特殊标记，表示当前子项的序列号 |
+| initialExpand | 是否默认展开数据                                             | false                                                        |
 
 
 
 string:
 
-| field                   | feature                                                      | default value                                                |
-| ----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| type                    | Text type, "singleline" for single-line editing, "multiline" for multi-line editing | "singleline"                                                 |
-| required                | Is it necessary                                              | true                                                         |
-| customValidate          | Custom validation function, js function                      | None, example: "enableWhen": "(v) => v.includes('test')", where v is the current input value |
-| customValidateErrorText | Custom error text when validation fails                      | ""                                                           |
-| helperText              | prompt text                                                  | ""                                                           |
-| minLen                  | Minimum length of text that can be entered                   | 1                                                            |
-| maxLen                  | Maximum length of text that can be entered                   | unlimited                                                    |
-| rows                    | The line height of the text box, only takes effect when type=multiline | 4                                                            |
-| needI18n                | Whether internationalization is required                     | false                                                        |
+| 配置项                  | 功能                                                     | 默认值                                                       |
+| ----------------------- | -------------------------------------------------------- | ------------------------------------------------------------ |
+| type                    | 文本类型,"singleline" 为单行编辑，"multiline" 为多行编辑 | "singleline"                                                 |
+| required                | 是否必须                                                 | true                                                         |
+| customValidate          | 自定义的校验函数，js 函数                                | 无，示例："enableWhen": "(v) => v.includes('test')"，其中 v 为当前的输入值 |
+| customValidateErrorText | 自定义校验失败时的错误提示文本                           | ""                                                           |
+| helperText              | 提示文本                                                 | ""                                                           |
+| minLen                  | 可输入文本最小长度                                       | 1                                                            |
+| maxLen                  | 可输入文本最大长度                                       | 无限                                                         |
+| rows                    | 文本框的行高，type=multiline 时才生效                    | 4                                                            |
+| needI18n                | 是否需要国际化                                           | false                                                        |
 
 
 
 number:
 
-| field                   | feature                                                      | default value                                                |
-| ----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| type                    | Numeric type, "int" is an integer, "float" is a floating point number | "float"                                                      |
-| required                | Is it necessary                                              | true                                                         |
-| customValidate          | Custom validation function, js function                      | None, example: "enableWhen": "(v) => v > 1000", where v is the current input value |
-| customValidateErrorText | Custom error text when validation fails                      | ""                                                           |
-| helperText              | prompt text                                                  | ""                                                           |
-| min                     | The minimum value that can be entered                        | unlimited                                                    |
-| max                     | The maximum value that can be entered                        | unlimited                                                    |
-| prefix                  | Numerical prefix, only displayed on the interface, does not affect the actual data output | ""                                                           |
-| suffix                  | Numerical suffix, only displayed on the interface, does not affect the actual data output | ""                                                           |
+| 配置项                  | 功能                                           | 默认值                                                       |
+| ----------------------- | ---------------------------------------------- | ------------------------------------------------------------ |
+| type                    | 数值类型,"int" 为整数，"float" 为浮点数        | "float"                                                      |
+| required                | 是否必须                                       | true                                                         |
+| customValidate          | 自定义的校验函数，js 函数                      | 无，示例："enableWhen": "(v) => v > 1000"，其中 v 为当前的输入值 |
+| customValidateErrorText | 自定义校验失败时的错误提示文本                 | ""                                                           |
+| helperText              | 提示文本                                       | ""                                                           |
+| min                     | 可输入的最小值                                 | 无限                                                         |
+| max                     | 可输入的最小值                                 | 无限                                                         |
+| prefix                  | 数值前缀，只会显示在界面上，不影响实际数据输出 | ""                                                           |
+| suffix                  | 数值后缀，只会显示在界面上，不影响实际数据输出 | ""                                                           |
 
 
 
 select:
 
-| field   | feature                                                      | default value |
-| ------- | ------------------------------------------------------------ | ------------- |
-| options | List of options, array format [{ "name": "Test", "value": "test"}] | []            |
+| 配置项  | 功能                                                      | 默认值 |
+| ------- | --------------------------------------------------------- | ------ |
+| options | 选项列表，数组格式为 [{ "name": "Test", "value": "test"}] | []     |
 
 
 
-## How to compile
+## 如何编译运行
 
 ```shell
 npm install
@@ -879,10 +879,10 @@ npm run start
 
 
 
-## Development plan
+## 后续开发计划
 
-- [ ] Support image display
-- [ ] supports custom filter conditions
-- [ ] supports data grouping
-- [ ] Support data type inheritance and reference
-- [ ] Project-level data management
+- [ ] 支持图片的展示
+- [ ] 支持自定义过滤条件
+- [ ] 支持数据分组
+- [ ] 支持数据类型的继承和引用
+- [ ] 基于项目级别的数据管理

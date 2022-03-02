@@ -11,18 +11,8 @@
 import path from 'path';
 import fs from 'fs';
 import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
-import { autoUpdater } from 'electron-updater';
-import log from 'electron-log';
 import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
-
-export default class AppUpdater {
-  constructor() {
-    log.transports.file.level = 'info';
-    autoUpdater.logger = log;
-    autoUpdater.checkForUpdatesAndNotify();
-  }
-}
 
 let mainWindow: BrowserWindow | null = null;
 let needClose = false;
@@ -52,7 +42,9 @@ ipcMain.on('openFile', async (_, arg) => {
   if (arg?.filePath) {
     data = fs.readFileSync(arg.filePath).toString();
   } else {
-    data = dialog.showOpenDialogSync(mainWindow, {});
+    data = dialog.showOpenDialogSync(mainWindow, {
+      filters: [{ name: 'Data', extensions: ['json'] }],
+    });
   }
   let res: any = data;
   if (Array.isArray(data)) {
@@ -67,7 +59,9 @@ ipcMain.on('openFile', async (_, arg) => {
 });
 
 ipcMain.on('saveFileDialog', async (event, arg) => {
-  const path = dialog.showSaveDialogSync(mainWindow, {});
+  const path = dialog.showSaveDialogSync(mainWindow, {
+    filters: [{ name: 'Data', extensions: ['json'] }],
+  });
   if (path) {
     fs.writeFileSync(path, arg.data);
     const data = {
@@ -176,9 +170,6 @@ const createWindow = async () => {
     return { action: 'deny' };
   });
 
-  // Remove this if your app does not use auto updates
-  // eslint-disable-next-line
-  new AppUpdater();
 };
 
 /**

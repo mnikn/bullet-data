@@ -49,8 +49,8 @@ const SchemaConfig = ({
 
     const createDependencyProposals = (range) => {
       const fieldObj = {
-        id: {
-          name: 'id',
+        your_field: {
+          name: 'your_field',
           config: {},
         },
       };
@@ -119,7 +119,7 @@ const SchemaConfig = ({
           documentation: 'object field',
           insertText: formatInnerField({
             ...fieldObj,
-            id: { ...fieldObj.id, ...NUM_JSON },
+            your_field: { ...fieldObj.your_field, ...NUM_JSON },
           }),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
@@ -131,7 +131,7 @@ const SchemaConfig = ({
           documentation: 'object field',
           insertText: formatInnerField({
             ...fieldObj,
-            id: { ...fieldObj.id, ...STR_JSON },
+            your_field: { ...fieldObj.your_field, ...STR_JSON },
           }),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
@@ -143,7 +143,7 @@ const SchemaConfig = ({
           documentation: 'object field',
           insertText: formatInnerField({
             ...fieldObj,
-            id: { ...fieldObj.id, ...BOOLEAN_JSON },
+            your_field: { ...fieldObj.your_field, ...BOOLEAN_JSON },
           }),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
@@ -155,7 +155,7 @@ const SchemaConfig = ({
           documentation: 'object field',
           insertText: formatInnerField({
             ...fieldObj,
-            id: { ...fieldObj.id, ...SELECT_JSON },
+            your_field: { ...fieldObj.your_field, ...SELECT_JSON },
           }),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
@@ -167,7 +167,7 @@ const SchemaConfig = ({
           documentation: 'object field',
           insertText: formatInnerField({
             ...fieldObj,
-            id: { ...fieldObj.id, ...ARR_JSON },
+            your_field: { ...fieldObj.your_field, ...ARR_JSON },
           }),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
@@ -179,7 +179,7 @@ const SchemaConfig = ({
           documentation: 'object field',
           insertText: formatInnerField({
             ...fieldObj,
-            id: { ...fieldObj.id, ...OBJ_JSON },
+            your_field: { ...fieldObj.your_field, ...OBJ_JSON },
           }),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,

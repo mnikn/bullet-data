@@ -180,7 +180,7 @@ export default class MenuBuilder {
         {
           label: 'Search Issues',
           click() {
-            shell.openExternal('https://github.com/electron/electron/issues');
+            shell.openExternal('https://github.com/mnikn/general-data-manager/issues');
           },
         },
       ],
@@ -327,14 +327,14 @@ export default class MenuBuilder {
             label: 'Documentation',
             click() {
               shell.openExternal(
-                'https://github.com/electron/electron/tree/main/docs#readme'
+                'https://github.com/mnikn/general-data-manager/blob/main/README.md'
               );
             },
           },
           {
             label: 'Search Issues',
             click() {
-              shell.openExternal('https://github.com/electron/electron/issues');
+              shell.openExternal('https://github.com/mnikn/general-data-manager/issues');
             },
           },
         ],
