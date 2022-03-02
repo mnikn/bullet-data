@@ -2,7 +2,7 @@
 
 [English](../README.md) | [中文](./README_zh.md)
 
-General Data Manager 目的是让配置数据管理可视化，能够根据数据格式自定义定制对应的编辑面板。
+General Data Manager 目的是让配置数据管理可视化，能够根据数据格式自定义定制对应的编辑面板。支持 json 数据的可视化。
 
 目前只支持 windows 平台。
 
