@@ -727,10 +727,10 @@ Example output：
 ## Features
   
 - Visualize configuration data
-  - convenient to dynamically modify the structure and format the data according to the configuration information
-  - Support custom validation of fields
-  - Supports multi-level nesting of fields
-  - Supports multilingualization of data
+- convenient to dynamically modify the structure and format the data according to the configuration information
+- Support custom validation of fields
+- Supports multi-level nesting of fields
+- Supports multilingualization of data
   
 ## Config Documentation
   
