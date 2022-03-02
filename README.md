@@ -881,7 +881,7 @@ select:
 ## Development plan
   
 - [ ] Support image display
-  - [ ] supports custom filter conditions
-  - [ ] supports data grouping
-  - [ ] Support data type inheritance and reference
-  - [ ] Project-level data management
+- [ ] supports custom filter conditions
+- [ ] supports data grouping
+- [ ] Support data type inheritance and reference
+- [ ] Project-level data management
