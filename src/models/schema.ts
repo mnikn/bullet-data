@@ -142,8 +142,8 @@ export const DEFAULT_CONFIG = {
     customValidateErrorText: '',
     helperText: '',
     type: 'singleline', // singleline | multiline
-    minLen: 1,
-    maxLen: 20,
+    minLen: 0,
+    maxLen: Number.MAX_SAFE_INTEGER,
     rows: 4,
     needI18n: false,
   },
