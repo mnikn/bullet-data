@@ -12,7 +12,7 @@ General Data Manager is aim to customize visualize configuration data, support `
 ## Features
   
 - Visualize configuration data
-- convenient to dynamically modify the structure and format the data according to the configuration information
+- Convenient to dynamically modify the structure and format the data according to the configuration information
 - Support custom validation of fields
 - Supports multi-level nesting of fields
 - Supports multilingualization of data
