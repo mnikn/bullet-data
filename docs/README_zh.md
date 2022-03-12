@@ -9,7 +9,7 @@ General Data Manager 目的是让配置数据管理可视化，能够根据数�
 ![image-20220301154140204](../screenshots/example_event.png)
 
 
-## API 文档
+## Config 文档
 
 请看[这里](./API_zh.md)。
 
