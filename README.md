@@ -33,7 +33,7 @@ Please check [here](./docs/API_en.md).
 ## Development plan
   
 - [ ] Support image display
-- [ ] supports custom filter conditions
-- [ ] supports data grouping
+- [ ] Supports custom filter conditions
+- [ ] Supports data grouping
 - [ ] Support data type inheritance and reference
 - [ ] Project-level data management
