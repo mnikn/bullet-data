@@ -3,7 +3,7 @@
   [English](./README.md) | [中文](./docs/README_zh.md)
   
   
-General Data Manager is aim to customize visualize configuration data, support `json` data visualize. Currently only the windows platform is supported, for more exmaples please check [here](./docs/example.md).
+**General Data Manager** is aim to customize visualize configuration data, support `json` data visualize. Currently only the windows platform is supported, for more exmaples please check [here](./docs/example.md).
 
 ![image-20220301155635709](./screenshots/example_weapon.png)
 ![image-20220301152952560](./screenshots/exmaple_item.png)
