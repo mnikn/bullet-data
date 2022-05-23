@@ -141,7 +141,7 @@ export const DEFAULT_CONFIG = {
     customValidate: null,
     customValidateErrorText: '',
     helperText: '',
-    type: 'singleline', // singleline | multiline
+    type: 'singleline', // singleline | multiline | code
     minLen: 0,
     maxLen: Number.MAX_SAFE_INTEGER,
     rows: 4,
@@ -186,11 +186,21 @@ export const DEFAULT_CONFIG = {
     colSpan: 3,
     defaultValue: '',
     required: false,
-    options: [],
+    options: [
+      {
+        label: 'None',
+        value: 'none',
+      },
+    ],
   },
   SELECT_CONFIG_DEFAULT: {
     colSpan: 3,
-    options: [],
+    options: [
+      {
+        label: 'None',
+        value: 'none',
+      },
+    ],
     defaultValue: '',
   },
 };

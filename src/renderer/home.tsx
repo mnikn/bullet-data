@@ -2,13 +2,10 @@ import AddIcon from '@mui/icons-material/Add';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import Base64 from 'js-base64';
 import {
   Alert,
   Button,
-  Card,
   CardContent,
-  CardHeader,
   CircularProgress,
   Collapse,
   CssBaseline,
@@ -39,14 +36,85 @@ import {
 } from 'models/schema';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import style from 'styled-components';
 import { generateUUID } from 'utils/uuid';
+import Confimration from './components/confirmation';
 import { FieldContainer } from './components/field';
 import Context from './context';
+import './home.scss';
 import Preview from './preview';
 /* import FilterPanel from './filter_panel'; */
 import SchemaConfig from './schema_config';
+import {
+  PRIMARY_COLOR1,
+  PRIMARY_COLOR1_LIGHT1,
+  PRIMARY_COLOR2,
+  SECOND_COLOR1,
+} from './style';
 import useSave from './use_save';
-import Confimration from './components/confirmation';
+
+const StyledCard = style.div<{ expand: boolean }>`
+  clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
+  padding: 30px;
+  min-width: 500px;
+  background: ${PRIMARY_COLOR1}!important;
+  position: relative;
+  color: ${PRIMARY_COLOR1}!important;
+  flex-grow: 1;
+
+  .bg {
+    position: absolute;
+    background: ${PRIMARY_COLOR2};
+    height: ${({ expand }) => (expand ? 'calc(100% - 40px)' : '70%')};
+    width: calc(100% - 40px);
+  clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
+    z-index: -2;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: row;
+    color: ${PRIMARY_COLOR2};
+    padding-top: 25px;
+    padding-left: 20px;
+    .btn-group {
+      margin-left: auto;
+    }
+    .summary {
+      z-index: 1;
+      color: ${PRIMARY_COLOR1};
+      font-size: 18px;
+      font-weight: bold;
+    }
+  }
+
+ .icon {
+    color: #FFF305;
+  }
+`;
+
+const StyledAlert = style(Alert)`
+  @keyframes showup {
+    from {
+      transform: translateX(0%);
+    }
+    to {
+      transform: translateX(50%);
+    }
+  }
+  position: fixed;
+  width: 50%;
+  transform: translateX(50%);
+  z-index: 10;
+  top: 50px;
+  height: 100px;
+  padding-left: 10%;
+  background: ${SECOND_COLOR1};
+  color: ${PRIMARY_COLOR1};
+  border-radius: 0px;
+  clip-path: polygon(75% 0%, 100% 50%, 75% 100%, 0% 100%, 10% 50%, 0% 0%);
+  animation: 0.3s cubic-bezier(.73,.2,0,.88) showup;
+`;
 
 const DEFAULT_SCHEMA_CONFIG = {
   i18n: [],
@@ -83,14 +151,14 @@ const getItemStyle = (isDragging, draggableStyle) => ({
   margin: `0 0 ${grid}px 0`,
 
   // change background colour if dragging
-  background: isDragging ? 'lightgreen' : '#e7ebf0',
+  background: isDragging ? 'lightgreen' : '#464D54',
 
   // styles we need to apply on draggables
   ...draggableStyle,
 });
 
 const getListStyle = (isDraggingOver) => ({
-  background: isDraggingOver ? 'lightblue' : '#e7ebf0',
+  background: isDraggingOver ? 'lightblue' : '#464D54',
   padding: grid,
   width: 250,
 });
@@ -229,20 +297,27 @@ const Item = ({
   );
 
   return (
-    <Card sx={sx}>
-      <CardHeader
-        subheader={summary}
-        action={
-          <>
-            <IconButton aria-label="settings" onClick={handleSettingsClick}>
-              <MoreVertIcon />
-            </IconButton>
-            <ExpandMore expand={expanded} onClick={handleExpandClick}>
-              <ExpandMoreIcon />
-            </ExpandMore>
-          </>
-        }
-      />
+    <StyledCard expand={expanded}>
+      <div className="bg" />
+      <div className="header">
+        <div className="summary">{summary}</div>
+        <div className="btn-group">
+          <IconButton
+            aria-label="settings"
+            onClick={handleSettingsClick}
+            color="primary"
+          >
+            <MoreVertIcon className="icon" />
+          </IconButton>
+          <ExpandMore
+            expand={expanded}
+            onClick={handleExpandClick}
+            color="primary"
+          >
+            <ExpandMoreIcon className="icon" />
+          </ExpandMore>
+        </div>
+      </div>
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <CardContent>
           <FieldContainer
@@ -259,6 +334,11 @@ const Item = ({
         onClose={handleSettingsClose}
         MenuListProps={{
           'aria-labelledby': 'basic-button',
+        }}
+        sx={{
+          '& .MuiPaper-root': {
+            backgroundColor: PRIMARY_COLOR1,
+          },
         }}
       >
         <MenuItem
@@ -278,7 +358,7 @@ const Item = ({
           Delete
         </MenuItem>
       </Menu>
-    </Card>
+    </StyledCard>
   );
 };
 
@@ -513,7 +593,7 @@ const Home = () => {
         {/* <FilterPanel onFilterChange={onFilterChange} /> */}
         <div
           style={{
-            backgroundColor: '#e7ebf0',
+            backgroundColor: '#464D54',
             padding: '20px',
           }}
         >
@@ -549,19 +629,7 @@ const Home = () => {
             }}
           />
           {saving && (
-            <Alert
-              sx={{
-                position: 'fixed',
-                width: '50%',
-                transform: 'translateX(50%)',
-                zIndex: 10,
-                top: '50px',
-                height: '100px',
-              }}
-              icon={<></>}
-              variant="standard"
-              color="info"
-            >
+            <StyledAlert icon={<></>} variant="standard" color="info">
               <Stack
                 spacing={2}
                 direction="row"
@@ -572,38 +640,58 @@ const Home = () => {
                   Saving...Please wait for a while
                 </div>
               </Stack>
-            </Alert>
+            </StyledAlert>
           )}
-          <Stack>
-            <Stack spacing={2} direction="row-reverse">
-              <Button
-                style={{ width: '240px' }}
-                variant="contained"
-                onClick={() => {
-                  setSchemaConfigOpen(true);
-                }}
-              >
-                Config
-              </Button>
-              {schemaConfig.i18n.length > 0 && (
-                <Select
-                  labelId="i18n-select-label"
-                  id="i18n-select"
-                  value={currentLang}
-                  label="I18n"
-                  onChange={(e) => setCurrentLang(e.target.value)}
-                  size="small"
-                  sx={{ backgroundColor: '#fff' }}
+          <Stack spacing={2}>
+            <Stack spacing={2} direction="row">
+              <Stack spacing={2} direction="row" sx={{ flexGrow: 1 }}>
+                <Button
+                  sx={{
+                    width: '40px',
+                    borderRadius: '0px',
+                    clipPath:
+                      'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
+                  }}
+                  variant="contained"
                 >
-                  {schemaConfig.i18n.map((item2, j) => {
-                    return (
-                      <MenuItem key={j} value={item2}>
-                        {item2}
-                      </MenuItem>
-                    );
-                  })}
-                </Select>
-              )}
+                  File
+                </Button>
+              </Stack>
+              <Stack directon="row" spacing={2} sx={{ marginLeft: 'auto' }}>
+                <Button
+                  sx={{
+                    width: '240px',
+                    borderRadius: '0px',
+                    clipPath:
+                      'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
+                  }}
+                  variant="contained"
+                  onClick={() => {
+                    setSchemaConfigOpen(true);
+                  }}
+                >
+                  Schema Config
+                </Button>
+                {schemaConfig.i18n.length > 0 && (
+                  <Select
+                    labelId="i18n-select-label"
+                    id="i18n-select"
+                    value={currentLang}
+                    label="I18n"
+                    onChange={(e) => setCurrentLang(e.target.value)}
+                    size="small"
+                    sx={{ backgroundColor: '#fff' }}
+                  >
+                    {schemaConfig.i18n.map((item2, j) => {
+                      return (
+                        <MenuItem key={j} value={item2}>
+                          {item2}
+                        </MenuItem>
+                      );
+                    })}
+                  </Select>
+                )}
+              </Stack>
             </Stack>
 
             <DragDropContext
@@ -627,7 +715,12 @@ const Home = () => {
                     ref={provided.innerRef}
                     style={{
                       ...getListStyle(snapshot.isDraggingOver),
-                      ...{ width: '100%' },
+                      ...{
+                        width: '100%',
+                        background: snapshot.isDraggingOver
+                          ? PRIMARY_COLOR1_LIGHT1
+                          : '#464D54',
+                      },
                     }}
                   >
                     {displayValueList.map((item, i) => {
@@ -638,10 +731,15 @@ const Home = () => {
                             <div
                               ref={provided.innerRef}
                               {...provided.draggableProps}
-                              style={getItemStyle(
-                                snapshot.isDragging,
-                                provided.draggableProps.style
-                              )}
+                              style={{
+                                ...getItemStyle(
+                                  snapshot.isDragging,
+                                  provided.draggableProps.style
+                                ),
+                                background: snapshot.isDragging
+                                  ? SECOND_COLOR1
+                                  : '#464D54',
+                              }}
                             >
                               <Stack
                                 spacing={1}
@@ -652,7 +750,9 @@ const Home = () => {
                                 }}
                               >
                                 <span {...provided.dragHandleProps}>
-                                  <DragIndicatorIcon />
+                                  <DragIndicatorIcon
+                                    sx={{ color: PRIMARY_COLOR1 }}
+                                  />
                                 </span>
                                 <Item
                                   sx={{ flexGrow: 1 }}
@@ -676,19 +776,19 @@ const Home = () => {
                 )}
               </Droppable>
             </DragDropContext>
+            <Button
+              sx={{
+                width: '100%',
+                padding: '10px',
+                borderRadius: '0px',
+                clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+              }}
+              variant="contained"
+              onClick={addItem}
+            >
+              Add Item
+            </Button>
           </Stack>
-
-          <Fab
-            sx={{
-              position: 'fixed',
-              bottom: 48,
-              right: 48,
-            }}
-            color="primary"
-            onClick={addItem}
-          >
-            <AddIcon />
-          </Fab>
 
           {schemaConfigOpen && (
             <SchemaConfig

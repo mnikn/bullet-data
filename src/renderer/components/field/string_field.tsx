@@ -1,7 +1,160 @@
-import { TextField } from "@mui/material";
-import { SchemaFieldString } from "models/schema";
-import { useContext, useEffect, useRef, useState } from "react";
+import { TextField } from '@mui/material';
+import styled from 'styled-components';
+import { SchemaFieldString } from 'models/schema';
+import { useContext, useEffect, useRef, useState } from 'react';
 import Context from '../../context';
+import {
+  PRIMARY_COLOR1,
+  PRIMARY_COLOR2,
+  PRIMARY_COLOR2_LIGHT1,
+  PRIMARY_COLOR2_LIGHT2,
+} from '../../style';
+import classNames from 'classnames';
+
+const StyledTextField = styled.div`
+  @keyframes moveup {
+    from {
+      top: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      color: ${PRIMARY_COLOR2_LIGHT1};
+    }
+    to {
+      top: -15px;
+      transform: translateX(-50%) translateY(-50%);
+      color: ${PRIMARY_COLOR1};
+    }
+  }
+
+  @keyframes movedown {
+    from {
+      top: -25%;
+      transform: translateX(-50%) translateY(-50%);
+      color: ${PRIMARY_COLOR1};
+    }
+    to {
+      top: 50%;
+      transform: translateX(-50%) translateY(-50%);
+      color: ${PRIMARY_COLOR2_LIGHT1};
+    }
+  }
+
+  position: relative;
+  input {
+    background: ${PRIMARY_COLOR1};
+    height: 50px;
+    font-size: 16px;
+    color: ${PRIMARY_COLOR2};
+    width: 100%;
+    border: none;
+    border-radius: 32px;
+    padding: 6px;
+    padding-left: 12px;
+    padding-right: 12px;
+    outline: none;
+    font-family: system-ui;
+  }
+
+  textarea {
+    background: ${PRIMARY_COLOR1};
+    height: 150px;
+    font-size: 16px;
+    color: ${PRIMARY_COLOR2};
+    width: 100%;
+    border: none;
+    border-radius: 32px;
+    padding: 20px;
+    outline: none;
+    resize: none;
+    font-family: system-ui;
+  }
+
+  .label {
+    position: absolute;
+    overflow: hidden;
+    top: 50%;
+    left: 50%;
+    width: 80%;
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
+    transform: translateX(-50%) translateY(-50%);
+    color: ${PRIMARY_COLOR2_LIGHT2};
+    text-overflow: ellipsis;
+  }
+
+  .label.title {
+    top: -15px;
+    transform: translateX(-50%) translateY(-50%);
+    color: ${PRIMARY_COLOR1};
+    animation: 0.3s moveup;
+  }
+`;
+
+function MyTextField({
+  label,
+  schema,
+  value,
+  onValueChange,
+}: {
+  label?: string;
+  schema: SchemaFieldString;
+  value: string;
+  onValueChange?: (value: any) => void;
+}) {
+  const [focus, setFocus] = useState(false);
+  const [hasBlur, setHasBlur] = useState(false);
+  const [contentValue, setContentValue] = useState(
+    schema.config.needI18n ? '' : value
+  );
+
+  return (
+    <StyledTextField>
+      {schema.config.type === 'singleline' && (
+        <input
+          onFocus={() => {
+            setFocus(true);
+            setHasBlur(true);
+          }}
+          onBlur={() => {
+            setFocus(false);
+            setHasBlur(true);
+          }}
+          value={contentValue}
+          onChange={(e) => {
+            setContentValue(e.target.value);
+            if (onValueChange) {
+              onValueChange(e.target.value);
+            }
+          }}
+        />
+      )}
+      {schema.config.type === 'multiline' && (
+        <textarea
+          onFocus={() => {
+            setFocus(true);
+          }}
+          onBlur={() => {
+            setFocus(false);
+          }}
+          value={contentValue}
+          onChange={(e) => {
+            setContentValue(e.target.value);
+            if (onValueChange) {
+              onValueChange(e.target.value);
+            }
+          }}
+        />
+      )}
+      <div
+        className={classNames('label', {
+          title: focus || contentValue,
+        })}
+      >
+        {label}
+      </div>
+    </StyledTextField>
+  );
+}
 
 const FieldString = ({
   label,
@@ -113,4 +266,4 @@ const FieldString = ({
   );
 };
 
-export default FieldString;
+export default MyTextField;

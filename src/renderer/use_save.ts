@@ -49,7 +49,7 @@ const useSave = ({ valueList, schema, schemaConfig }) => {
         });
         setTimeout(() => {
           setSaving(false);
-        }, 300);
+        }, 700);
       } else {
         const val2 = await window.electron.ipcRenderer.saveFileDialog({
           action: 'save-value-file',

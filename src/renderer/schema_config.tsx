@@ -2,6 +2,7 @@ import { Modal, Box, Stack, Button } from '@mui/material';
 import { DEFAULT_CONFIG } from 'models/schema';
 import { useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
+import { PRIMARY_COLOR1, PRIMARY_COLOR2_LIGHT1 } from './style';
 
 const OBJ_JSON = {
   type: 'object',
@@ -224,8 +225,10 @@ const SchemaConfig = ({
           transform: 'translate(-50%, -50%)',
           width: 720,
           height: 620,
-          bgcolor: 'background.paper',
-          borderRadius: '12px',
+          bgcolor: PRIMARY_COLOR2_LIGHT1,
+          borderRadius: '0px',
+          clipPath:
+            'polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%)',
           p: 4,
         }}
       >
@@ -245,7 +248,10 @@ const SchemaConfig = ({
           </Stack>
           <Stack spacing={2} direction="row">
             <Button
-              sx={{ flexGrow: 1 }}
+              sx={{
+                flexGrow: 1,
+                clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
+              }}
               variant="contained"
               onClick={() => {
                 try {
@@ -257,7 +263,11 @@ const SchemaConfig = ({
               Confirm
             </Button>
             <Button
-              sx={{ flexGrow: 1 }}
+              sx={{
+                flexGrow: 1,
+
+                clipPath: 'polygon(0 0, 90% 0, 100% 100%, 10% 100%)',
+              }}
               variant="contained"
               onClick={() => {
                 close();
