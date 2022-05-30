@@ -266,7 +266,12 @@ export const FieldArray = ({
                 style={{ width: '100%', alignItems: 'center' }}
               >
                 <Stack spacing="2" direction="row" sx={{ flexGrow: 1 }}>
-                  <CollapseCard title={`# ${i + 1}`}>
+                  <CollapseCard
+                    title={`# ${i + 1}`}
+                    initialExpand={
+                      (schema.fieldSchema as SchemaField).config.initialExpand
+                    }
+                  >
                     <FieldContainer
                       schema={schema.fieldSchema as SchemaField}
                       value={item.value}

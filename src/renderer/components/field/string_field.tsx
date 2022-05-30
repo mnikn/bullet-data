@@ -8,6 +8,7 @@ import {
   PRIMARY_COLOR2,
   PRIMARY_COLOR2_LIGHT1,
   PRIMARY_COLOR2_LIGHT2,
+  SECOND_COLOR1,
 } from '../../style';
 import classNames from 'classnames';
 
@@ -87,6 +88,22 @@ const StyledTextField = styled.div`
     transform: translateX(-50%) translateY(-50%);
     color: ${PRIMARY_COLOR1};
     animation: 0.3s moveup;
+    font-weight: bold;
+  }
+
+  .error {
+    position: absolute;
+    overflow: hidden;
+    bottom: -50%;
+    left: 50%;
+    width: 80%;
+    font-weight: bold;
+    text-align: center;
+    user-select: none;
+    pointer-events: none;
+    transform: translateX(-50%);
+    color: ${SECOND_COLOR1};
+    text-overflow: ellipsis;
   }
 `;
 
@@ -98,14 +115,66 @@ function MyTextField({
 }: {
   label?: string;
   schema: SchemaFieldString;
-  value: string;
+  value: any;
   onValueChange?: (value: any) => void;
 }) {
   const [focus, setFocus] = useState(false);
-  const [hasBlur, setHasBlur] = useState(false);
+  const { currentLang, schemaConfig } = useContext(Context);
   const [contentValue, setContentValue] = useState(
-    schema.config.needI18n ? '' : value
+    schemaConfig.i18n.length > 0 && schema.config.needI18n
+      ? value
+        ? value[currentLang]
+        : ''
+      : value || ''
   );
+
+  useEffect(() => {
+    setContentValue(
+      schemaConfig.i18n.length > 0 && schema.config.needI18n
+        ? value
+          ? value[currentLang]
+          : ''
+        : value || ''
+    );
+  }, [currentLang]);
+
+  const [errorText, setErrorText] = useState<string | null>(null);
+  const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const textValue = e.target.value;
+    setContentValue(textValue);
+    if (schema.config.required && !textValue) {
+      setErrorText('Text cannot be empty');
+      return;
+    }
+    if (textValue.length < schema.config.minLen) {
+      setErrorText(`Text length must more than ${schema.config.minLen}`);
+      return;
+    }
+    if (textValue.length > schema.config.maxLen) {
+      setErrorText(`Text length must less than ${schema.config.maxLen}`);
+      return;
+    }
+    if (schema.config.customValidate) {
+      const fn = eval(schema.config.customValidate);
+      if (fn) {
+        const success = fn(textValue);
+        if (!success) {
+          setErrorText(
+            schema.config.customValidateErrorText || 'Custom validate error'
+          );
+          return;
+        }
+      }
+    }
+    setErrorText(null);
+    if (onValueChange) {
+      onValueChange(
+        schema.config.needI18n
+          ? { ...value, [currentLang]: textValue }
+          : textValue
+      );
+    }
+  };
 
   return (
     <StyledTextField>
@@ -113,19 +182,12 @@ function MyTextField({
         <input
           onFocus={() => {
             setFocus(true);
-            setHasBlur(true);
           }}
           onBlur={() => {
             setFocus(false);
-            setHasBlur(true);
           }}
           value={contentValue}
-          onChange={(e) => {
-            setContentValue(e.target.value);
-            if (onValueChange) {
-              onValueChange(e.target.value);
-            }
-          }}
+          onChange={onTextChange}
         />
       )}
       {schema.config.type === 'multiline' && (
@@ -137,12 +199,7 @@ function MyTextField({
             setFocus(false);
           }}
           value={contentValue}
-          onChange={(e) => {
-            setContentValue(e.target.value);
-            if (onValueChange) {
-              onValueChange(e.target.value);
-            }
-          }}
+          onChange={onTextChange}
         />
       )}
       <div
@@ -151,6 +208,12 @@ function MyTextField({
         })}
       >
         {label}
+      </div>
+      <div
+        className="error"
+        style={{ visibility: errorText ? 'visible' : 'hidden' }}
+      >
+        {errorText}
       </div>
     </StyledTextField>
   );

@@ -102,9 +102,16 @@ const useSave = ({ valueList, schema, schemaConfig }) => {
     };
   }, [save]);
 
+  const newFile = () => {
+    save();
+    localStorage.clear();
+    window.location.reload();
+  };
+
   return {
     saving,
     save,
+    newFile,
   };
 };
 

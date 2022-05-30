@@ -43,7 +43,7 @@ export const FieldContainer = ({
     };
 
     return (
-      <Grid container spacing={{ xs: 2, md: 2 }}>
+      <Grid container spacing={{ xs: 2, md: 5 }}>
         {(schema as SchemaFieldObject).fields.map((item, i) => {
           if (item.data.config.enableWhen) {
             const fn = eval(item.data.config.enableWhen);
@@ -266,7 +266,7 @@ export const FieldArray = ({
         title={label || ''}
         initialExpand={schema.config.initialExpand}
       >
-        <Stack spacing={1}>
+        <Stack spacing={4}>
           {list.map((item, i) => {
             return (
               <Stack
@@ -286,20 +286,31 @@ export const FieldArray = ({
                       onValueChange={(v) => onItemChange(v, i)}
                     />
                   </CollapseCard>
-                  <IconButton component="span" onClick={() => moveUpItem(i)}>
+                  <IconButton onClick={() => moveUpItem(i)} color="primary">
                     <ArrowUpwardIcon />
                   </IconButton>
-                  <IconButton component="span" onClick={() => moveDownItem(i)}>
+                  <IconButton onClick={() => moveDownItem(i)} color="primary">
                     <ArrowDownwardIcon />
                   </IconButton>
-                  <IconButton component="span" onClick={() => deleteItem(i)}>
+                  <IconButton onClick={() => deleteItem(i)} color="primary">
                     <DeleteIcon />
                   </IconButton>
                 </Stack>
               </Stack>
             );
           })}
-          <Button variant="contained" onClick={addItem}>
+          <Button
+            variant="contained"
+            onClick={addItem}
+            sx={{
+              width: '80%',
+              padding: '10px',
+              borderRadius: '0px',
+              clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+              marginLeft: 'auto!important',
+              marginRight: 'auto!important',
+            }}
+          >
             Add Item
           </Button>
         </Stack>

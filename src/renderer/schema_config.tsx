@@ -1,8 +1,8 @@
-import { Modal, Box, Stack, Button } from '@mui/material';
+import { Box, Button, Modal, Stack } from '@mui/material';
 import { DEFAULT_CONFIG } from 'models/schema';
 import { useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
-import { PRIMARY_COLOR1, PRIMARY_COLOR2_LIGHT1 } from './style';
+import { PRIMARY_COLOR2_LIGHT1 } from './style';
 
 const OBJ_JSON = {
   type: 'object',
@@ -61,37 +61,37 @@ const SchemaConfig = ({
       };
       let snippets = [
         {
-          label: 'object', // 用户键入list2d_basic的任意前缀即可触发自动补全，选择该项即可触发添加代码片段
+          label: 'object',
           kind: monaco.languages.CompletionItemKind.Snippet,
           documentation: 'object field',
-          insertText: JSON.stringify(OBJ_JSON, null, 2), // ${i:j}，其中i表示按tab切换的顺序编号，j表示默认串
+          insertText: JSON.stringify(OBJ_JSON, null, 2),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           range: range,
         },
         {
-          label: 'array', // 用户键入list2d_basic的任意前缀即可触发自动补全，选择该项即可触发添加代码片段
+          label: 'array',
           kind: monaco.languages.CompletionItemKind.Snippet,
           documentation: 'object field',
-          insertText: JSON.stringify(ARR_JSON, null, 2), // ${i:j}，其中i表示按tab切换的顺序编号，j表示默认串
+          insertText: JSON.stringify(ARR_JSON, null, 2),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           range: range,
         },
         {
-          label: 'string', // 用户键入list2d_basic的任意前缀即可触发自动补全，选择该项即可触发添加代码片段
+          label: 'string',
           kind: monaco.languages.CompletionItemKind.Snippet,
           documentation: 'object field',
-          insertText: JSON.stringify(STR_JSON, null, 2), // ${i:j}，其中i表示按tab切换的顺序编号，j表示默认串
+          insertText: JSON.stringify(STR_JSON, null, 2),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           range: range,
         },
         {
-          label: 'boolean', // 用户键入list2d_basic的任意前缀即可触发自动补全，选择该项即可触发添加代码片段
+          label: 'boolean',
           kind: monaco.languages.CompletionItemKind.Snippet,
           documentation: 'object field',
-          insertText: JSON.stringify(BOOLEAN_JSON, null, 2), // ${i:j}，其中i表示按tab切换的顺序编号，j表示默认串
+          insertText: JSON.stringify(BOOLEAN_JSON, null, 2),
           insertTextRules:
             monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet,
           range: range,
@@ -265,13 +265,13 @@ const SchemaConfig = ({
             <Button
               sx={{
                 flexGrow: 1,
-
                 clipPath: 'polygon(0 0, 90% 0, 100% 100%, 10% 100%)',
               }}
               variant="contained"
               onClick={() => {
                 close();
               }}
+              color="secondary"
             >
               Cancel
             </Button>

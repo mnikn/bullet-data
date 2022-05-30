@@ -11,7 +11,7 @@
 import path from 'path';
 import fs from 'fs';
 import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
-import MenuBuilder from './menu';
+// import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
 
 let mainWindow: BrowserWindow | null = null;
@@ -131,10 +131,13 @@ const createWindow = async () => {
     show: false,
     width: 1024,
     height: 728,
+    minWidth: 500,
+    minHeight: 500,
     icon: getAssetPath('icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
+    autoHideMenuBar: true
   });
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));
@@ -154,22 +157,20 @@ const createWindow = async () => {
     if (!mainWindow) {
       throw new Error('"mainWindow" is not defined');
     }
-    console.log('event close: ', needClose);
     if (!needClose) {
       e.preventDefault();
       mainWindow.webContents.send('close');
     }
   });
 
-  const menuBuilder = new MenuBuilder(mainWindow);
-  menuBuilder.buildMenu();
+  // const menuBuilder = new MenuBuilder(mainWindow);
+  // menuBuilder.buildMenu();
 
   // Open urls in the user's browser
   mainWindow.webContents.setWindowOpenHandler((edata) => {
     shell.openExternal(edata.url);
     return { action: 'deny' };
   });
-
 };
 
 /**

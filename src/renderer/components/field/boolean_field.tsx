@@ -1,7 +1,6 @@
 import { Checkbox, FormControlLabel, FormGroup } from '@mui/material';
-import {
-  SchemaFieldBoolean
-} from 'models/schema';
+import { SchemaFieldBoolean } from 'models/schema';
+import { PRIMARY_COLOR1 } from 'renderer/style';
 
 const FieldBoolean = ({
   label,
@@ -22,7 +21,13 @@ const FieldBoolean = ({
   return (
     <FormGroup>
       <FormControlLabel
-        control={<Checkbox checked={value} />}
+        control={
+          <Checkbox
+            checked={value}
+            color="primary"
+            sx={{ color: PRIMARY_COLOR1 }}
+          />
+        }
         label={label || ''}
         onChange={onChange}
       />
