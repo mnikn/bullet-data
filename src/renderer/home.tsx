@@ -1,30 +1,30 @@
-import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
-import Base64 from 'js-base64';
 import {
   Alert,
   Button,
-  Card,
   CardContent,
-  CardHeader,
   CircularProgress,
   Collapse,
   CssBaseline,
-  Fab,
   GlobalStyles,
   IconButton,
   Menu,
   MenuItem,
-  Select,
   Stack,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import { FILE_PATH } from 'constatnts/storage_key';
+import {
+  FILE_PATH,
+  RECENTE_FILE_PATHS,
+  SIDEBAR_VISIBLE,
+} from 'constatnts/storage_key';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 import throttle from 'lodash/throttle';
+import uniq from 'lodash/uniq';
 import {
   DEFAULT_CONFIG,
   SchemaField,
@@ -39,14 +39,86 @@ import {
 } from 'models/schema';
 import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import style from 'styled-components';
 import { generateUUID } from 'utils/uuid';
+import Confimration from './components/confirmation';
 import { FieldContainer } from './components/field';
+import FieldSelect from './components/field/select_field';
 import Context from './context';
+import './home.scss';
 import Preview from './preview';
 /* import FilterPanel from './filter_panel'; */
 import SchemaConfig from './schema_config';
+import {
+  PRIMARY_COLOR1,
+  PRIMARY_COLOR1_LIGHT1,
+  PRIMARY_COLOR2,
+  SECOND_COLOR1,
+} from './style';
 import useSave from './use_save';
-import Confimration from './components/confirmation';
+
+const StyledCard = style.div<{ expand: boolean }>`
+  clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
+  padding: 30px;
+  min-width: 500px;
+  background: ${PRIMARY_COLOR1}!important;
+  position: relative;
+  color: ${PRIMARY_COLOR1}!important;
+  flex-grow: 1;
+
+  .bg {
+    position: absolute;
+    background: ${PRIMARY_COLOR2};
+    height: ${({ expand }) => (expand ? 'calc(100% - 40px)' : '70%')};
+    width: calc(100% - 40px);
+  clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
+    z-index: -2;
+  }
+
+  .header {
+    display: flex;
+    flex-direction: row;
+    color: ${PRIMARY_COLOR2};
+    padding-top: 25px;
+    padding-left: 20px;
+    .btn-group {
+      margin-left: auto;
+    }
+    .summary {
+      z-index: 1;
+      color: ${PRIMARY_COLOR1};
+      font-size: 18px;
+      font-weight: bold;
+    }
+  }
+
+ .icon {
+    color: ${PRIMARY_COLOR1};
+  }
+`;
+
+const StyledAlert = style(Alert)`
+  @keyframes showup {
+    from {
+      transform: translateX(-50%);
+    }
+    to {
+      transform: translateX(50%);
+    }
+  }
+  position: fixed;
+  width: 50%;
+  transform: translateX(50%);
+  z-index: 10;
+  top: 50px;
+  height: 100px;
+  padding-left: 5%;
+  background: ${SECOND_COLOR1};
+  color: ${PRIMARY_COLOR1};
+  border-radius: 0px;
+  clip-path: polygon(75% 0%, 100% 50%, 75% 100%, 0% 100%, 10% 50%, 0% 0%);
+  animation: 0.3s cubic-bezier(.73,.2,0,.88) showup;
+`;
 
 const DEFAULT_SCHEMA_CONFIG = {
   i18n: [],
@@ -55,6 +127,7 @@ const DEFAULT_SCHEMA_CONFIG = {
     fields: {},
     config: {
       ...DEFAULT_CONFIG.OBJECT,
+      initialExpand: false,
       summary: '#{{___index}}',
     },
   },
@@ -76,21 +149,30 @@ const grid = 6;
 
 const HIDDEN_ID = '$$__index';
 
-const getItemStyle = (isDragging, draggableStyle) => ({
+// a little function to help us with reordering the result
+const reorder = (list: any[], startIndex: number, endIndex: number) => {
+  const result = Array.from(list);
+  const [removed] = result.splice(startIndex, 1);
+  result.splice(endIndex, 0, removed);
+
+  return result;
+};
+
+const getItemStyle = (isDragging: boolean, draggableStyle: any) => ({
   // some basic styles to make the items look a bit nicer
   userSelect: 'none',
   padding: grid * 2,
   margin: `0 0 ${grid}px 0`,
 
   // change background colour if dragging
-  background: isDragging ? 'lightgreen' : '#e7ebf0',
+  background: isDragging ? 'lightgreen' : '#464D54',
 
   // styles we need to apply on draggables
   ...draggableStyle,
 });
 
-const getListStyle = (isDraggingOver) => ({
-  background: isDraggingOver ? 'lightblue' : '#e7ebf0',
+const getListStyle = (isDraggingOver: boolean) => ({
+  background: isDraggingOver ? 'lightblue' : '#464D54',
   padding: grid,
   width: 250,
 });
@@ -175,6 +257,8 @@ function buildSchema(json: any): SchemaField {
   return new SchemaFieldObject();
 }
 
+const i18nSelectionSchema = new SchemaFieldSelect();
+
 const Item = ({
   schema,
   value,
@@ -182,17 +266,13 @@ const Item = ({
   onValueChange,
   onDuplicate,
   onDelete,
-  schemaConfig,
-  sx,
 }: {
   schema: SchemaField;
-  schemaConfig: any;
   value: any;
   onValueChange?: (v: any) => void;
   index: number;
   onDuplicate: () => void;
   onDelete: () => void;
-  sx?: any;
 }) => {
   const [expanded, setExpanded] = useState<boolean>(
     (schema as SchemaFieldObject).config.initialExpand
@@ -215,34 +295,41 @@ const Item = ({
   const { currentLang } = useContext(Context);
   const summary = schema.config.summary.replace(
     /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
-    (all) => {
+    (all: any) => {
       const item = all.substring(2, all.length - 2);
       if (item === '___index') {
         return index;
       }
       const v = get(value, item, '');
       if (typeof v === 'object') {
-        return v[currentLang];
+        return v[currentLang] || '';
       }
       return v;
     }
   );
 
   return (
-    <Card sx={sx}>
-      <CardHeader
-        subheader={summary}
-        action={
-          <>
-            <IconButton aria-label="settings" onClick={handleSettingsClick}>
-              <MoreVertIcon />
-            </IconButton>
-            <ExpandMore expand={expanded} onClick={handleExpandClick}>
-              <ExpandMoreIcon />
-            </ExpandMore>
-          </>
-        }
-      />
+    <StyledCard expand={expanded}>
+      <div className="bg" />
+      <div className="header">
+        <div className="summary">{summary}</div>
+        <div className="btn-group">
+          <IconButton
+            aria-label="settings"
+            onClick={handleSettingsClick}
+            color="primary"
+          >
+            <MoreVertIcon className="icon" />
+          </IconButton>
+          <ExpandMore
+            expand={expanded}
+            onClick={handleExpandClick}
+            color="primary"
+          >
+            <ExpandMoreIcon className="icon" />
+          </ExpandMore>
+        </div>
+      </div>
       <Collapse in={expanded} timeout="auto" unmountOnExit>
         <CardContent>
           <FieldContainer
@@ -259,6 +346,11 @@ const Item = ({
         onClose={handleSettingsClose}
         MenuListProps={{
           'aria-labelledby': 'basic-button',
+        }}
+        sx={{
+          '& .MuiPaper-root': {
+            backgroundColor: PRIMARY_COLOR1,
+          },
         }}
       >
         <MenuItem
@@ -278,7 +370,7 @@ const Item = ({
           Delete
         </MenuItem>
       </Menu>
-    </Card>
+    </StyledCard>
   );
 };
 
@@ -288,11 +380,50 @@ const Home = () => {
   const [schemaConfigOpen, setSchemaConfigOpen] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [confirmationVisible, setConfirmationVisbile] = useState(false);
+  const [sidebarVisible, setSidebarVisible] = useState(
+    !!Number(localStorage.getItem(SIDEBAR_VISIBLE) || '1')
+  );
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
   const [currentLang, setCurrentLang] = useState<string>('');
   const [schema, setSchema] = useState<SchemaField | null>(null);
 
-  const { saving, save } = useSave({ valueList, schema, schemaConfig });
+  const [recentFiles, setRecentFiles] = useState<string[]>(
+    JSON.parse(localStorage.getItem(RECENTE_FILE_PATHS) || '[]')
+  );
+  const [headerAnchorEl, setHeaderAnchorEl] = useState<null | HTMLElement>(
+    null
+  );
+
+  useEffect(() => {
+    if (!schemaConfig) {
+      return;
+    }
+    i18nSelectionSchema.config.options = schemaConfig.i18n.map((k) => {
+      return {
+        label: k,
+        value: k,
+      };
+    });
+  }, [schemaConfig]);
+
+  const headerMenuOpen = Boolean(headerAnchorEl);
+  const handleAnchorButtonClick = (
+    event: React.MouseEvent<HTMLButtonElement>
+  ) => {
+    setHeaderAnchorEl(event.currentTarget);
+  };
+  const handleHeaderMenuClose = () => {
+    setHeaderAnchorEl(null);
+  };
+  const [headerMenuActions, setHeaderMenuActions] = useState<
+    { fn: () => void; title: string; shortcut?: string }[]
+  >([]);
+
+  const { saving, save, newFile } = useSave({
+    valueList,
+    schema,
+    schemaConfig,
+  });
 
   const setValueListRef = useRef(
     throttle((newValue) => setActualValueList(newValue), 1000)
@@ -305,7 +436,7 @@ const Home = () => {
 
   useEffect(() => {
     const valuePath = localStorage.getItem(FILE_PATH);
-    document.querySelector('title').innerText = `General Data Manager ${
+    document.querySelector('title').innerText = `Bullet Data ${
       valuePath ? '--- ' + valuePath : ''
     }`;
     if (valuePath) {
@@ -346,13 +477,13 @@ const Home = () => {
         filePath: valuePath,
         action: 'save-value',
       },
-      (val) => {
+      (val: any) => {
         const data = JSON.parse(val.data);
-        const formatData = data.map((item) => {
+        const formatData = data.map((item: any) => {
           return validateValue(item, item, schema, schemaConfig);
         });
         console.log(formatData);
-        const finalData = formatData.map((item) => {
+        const finalData = formatData.map((item: any) => {
           item[HIDDEN_ID] = generateUUID();
           return item;
         }, []);
@@ -362,17 +493,17 @@ const Home = () => {
   }, [schema, schemaConfig]);
 
   const onItemChange = (v: any, i: number) => {
-    setValueList((prev) => {
-      return prev.map((item, j) => (j === i ? v : item));
+    setValueList((prev: any) => {
+      return prev.map((item: any, j: number) => (j === i ? v : item));
     });
   };
   const onItemDelete = (i: number) => {
-    setValueList((prev) => {
-      return prev.filter((_, j) => j !== i);
+    setValueList((prev: any) => {
+      return prev.filter((_: any, j: number) => j !== i);
     });
   };
   const onItemDuplicate = (i: number) => {
-    setValueList((prev) => {
+    setValueList((prev: any) => {
       const v = cloneDeep(prev[i]);
       v[HIDDEN_ID] = generateUUID();
       prev.splice(i, 0, v);
@@ -390,10 +521,9 @@ const Home = () => {
     if (!schema) {
       return;
     }
-    setValueList((prevArr) => {
+    setValueList((prevArr: any) => {
       const v = cloneDeep(schema.config.defaultValue);
       v[HIDDEN_ID] = generateUUID();
-      console.log(prevArr, v);
       return prevArr.concat(v);
     });
   }, [schema]);
@@ -420,9 +550,36 @@ const Home = () => {
   }, [addItem]);
 
   useEffect(() => {
-    const onClose = async (e) => {
+    const onKeyDown = (e: any) => {
+      if (e.code === 'KeyS' && e.ctrlKey) {
+        save();
+      }
+      if (e.code === 'KeyL' && e.ctrlKey) {
+        setPreviewVisible(true);
+      }
+      if (e.code === 'KeyO' && e.ctrlKey) {
+        (window as any).electron.ipcRenderer.openFile();
+      }
+
+      // switch lang shortcut
+      if (e.code.includes('Digit') && e.ctrlKey) {
+        const index = Number(e.code.split('Digit')[1]) - 1;
+        if (index >= 0 && schemaConfig.i18n.length > index) {
+          setCurrentLang(schemaConfig.i18n[index]);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [save, schemaConfig]);
+
+  useEffect(() => {
+    const onClose = async () => {
       const valuePath = localStorage.getItem(FILE_PATH);
-      if (valuePath) {
+      if (valuePath && schema) {
         const currentFileValue = await window.electron.ipcRenderer.readJsonFile(
           {
             filePath: valuePath,
@@ -431,7 +588,7 @@ const Home = () => {
         );
 
         const formatData = (JSON.parse(currentFileValue.data) || []).map(
-          (item) => {
+          (item: any) => {
             return validateValue(item, item, schema, schemaConfig);
           }
         );
@@ -513,8 +670,9 @@ const Home = () => {
         {/* <FilterPanel onFilterChange={onFilterChange} /> */}
         <div
           style={{
-            backgroundColor: '#e7ebf0',
-            padding: '20px',
+            backgroundColor: '#464D54',
+            height: '100%',
+            paddingBottom: '20px',
           }}
         >
           <CssBaseline enableColorScheme />
@@ -549,146 +707,313 @@ const Home = () => {
             }}
           />
           {saving && (
-            <Alert
-              sx={{
-                position: 'fixed',
-                width: '50%',
-                transform: 'translateX(50%)',
-                zIndex: 10,
-                top: '50px',
-                height: '100px',
-              }}
-              icon={<></>}
-              variant="standard"
-              color="info"
-            >
+            <StyledAlert icon={<></>} variant="standard" color="info">
               <Stack
                 spacing={2}
                 direction="row"
                 sx={{ alignItems: 'center', height: '100%', width: '100%' }}
               >
                 <CircularProgress />
-                <div style={{ fontSize: '18px' }}>
+                <div style={{ fontSize: '18px', zIndex: 3 }}>
                   Saving...Please wait for a while
                 </div>
               </Stack>
-            </Alert>
+            </StyledAlert>
           )}
-          <Stack>
-            <Stack spacing={2} direction="row-reverse">
-              <Button
-                style={{ width: '240px' }}
-                variant="contained"
-                onClick={() => {
-                  setSchemaConfigOpen(true);
+          <Stack
+            spacing={2}
+            direction="row"
+            sx={{
+              height: '100%',
+            }}
+          >
+            {sidebarVisible && (
+              <Stack
+                sx={{
+                  background: '#8593A1',
+                  minWidth: '200px',
+                  maxWidth: '300px',
+                  flexShrink: '0',
+                  alignItems: 'center',
                 }}
               >
-                Config
-              </Button>
-              {schemaConfig.i18n.length > 0 && (
-                <Select
-                  labelId="i18n-select-label"
-                  id="i18n-select"
-                  value={currentLang}
-                  label="I18n"
-                  onChange={(e) => setCurrentLang(e.target.value)}
-                  size="small"
-                  sx={{ backgroundColor: '#fff' }}
+                <div
+                  style={{
+                    padding: '10px',
+                    color: PRIMARY_COLOR1,
+                    fontWeight: 'bold',
+                  }}
                 >
-                  {schemaConfig.i18n.map((item2, j) => {
-                    return (
-                      <MenuItem key={j} value={item2}>
-                        {item2}
-                      </MenuItem>
-                    );
-                  })}
-                </Select>
-              )}
-            </Stack>
-
-            <DragDropContext
-              onDragEnd={(e) => {
-                const final = displayValueList.map((item, j) => {
-                  if (j === e.source?.index) {
-                    return displayValueList[e.destination?.index];
-                  }
-                  if (j === e.destination?.index) {
-                    return displayValueList[e.source?.index];
-                  }
-                  return item;
-                }, []);
-                setValueList(final);
+                  Recent Files
+                </div>
+                {recentFiles.map((f: string) => {
+                  return (
+                    <Stack
+                      direction="row"
+                      sx={{
+                        justifyContent: 'space-between',
+                        width: '100%',
+                        padding: '10px',
+                      }}
+                    >
+                      <Button
+                        key={f}
+                        sx={{
+                          borderRadius: '0px',
+                          display: 'flow-root',
+                          textTransform: 'none',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          direction: 'rtl',
+                          textAlign: 'left',
+                        }}
+                        onClick={() => {
+                          localStorage.setItem(FILE_PATH, f);
+                          window.location.reload();
+                        }}
+                      >
+                        {f}
+                      </Button>
+                      <IconButton color="primary">
+                        <CloseIcon
+                          className="icon"
+                          onClick={() => {
+                            const recents: any[] = uniq(
+                              JSON.parse(
+                                localStorage.getItem(RECENTE_FILE_PATHS) || '[]'
+                              ).filter((c: any) => c !== f)
+                            );
+                            setRecentFiles(recents);
+                            localStorage.setItem(
+                              RECENTE_FILE_PATHS,
+                              JSON.stringify(recents)
+                            );
+                          }}
+                        />
+                      </IconButton>
+                    </Stack>
+                  );
+                })}
+              </Stack>
+            )}
+            <Stack
+              spacing={2}
+              sx={{
+                flexGrow: 1,
               }}
             >
-              <Droppable droppableId="droppable">
-                {(provided, snapshot) => (
-                  <div
-                    {...provided.droppableProps}
-                    ref={provided.innerRef}
-                    style={{
-                      ...getListStyle(snapshot.isDraggingOver),
-                      ...{ width: '100%' },
+              <Stack
+                spacing={2}
+                direction="row"
+                sx={{
+                  // position: 'sticky',
+                  // top: 0,
+                  // zIndex: 2,
+                  // background: 'rgb(70, 77, 84)',
+                  padding: '20px',
+                }}
+              >
+                <Stack
+                  spacing={4}
+                  direction="row"
+                  sx={{ flexGrow: 1, paddingLeft: '40px' }}
+                >
+                  <Button
+                    sx={{
+                      width: '120px',
+                      borderRadius: '0px',
+                      clipPath:
+                        'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
+                    }}
+                    variant="contained"
+                    onClick={(e) => {
+                      setHeaderAnchorEl(e.currentTarget);
+                      setHeaderMenuActions([
+                        {
+                          title: 'New',
+                          fn: () => {
+                            newFile();
+                          },
+                        },
+                        {
+                          title: 'Open',
+                          shortcut: 'Ctrl+O',
+                          fn: () => {
+                            (window as any).electron.ipcRenderer.openFile();
+                          },
+                        },
+                        {
+                          title: 'Save',
+                          shortcut: 'Ctrl+S',
+                          fn: () => {
+                            save();
+                          },
+                        },
+                        {
+                          title: 'Preview',
+                          shortcut: 'Ctrl+L',
+                          fn: () => {
+                            setPreviewVisible(true);
+                          },
+                        },
+                      ]);
                     }}
                   >
-                    {displayValueList.map((item, i) => {
-                      const key = String(item[HIDDEN_ID]);
-                      return (
-                        <Draggable key={key} draggableId={key} index={i}>
-                          {(provided, snapshot) => (
-                            <div
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              style={getItemStyle(
-                                snapshot.isDragging,
-                                provided.draggableProps.style
-                              )}
-                            >
-                              <Stack
-                                spacing={1}
-                                direction="row"
+                    File
+                  </Button>
+                  <Button
+                    sx={{
+                      width: '120px',
+                      borderRadius: '0px',
+                      clipPath:
+                        'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
+                    }}
+                    variant="contained"
+                    onClick={(e) => {
+                      setHeaderAnchorEl(e.currentTarget);
+                      setHeaderMenuActions([
+                        {
+                          title: 'Toogle sidebar',
+                          fn: () => {
+                            setSidebarVisible((prev) => {
+                              localStorage.setItem(
+                                SIDEBAR_VISIBLE,
+                                !prev ? '1' : '0'
+                              );
+                              return !prev;
+                            });
+                          },
+                        },
+                      ]);
+                    }}
+                  >
+                    View
+                  </Button>
+                </Stack>
+                <Stack direction="row" spacing={2} sx={{ marginLeft: 'auto' }}>
+                  {schemaConfig.i18n.length > 0 && (
+                    <FieldSelect
+                      schema={i18nSelectionSchema}
+                      value={currentLang}
+                      onValueChange={(v) => {
+                        setCurrentLang(v);
+                      }}
+                    />
+                  )}
+                  <Button
+                    sx={{
+                      width: '240px',
+                      borderRadius: '0px',
+                      clipPath:
+                        'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
+                    }}
+                    variant="contained"
+                    onClick={() => {
+                      setSchemaConfigOpen(true);
+                    }}
+                  >
+                    Schema Config
+                  </Button>
+                </Stack>
+              </Stack>
+
+              <DragDropContext
+                onDragEnd={(result: any) => {
+                  setValueList(
+                    reorder(
+                      valueList,
+                      result.source.index,
+                      result.destination.index
+                    )
+                  );
+                }}
+              >
+                <Droppable droppableId="droppable">
+                  {(provided, snapshot) => (
+                    <div
+                      {...provided.droppableProps}
+                      ref={provided.innerRef}
+                      style={{
+                        ...getListStyle(snapshot.isDraggingOver),
+                        ...{
+                          width: '100%',
+                          overflow: 'auto',
+                          background: snapshot.isDraggingOver
+                            ? PRIMARY_COLOR1_LIGHT1
+                            : '#464D54',
+                        },
+                      }}
+                    >
+                      {displayValueList.map((item, i) => {
+                        const key = String(item[HIDDEN_ID]);
+                        return (
+                          <Draggable key={key} draggableId={key} index={i}>
+                            {(provided, snapshot) => (
+                              <div
+                                ref={provided.innerRef}
+                                {...provided.draggableProps}
                                 style={{
-                                  width: '100%',
-                                  alignItems: 'center',
+                                  ...getItemStyle(
+                                    snapshot.isDragging,
+                                    provided.draggableProps.style
+                                  ),
+                                  background: snapshot.isDragging
+                                    ? SECOND_COLOR1
+                                    : '#464D54',
                                 }}
                               >
-                                <span {...provided.dragHandleProps}>
-                                  <DragIndicatorIcon />
-                                </span>
-                                <Item
-                                  sx={{ flexGrow: 1 }}
-                                  key={key}
-                                  index={i + 1}
-                                  schema={schema}
-                                  schemaConfig={schemaConfig}
-                                  value={displayValueList[i]}
-                                  onValueChange={(v) => onItemChange(v, i)}
-                                  onDuplicate={() => onItemDuplicate(i)}
-                                  onDelete={() => onItemDelete(i)}
-                                />
-                              </Stack>
-                            </div>
-                          )}
-                        </Draggable>
-                      );
-                    })}
-                    {provided.placeholder}
-                  </div>
-                )}
-              </Droppable>
-            </DragDropContext>
+                                <Stack
+                                  spacing={1}
+                                  direction="row"
+                                  style={{
+                                    width: '100%',
+                                    alignItems: 'center',
+                                  }}
+                                >
+                                  <span {...provided.dragHandleProps}>
+                                    <DragIndicatorIcon
+                                      sx={{ color: PRIMARY_COLOR1 }}
+                                    />
+                                  </span>
+                                  <Item
+                                    sx={{ flexGrow: 1 }}
+                                    key={key}
+                                    index={i + 1}
+                                    schema={schema}
+                                    schemaConfig={schemaConfig}
+                                    value={displayValueList[i]}
+                                    onValueChange={(v) => onItemChange(v, i)}
+                                    onDuplicate={() => onItemDuplicate(i)}
+                                    onDelete={() => onItemDelete(i)}
+                                  />
+                                </Stack>
+                              </div>
+                            )}
+                          </Draggable>
+                        );
+                      })}
+                      {provided.placeholder}
+                    </div>
+                  )}
+                </Droppable>
+              </DragDropContext>
+              <Button
+                sx={{
+                  width: '90%',
+                  padding: '10px',
+                  borderRadius: '0px',
+                  clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+                  marginLeft: 'auto!important',
+                  marginRight: 'auto!important',
+                }}
+                variant="contained"
+                onClick={addItem}
+              >
+                Add Item
+              </Button>
+            </Stack>
           </Stack>
-
-          <Fab
-            sx={{
-              position: 'fixed',
-              bottom: 48,
-              right: 48,
-            }}
-            color="primary"
-            onClick={addItem}
-          >
-            <AddIcon />
-          </Fab>
 
           {schemaConfigOpen && (
             <SchemaConfig
@@ -719,6 +1044,41 @@ const Home = () => {
             />
           )}
         </div>
+        <Menu
+          id="header-menu"
+          anchorEl={headerAnchorEl}
+          open={headerMenuOpen}
+          onClose={handleHeaderMenuClose}
+          MenuListProps={{
+            'aria-labelledby': 'basic-button',
+          }}
+          sx={{
+            '& .MuiPaper-root': {
+              backgroundColor: PRIMARY_COLOR1,
+              width: '150px',
+              marginTop: 2,
+              borderRadius: '32px',
+            },
+          }}
+        >
+          {headerMenuActions.map((m) => {
+            return (
+              <MenuItem
+                sx={{ display: 'flex', justifyContent: 'center' }}
+                onClick={() => {
+                  setHeaderAnchorEl(null);
+                  m.fn();
+                }}
+              >
+                {m.title}
+
+                {m.shortcut && (
+                  <span style={{ color: '#80868C' }}>( {m.shortcut} )</span>
+                )}
+              </MenuItem>
+            );
+          })}
+        </Menu>
       </>
     </Context.Provider>
   );

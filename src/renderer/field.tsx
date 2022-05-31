@@ -1,21 +1,21 @@
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Button,
-  Card,
-  CardContent,
-  CardHeader,
+  Checkbox,
+  FormControl,
+  FormControlLabel,
+  FormGroup,
   Grid,
   IconButton,
-  Stack,
-  Checkbox,
-  FormControlLabel,
-  TextField,
-  FormGroup,
-  Divider,
+  InputLabel,
   MenuItem,
   Select,
-  InputLabel,
-  FormControl,
+  Stack,
+  TextField,
 } from '@mui/material';
+import get from 'lodash/get';
 import {
   SchemaField,
   SchemaFieldArray,
@@ -26,16 +26,10 @@ import {
   SchemaFieldString,
   SchemaFieldType,
 } from 'models/schema';
-import { useContext, useEffect, useRef, useState, forwardRef } from 'react';
-import DeleteIcon from '@mui/icons-material/Delete';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import get from 'lodash/get';
-import { Base64 } from 'js-base64';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { generateUUID } from 'utils/uuid';
 import CollapseCard from './components/collapse_card';
 import Context from './context';
-import { generateUUID } from 'utils/uuid';
-import NumberFormat from 'react-number-format';
 import FieldNumber from './number_field';
 
 export const FieldContainer = ({
@@ -272,20 +266,25 @@ export const FieldArray = ({
                 style={{ width: '100%', alignItems: 'center' }}
               >
                 <Stack spacing="2" direction="row" sx={{ flexGrow: 1 }}>
-                  <CollapseCard title={`# ${i + 1}`}>
+                  <CollapseCard
+                    title={`# ${i + 1}`}
+                    initialExpand={
+                      (schema.fieldSchema as SchemaField).config.initialExpand
+                    }
+                  >
                     <FieldContainer
                       schema={schema.fieldSchema as SchemaField}
                       value={item.value}
                       onValueChange={(v) => onItemChange(v, i)}
                     />
                   </CollapseCard>
-                  <IconButton component="span" onClick={() => moveUpItem(i)}>
+                  <IconButton onClick={() => moveUpItem(i)} color="primary">
                     <ArrowUpwardIcon />
                   </IconButton>
-                  <IconButton component="span" onClick={() => moveDownItem(i)}>
+                  <IconButton onClick={() => moveDownItem(i)} color="primary">
                     <ArrowDownwardIcon />
                   </IconButton>
-                  <IconButton component="span" onClick={() => deleteItem(i)}>
+                  <IconButton onClick={() => deleteItem(i)} color="primary">
                     <DeleteIcon />
                   </IconButton>
                 </Stack>

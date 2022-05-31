@@ -1,12 +1,12 @@
 {
-  "name": "general-data-manager",
-  "version": "0.1.0",
-  "description": "A general data manager.",
+  "name": "bullet-data",
+  "version": "0.2.0",
+  "description": "Manage data like a bullet.",
   "main": "./dist/main/main.js",
   "author": {
     "name": "mnikn",
     "email": "iamtruelyking@gmail.com",
-    "url": "https://github.com/mnikn/general-data-manager"
+    "url": "https://github.com/mnikn/bullet-data"
   },
   "scripts": {
     "electron-rebuild": "node -r ts-node/register ../../.erb/scripts/electron-rebuild.js",

@@ -7,7 +7,8 @@ export function validateValue(
   if (schema.config.enableWhen) {
     const fn = eval(schema.config.enableWhen);
     if (!fn(totalObjValue)) {
-      return schema.config.defaultValue;
+      return undefined;
+      // return schema.config.defaultValue;
     }
   }
   if (schema.type === SchemaFieldType.Array) {
@@ -91,7 +92,7 @@ export function validateValue(
   }
 
   if (schema.type === SchemaFieldType.Select) {
-    if (typeof value === 'string') {
+    if (value !== null && value !== undefined) {
       return value;
     } else {
       return schema.config.defaultValue;
@@ -141,11 +142,12 @@ export const DEFAULT_CONFIG = {
     customValidate: null,
     customValidateErrorText: '',
     helperText: '',
-    type: 'singleline', // singleline | multiline
+    type: 'singleline', // singleline | multiline | code
     minLen: 0,
     maxLen: Number.MAX_SAFE_INTEGER,
-    rows: 4,
+    height: '200px',
     needI18n: false,
+    codeLang: '',
   },
   STRING_CONFIG_DEFAULT: {
     colSpan: 3,
@@ -186,11 +188,21 @@ export const DEFAULT_CONFIG = {
     colSpan: 3,
     defaultValue: '',
     required: false,
-    options: [],
+    options: [
+      {
+        label: 'None',
+        value: 'none',
+      },
+    ],
   },
   SELECT_CONFIG_DEFAULT: {
     colSpan: 3,
-    options: [],
+    options: [
+      {
+        label: 'None',
+        value: 'none',
+      },
+    ],
     defaultValue: '',
   },
 };
@@ -258,6 +270,9 @@ export class SchemaFieldObject extends SchemaField {
         return field.config.defaultValue;
       }
       case SchemaFieldType.Boolean: {
+        return field.config.defaultValue;
+      }
+      case SchemaFieldType.Select: {
         return field.config.defaultValue;
       }
     }

@@ -1,0 +1,122 @@
+{
+  "i18n": [
+    "en",
+    "zh"
+  ],
+  "schema": {
+    "type": "object",
+    "fields": {
+      "id": {
+        "name": "id",
+        "config": {
+          "colSpan": 3,
+          "defaultValue": "",
+          "type": "singleline"
+        },
+        "type": "string"
+      },
+      "name": {
+        "name": "name",
+        "config": {
+          "colSpan": 3,
+          "defaultValue": "",
+          "type": "singleline",
+          "needI18n": true
+        },
+        "type": "string"
+      },
+      "desc": {
+        "name": "desc",
+        "config": {
+          "colSpan": 6,
+          "defaultValue": "",
+          "type": "multiline",
+          "needI18n": true
+        },
+        "type": "string"
+      },
+      "skills": {
+        "name": "skills",
+        "config": {
+          "colSpan": 12,
+          "initialExpand": true
+        },
+        "type": "array",
+        "fieldSchema": {
+          "type": "select",
+          "config": {
+            "colSpan": 3,
+            "options": [
+              {
+                "label": "Fire ball",
+                "value": "fire_ball"
+              },
+              {
+                "label": "Mud Wall",
+                "value": "mud_wall"
+              },
+              {
+                "label": "Mass Destruction",
+                "value": "mass_destruction"
+              }
+            ],
+            "defaultValue": ""
+          }
+        }
+      },
+      "property": {
+        "name": "property",
+        "config": {
+          "colSpan": 12,
+          "initialExpand": true,
+          "summary": "{{___key}}"
+        },
+        "type": "object",
+        "fields": {
+          "strength": {
+            "name": "strength",
+            "config": {
+              "colSpan": 3,
+              "defaultValue": 6,
+              "type": "int"
+            },
+            "type": "number"
+          },
+          "dexterity": {
+            "name": "dexterity",
+            "config": {
+              "colSpan": 3,
+              "defaultValue": 6,
+              "type": "int"
+            },
+            "type": "number"
+          },
+          "wisdom": {
+            "name": "wisdom",
+            "config": {
+              "colSpan": 3,
+              "defaultValue": 6,
+              "type": "int"
+            },
+            "type": "number"
+          },
+          "will": {
+            "name": "will",
+            "config": {
+              "colSpan": 3,
+              "defaultValue": 6,
+              "type": "int"
+            },
+            "type": "number"
+          }
+        }
+      }
+    },
+    "config": {
+      "colSpan": 12,
+      "enableWhen": null,
+      "initialExpand": false,
+      "summary": "#{{___index}} {{name}}"
+    }
+  }
+}

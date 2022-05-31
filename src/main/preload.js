@@ -38,8 +38,11 @@ contextBridge.exposeInMainWorld('electron', {
         ipcRenderer.send('writeFile', arg);
       });
     },
-    openFileDialog() {
-      ipcRenderer.send('openFileDialog');
+    newFile() {
+      ipcRenderer.send('newFile', { action: 'new-file' });
+    },
+    openFile() {
+      ipcRenderer.send('openFile', { action: 'open-file' });
     },
     addRecentFile(arg) {
       ipcRenderer.send('addRecentFile', arg);

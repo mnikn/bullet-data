@@ -1,5 +1,6 @@
 import { Box, Button, Modal, Stack } from '@mui/material';
 import MonacoEditor from 'react-monaco-editor';
+import { PRIMARY_COLOR2_LIGHT1 } from './style';
 
 const Preview = ({
   valueList,
@@ -19,8 +20,10 @@ const Preview = ({
           transform: 'translate(-50%, -50%)',
           width: 720,
           height: 620,
-          bgcolor: 'background.paper',
-          borderRadius: '12px',
+          bgcolor: PRIMARY_COLOR2_LIGHT1,
+          borderRadius: '0px',
+          clipPath:
+            'polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%)',
           p: 4,
         }}
       >
@@ -39,8 +42,15 @@ const Preview = ({
           </Stack>
           <Stack spacing={2} direction="row">
             <Button
-              sx={{ flexGrow: 1 }}
+              sx={{
+                flexGrow: 1,
+                borderRadius: '0px',
+                clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
+                marginLeft: 'auto!important',
+                marginRight: 'auto!important',
+              }}
               variant="contained"
+              color="secondary"
               onClick={() => {
                 close();
               }}
