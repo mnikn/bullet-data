@@ -1,0 +1,43 @@
+[
+  {
+    "id": "cloud",
+    "name": {
+      "en": "Cloud",
+      "zh": "克劳德"
+    },
+    "desc": {
+      "en": "A solider.",
+      "zh": "一位士兵."
+    },
+    "skills": [
+      "fire_ball",
+      "mud_wall"
+    ],
+    "property": {
+      "strength": 8,
+      "dexterity": 8,
+      "wisdom": 0,
+      "will": 6
+    }
+  },
+  {
+    "id": "tina",
+    "name": {
+      "en": "Tina",
+      "zh": "蒂娜"
+    },
+    "desc": {
+      "en": "Girl 01.",
+      "zh": "女主角01"
+    },
+    "skills": [
+      "mud_wall"
+    ],
+    "property": {
+      "strength": 6,
+      "dexterity": 6,
+      "wisdom": 6,
+      "will": 6
+    }
+  }
+]

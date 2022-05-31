@@ -1,4 +1,4 @@
-import AddIcon from '@mui/icons-material/Add';
+import CloseIcon from '@mui/icons-material/Close';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -9,12 +9,10 @@ import {
   CircularProgress,
   Collapse,
   CssBaseline,
-  Fab,
   GlobalStyles,
   IconButton,
   Menu,
   MenuItem,
-  Select,
   Stack,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -25,8 +23,8 @@ import {
 } from 'constatnts/storage_key';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
-import uniq from 'lodash/uniq';
 import throttle from 'lodash/throttle';
+import uniq from 'lodash/uniq';
 import {
   DEFAULT_CONFIG,
   SchemaField,
@@ -43,7 +41,6 @@ import { useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import style from 'styled-components';
 import { generateUUID } from 'utils/uuid';
-import CloseIcon from '@mui/icons-material/Close';
 import Confimration from './components/confirmation';
 import { FieldContainer } from './components/field';
 import FieldSelect from './components/field/select_field';
@@ -305,7 +302,7 @@ const Item = ({
       }
       const v = get(value, item, '');
       if (typeof v === 'object') {
-        return v[currentLang];
+        return v[currentLang] || '';
       }
       return v;
     }
@@ -439,7 +436,7 @@ const Home = () => {
 
   useEffect(() => {
     const valuePath = localStorage.getItem(FILE_PATH);
-    document.querySelector('title').innerText = `General Data Manager ${
+    document.querySelector('title').innerText = `Bullet Data ${
       valuePath ? '--- ' + valuePath : ''
     }`;
     if (valuePath) {

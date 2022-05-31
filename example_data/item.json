@@ -1,0 +1,23 @@
+[
+  {
+    "id": "iron_sword",
+    "name": "铁剑",
+    "money": 100,
+    "num": 2,
+    "desc": "一把普通的铁剑."
+  },
+  {
+    "id": "sliver_sowrd",
+    "name": "银剑",
+    "money": 1000,
+    "num": 1,
+    "desc": "一把看起来很贵的银剑."
+  },
+  {
+    "id": "gold_sowrd",
+    "name": "金剑",
+    "money": 10000,
+    "num": 1,
+    "desc": "一把绝对买不起的金剑."
+  }
+]

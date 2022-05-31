@@ -52,6 +52,7 @@ const StyledInput = styled.div`
     padding-right: 12px;
     outline: none;
     font-family: system-ui;
+    font-weight: bold;
   }
 
   textarea {
@@ -66,6 +67,7 @@ const StyledInput = styled.div`
     outline: none;
     resize: none;
     font-family: system-ui;
+    font-weight: bold;
   }
 
   .label {
@@ -87,6 +89,7 @@ const StyledInput = styled.div`
     transform: translateX(-50%) translateY(-50%);
     color: ${PRIMARY_COLOR1};
     animation: 0.3s moveup;
+    font-weight: bold;
   }
 
   .error {

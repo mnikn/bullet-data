@@ -42,6 +42,7 @@ const StyledInput = styled.div`
     height: 50px;
     font-size: 16px;
     color: ${PRIMARY_COLOR2};
+    font-weight: bold;
     width: 100%;
     border: none;
     border-radius: 32px;
@@ -107,7 +108,7 @@ const FieldSelect = ({
 }: {
   label?: string;
   schema: SchemaFieldSelect;
-  value: string;
+  value: any;
   onValueChange?: (value: string) => void;
 }) => {
   const onChange = (e: any) => {
@@ -127,6 +128,7 @@ const FieldSelect = ({
           height: '50px',
           border: 'none',
           borderRadius: '32px',
+          fontWeight: 'bold',
         }}
         MenuProps={{
           PaperProps: {
@@ -140,7 +142,7 @@ const FieldSelect = ({
       >
         {schema.config.options.map((item, i) => {
           return (
-            <MenuItem key={i} value={item.value}>
+            <MenuItem key={i} value={item.value} sx={{ fontWeight: 'bold' }}>
               {item.label}
             </MenuItem>
           );

@@ -1,6 +1,6 @@
 {
-  "name": "general-data-manager",
-  "description": "A general data manager.",
+  "name": "bullet-data",
+  "description": "Manage data like a bullet.",
   "scripts": {
     "build": "concurrently \"npm run build:main\" \"npm run build:renderer\"",
     "build:main": "cross-env NODE_ENV=production TS_NODE_TRANSPILE_ONLY=true webpack --config ./.erb/configs/webpack.config.main.prod.ts",
@@ -15,8 +15,8 @@
     "test": "jest"
   },
   "build": {
-    "productName": "GeneralDataManager",
-    "appId": "org.erb.GeneralDataManager",
+    "productName": "Bullet Data",
+    "appId": "org.erb.BulletData",
     "asar": true,
     "asarUnpack": "**\\*.{node,dll}",
     "files": [
@@ -75,28 +75,28 @@
     "publish": {
       "provider": "github",
       "owner": "mnikn",
-      "repo": "general-data-manager"
+      "repo": "bullet-data"
     }
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/mnikn/general-data-manager.git"
+    "url": "git+https://github.com/mnikn/bullet-data.git"
   },
   "author": {
     "name": "mnikn",
     "email": "iamtruelyking@gmail.com",
-    "url": "https://github.com/mnikn/general-data-manager"
+    "url": "https://github.com/mnikn/bullet-data"
   },
   "contributors": [
     {
       "name": "mnikn",
       "email": "iamtruelyking@gmail.com",
-      "url": "https://github.com/mnikn/general-data-manager"
+      "url": "https://github.com/mnikn/bullet-data"
     }
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/mnikn/general-data-manager/issues"
+    "url": "https://github.com/mnikn/bullet-data/issues"
   },
   "keywords": [
     "electron",
@@ -109,7 +109,7 @@
     "hot",
     "reload"
   ],
-  "homepage": "https://github.com/mnikn/general-data-manager",
+  "homepage": "https://github.com/mnikn/bullet-data",
   "jest": {
     "testURL": "http://localhost/",
     "testEnvironment": "jsdom",

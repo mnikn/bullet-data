@@ -1,0 +1,60 @@
+{
+  "i18n": [],
+  "schema": {
+    "type": "object",
+    "fields": {
+      "id": {
+        "name": "id",
+        "config": {
+          "colSpan": 3,
+          "defaultValue": "",
+          "type": "singleline"
+        },
+        "type": "string"
+      },
+      "name": {
+        "name": "name",
+        "config": {
+          "colSpan": 3,
+          "defaultValue": "",
+          "type": "singleline"
+        },
+        "type": "string"
+      },
+      "money": {
+        "name": "money",
+        "config": {
+          "colSpan": 3,
+          "defaultValue": 0,
+          "type": "float",
+          "suffix": "金币"
+        },
+        "type": "number"
+      },
+      "num": {
+        "name": "num",
+        "config": {
+          "colSpan": 3,
+          "defaultValue": 1,
+          "type": "float"
+        },
+        "type": "number"
+      },
+      "desc": {
+        "name": "desc",
+        "config": {
+          "colSpan": 12,
+          "defaultValue": "",
+          "type": "multiline"
+        },
+        "type": "string"
+      }
+    },
+    "config": {
+      "colSpan": 12,
+      "enableWhen": null,
+      "initialExpand": false,
+      "summary": "#{{___index}}-{{id}} {{name}} {{money}}金币"
+    }
+  }
+}
