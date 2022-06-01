@@ -94,19 +94,25 @@ const StyledTextField = styled.div`
     font-weight: bold;
   }
 
-  .error {
+  .bottom {
     position: absolute;
-    overflow: hidden;
     bottom: -50%;
     left: 50%;
     width: 80%;
     font-weight: bold;
-    text-align: center;
     user-select: none;
     pointer-events: none;
     transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .error {
     color: ${SECOND_COLOR1};
     text-overflow: ellipsis;
+    overflow: hidden;
+    white-space: nowrap;
   }
 `;
 
@@ -232,11 +238,9 @@ function MyTextField({
       >
         {label}
       </div>
-      <div
-        className="error"
-        style={{ visibility: errorText ? 'visible' : 'hidden' }}
-      >
-        {errorText}
+
+      <div className="bottom">
+        {errorText && <div className="error">{errorText}</div>}
       </div>
     </StyledTextField>
   );

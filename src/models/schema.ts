@@ -129,10 +129,12 @@ export const DEFAULT_CONFIG = {
     defaultValue: [],
     enableWhen: null,
     initialExpand: false,
+    summary: '# {{___index}}',
   },
   ARRAY_CONFIG_DEFAULT: {
     colSpan: 12,
     initialExpand: false,
+    summary: '# {{___index}}',
   },
   STRING: {
     colSpan: 3,

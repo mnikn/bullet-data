@@ -125,15 +125,15 @@ string:
 
 | 配置项                  | 功能                                                     | 默认值                                                       |
 | ----------------------- | -------------------------------------------------------- | ------------------------------------------------------------ |
-| type                    | 文本类型,"singleline" 为单行编辑，"multiline" 为多行编辑 | "singleline"                                                 |
+| type                    | 文本类型,"singleline" 为单行编辑，"multiline" 为多行编辑, "code" 为代码 | "singleline"                                                 |
 | required                | 是否必须                                                 | true                                                         |
 | customValidate          | 自定义的校验函数，js 函数                                | 无，示例："enableWhen": "(v) => v.includes('test')"，其中 v 为当前的输入值 |
 | customValidateErrorText | 自定义校验失败时的错误提示文本                           | ""                                                           |
-| helperText              | 提示文本                                                 | ""                                                           |
 | minLen                  | 可输入文本最小长度                                       | 1                                                            |
 | maxLen                  | 可输入文本最大长度                                       | 无限                                                         |
 | height                  | 文本框的行高，type=multiline 或者 type=code 时才生效       | "200px"                                                      |
 | needI18n                | 是否需要国际化,当 type=code 时不生效                                           | false                                                        |
+| codeLang                | type="code" 时可用,值为 monca editor 的可选语言 | ""                                                        |
 
 
 
@@ -145,7 +145,6 @@ number:
 | required                | 是否必须                                       | true                                                         |
 | customValidate          | 自定义的校验函数，js 函数                      | 无，示例："enableWhen": "(v) => v > 1000"，其中 v 为当前的输入值 |
 | customValidateErrorText | 自定义校验失败时的错误提示文本                 | ""                                                           |
-| helperText              | 提示文本                                       | ""                                                           |
 | min                     | 可输入的最小值                                 | 无限                                                         |
 | max                     | 可输入的最小值                                 | 无限                                                         |
 | prefix                  | 数值前缀，只会显示在界面上，不影响实际数据输出 | ""                                                           |
@@ -157,7 +156,7 @@ select:
 
 | 配置项  | 功能                                                      | 默认值 |
 | ------- | --------------------------------------------------------- | ------ |
-| options | 选项列表，数组格式为 [{ "name": "Test", "value": "test"}] | []     |
+| options | 选项列表，数组格式为 [{ "label": "Test", "value": "test"}] | []     |
 
 
 

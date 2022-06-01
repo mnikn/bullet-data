@@ -35,6 +35,7 @@ const useSave = ({ valueList, schema, schemaConfig }) => {
         item[HIDDEN_ID] = undefined;
         return validateValue(item, item, schema, storeSchemaConfig);
       }, []);
+
       if (valuePath) {
         const configPath = getConfigPath(valuePath);
         await window.electron.ipcRenderer.writeJsonFile({

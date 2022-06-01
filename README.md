@@ -122,15 +122,15 @@ string:
   
 | field                   | feature                                                                             | default value                                                                                |
 | ----------------------- | ------------------------------------------------------------                        | ------------------------------------------------------------                                 |
-| type                    | Text type, "singleline" for single-line editing, "multiline" for multi-line editing | "singleline"                                                                                 |
+| type                    | Text type, "singleline" for single-line editing, "multiline" for multi-line editing, "code" for code editing | "singleline"                                                                                 |
 | required                | Is it necessary                                                                     | true                                                                                         |
 | customValidate          | Custom validation function, js function                                             | None, example: "enableWhen": "(v) => v.includes('test')", where v is the current input value |
 | customValidateErrorText | Custom error text when validation fails                                             | ""                                                                                           |
-| helperText              | prompt text                                                                         | ""                                                                                           |
 | minLen                  | Minimum length of text that can be entered                                          | 1                                                                                            |
 | maxLen                  | Maximum length of text that can be entered                                          | unlimited                                                                                    |
 | height                  | The line height of the text box, only takes effect when type=multiline or type=code | "200px"                                                                                      |
 | needI18n                | Whether internationalization is required, not work when type=code                   | false                                                                                        |
+| codeLang                | Avaible when type="code" , monca editor code language                                                        | ""
   
 
   
@@ -142,7 +142,6 @@ number:
   | required                | Is it necessary                                              | true                                                         |
   | customValidate          | Custom validation function, js function                      | None, example: "enableWhen": "(v) => v > 1000", where v is the current input value |
   | customValidateErrorText | Custom error text when validation fails                      | ""                                                           |
-  | helperText              | prompt text                                                  | ""                                                           |
   | min                     | The minimum value that can be entered                        | unlimited                                                    |
   | max                     | The maximum value that can be entered                        | unlimited                                                    |
   | prefix                  | Numerical prefix, only displayed on the interface, does not affect the actual data output | ""                                                           |
@@ -154,7 +153,7 @@ select:
   
 | field   | feature                                                      | default value |
   | ------- | ------------------------------------------------------------ | ------------- |
-  | options | List of options, array format [{ "name": "Test", "value": "test"}] | []            |
+  | options | List of options, array format [{ "label": "Test", "value": "test"}] | []            |
   
 
   

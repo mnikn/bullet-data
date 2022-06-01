@@ -202,6 +202,7 @@ export const FieldArray = ({
       };
     })
   );
+  const { currentLang } = useContext(Context);
 
   const addItem = () => {
     setList((prev) => {
@@ -268,6 +269,39 @@ export const FieldArray = ({
       >
         <Stack spacing={4}>
           {list.map((item, i) => {
+            const summary = schema.config.summary.replace(
+              /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
+              (all) => {
+                const word = all.substring(2, all.length - 2);
+                if (word === '___key') {
+                  return item.name;
+                }
+                if (word === '___index') {
+                  return i + 1;
+                }
+                if (word.includes('___val')) {
+                  if (schema.fieldSchema.type !== 'object') {
+                    return schema.fieldSchema.type === 'string' &&
+                      schema.fieldSchema.config.needI18n
+                      ? item.value[currentLang]
+                      : item.value;
+                  } else {
+                    const wpath = word.split('.').splice(1).join('.');
+                    const v = get(item.value, wpath);
+
+                    const field = schema.fieldSchema.fields.find(
+                      (f) => f.id === wpath
+                    );
+
+                    return field?.data?.type === 'string' &&
+                      field?.data?.config?.needI18n
+                      ? v[currentLang]
+                      : v;
+                  }
+                }
+                return item.value;
+              }
+            );
             return (
               <Stack
                 key={item.id}
@@ -277,7 +311,7 @@ export const FieldArray = ({
               >
                 <Stack spacing="2" direction="row" sx={{ flexGrow: 1 }}>
                   <CollapseCard
-                    title={`# ${i + 1}`}
+                    title={summary}
                     initialExpand={schema.config.initialExpand}
                   >
                     <FieldContainer
