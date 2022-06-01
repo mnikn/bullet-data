@@ -12,7 +12,11 @@ Currently only the windows platform is supported.
 ![image-20220301155635709](./screenshots/item.png)
 ![image-20220301152952560](./screenshots/skill.png)
 ![image-20220301154140204](./screenshots/character.png)
-  
+
+
+Example data at `example_data` folder。
+
+
 ## Features
   
 - Visualize configuration data
