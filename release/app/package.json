@@ -1,6 +1,6 @@
 {
   "name": "bullet-data",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Manage data like a bullet.",
   "main": "./dist/main/main.js",
   "author": {
