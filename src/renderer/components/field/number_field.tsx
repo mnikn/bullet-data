@@ -124,7 +124,11 @@ function MyFieldNumber({
   const [errorText, setErrorText] = useState<string | null>(null);
 
   useEffect(() => {
-    setValueText(schema.config.prefix + String(value) + schema.config.suffix);
+    setValueText(
+      schema.config.prefix +
+        (typeof value !== 'undefined' ? String(value) : '') +
+        schema.config.suffix
+    );
   }, [value, schema]);
 
   const hasValue = valueText || value === 0;

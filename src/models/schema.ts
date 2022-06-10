@@ -188,8 +188,9 @@ export const DEFAULT_CONFIG = {
   SELECT: {
     enableWhen: null,
     colSpan: 3,
-    defaultValue: '',
+    defaultValue: null,
     required: false,
+    clearable: false,
     options: [
       {
         label: 'None',

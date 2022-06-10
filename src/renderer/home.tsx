@@ -37,7 +37,14 @@ import {
   SchemaFieldType,
   validateValue,
 } from 'models/schema';
-import { useCallback, useContext, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import style from 'styled-components';
 import { generateUUID } from 'utils/uuid';
@@ -45,6 +52,7 @@ import Confimration from './components/confirmation';
 import { FieldContainer } from './components/field';
 import FieldSelect from './components/field/select_field';
 import Context from './context';
+import FilterPanel from './filter_panel';
 import './home.scss';
 import Preview from './preview';
 /* import FilterPanel from './filter_panel'; */
@@ -122,6 +130,7 @@ const StyledAlert = style(Alert)`
 
 const DEFAULT_SCHEMA_CONFIG = {
   i18n: [],
+  filters: [],
   schema: {
     type: 'object',
     fields: {},
@@ -257,8 +266,6 @@ function buildSchema(json: any): SchemaField {
   return new SchemaFieldObject();
 }
 
-const i18nSelectionSchema = new SchemaFieldSelect();
-
 const Item = ({
   schema,
   value,
@@ -386,6 +393,9 @@ const Home = () => {
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
   const [currentLang, setCurrentLang] = useState<string>('');
   const [schema, setSchema] = useState<SchemaField | null>(null);
+  const [filters, setFilters] = useState<any>({});
+  const [i18nSelectionSchema, setI18nSelectionSchema] =
+    useState<SchemaFieldSelect | null>(null);
 
   const [recentFiles, setRecentFiles] = useState<string[]>(
     JSON.parse(localStorage.getItem(RECENTE_FILE_PATHS) || '[]')
@@ -398,12 +408,17 @@ const Home = () => {
     if (!schemaConfig) {
       return;
     }
-    i18nSelectionSchema.config.options = schemaConfig.i18n.map((k) => {
-      return {
-        label: k,
-        value: k,
-      };
+
+    const i18nSchema = new SchemaFieldSelect();
+    i18nSchema.setup({
+      options: schemaConfig.i18n.map((k: any) => {
+        return {
+          label: k,
+          value: k,
+        };
+      }),
     });
+    setI18nSelectionSchema(i18nSchema);
   }, [schemaConfig]);
 
   const headerMenuOpen = Boolean(headerAnchorEl);
@@ -429,10 +444,6 @@ const Home = () => {
     throttle((newValue) => setActualValueList(newValue), 1000)
   );
   const setValueList = setValueListRef.current;
-
-  useEffect(() => {
-    setDisplayValueList(valueList);
-  }, [valueList]);
 
   useEffect(() => {
     const valuePath = localStorage.getItem(FILE_PATH);
@@ -488,18 +499,31 @@ const Home = () => {
           return item;
         }, []);
         setValueList(finalData);
+        setDisplayValueList(finalData);
       }
     );
   }, [schema, schemaConfig]);
 
   const onItemChange = (v: any, i: number) => {
+    const ditem = displayValueList.find((_, j) => j === i);
     setValueList((prev: any) => {
-      return prev.map((item: any, j: number) => (j === i ? v : item));
+      return prev.map((item: any) =>
+        item[HIDDEN_ID] === ditem[HIDDEN_ID] ? v : item
+      );
+    });
+    setDisplayValueList((prev: any) => {
+      return prev.map((item: any) =>
+        item[HIDDEN_ID] === ditem[HIDDEN_ID] ? v : item
+      );
     });
   };
   const onItemDelete = (i: number) => {
+    const ditem = displayValueList.find((_, j) => j === i);
     setValueList((prev: any) => {
-      return prev.filter((_: any, j: number) => j !== i);
+      return prev.filter((item: any) => item[HIDDEN_ID] !== ditem[HIDDEN_ID]);
+    });
+    setDisplayValueList((prev: any) => {
+      return prev.filter((item: any) => item[HIDDEN_ID] !== ditem[HIDDEN_ID]);
     });
   };
   const onItemDuplicate = (i: number) => {
@@ -522,6 +546,11 @@ const Home = () => {
       return;
     }
     setValueList((prevArr: any) => {
+      const v = cloneDeep(schema.config.defaultValue);
+      v[HIDDEN_ID] = generateUUID();
+      return prevArr.concat(v);
+    });
+    setDisplayValueList((prevArr: any) => {
       const v = cloneDeep(schema.config.defaultValue);
       v[HIDDEN_ID] = generateUUID();
       return prevArr.concat(v);
@@ -624,26 +653,51 @@ const Home = () => {
     }
   };
 
-  /* const onFilterChange = (filterVal) => {
-   *   setDisplayValueList(
-   *     valueList.filter((item) => {
-   *       const needFilter = Object.keys(filterVal).reduce((res, prop) => {
-   *         if (!res) {
-   *           return res;
-   *         }
-   *         if (!filterVal[prop].value) {
-   *           return res;
-   *         }
+  const onFilterChange = (filterVal: any) => {
+    setFilters(filterVal);
+    setDisplayValueList(
+      valueList.filter((item) => {
+        const needFilter = Object.keys(filterVal).reduce((res, prop) => {
+          if (!res) {
+            return res;
+          }
+          if (!filterVal[prop].value) {
+            return res;
+          }
 
-   *         if (filterVal[prop].type === 'string') {
-   *           return get(item, prop).includes(filterVal[prop].value);
-   *         }
-   *         return get(item, prop) === filterVal[prop].value;
-   *       }, true);
-   *       return needFilter;
-   *     })
-   *   );
-   * }; */
+          if (filterVal[prop].schema instanceof SchemaFieldString) {
+            if (filterVal[prop].filterType === 'include') {
+              return get(item, prop).includes(filterVal[prop].value);
+            } else if (filterVal[prop].filterType === 'exclude') {
+              return !get(item, prop).includes(filterVal[prop].value);
+            } else if (filterVal[prop].filterType === 'equal') {
+              return get(item, prop) === filterVal[prop].value;
+            }
+          } else if (filterVal[prop].schema instanceof SchemaFieldNumber) {
+            if (filterVal[prop].filterType === 'less') {
+              return get(item, prop) > filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'less_equal') {
+              return get(item, prop) >= filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'bigger') {
+              return get(item, prop) < filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'bigger_equal') {
+              return get(item, prop) <= filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'equal') {
+              return get(item, prop) === filterVal[prop].value;
+            }
+          } else if (filterVal[prop].schema instanceof SchemaFieldSelect) {
+            if (filterVal[prop].filterType === 'exists') {
+              return get(item, prop) === filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'not_exists') {
+              return get(item, prop) !== filterVal[prop].value;
+            }
+          }
+          return res;
+        }, true);
+        return needFilter;
+      })
+    );
+  };
 
   if (!schema && !schemaConfigOpen) {
     return (
@@ -664,10 +718,13 @@ const Home = () => {
         currentLang,
         setCurrentLang,
         schemaConfig,
+        schema,
       }}
     >
       <>
-        {/* <FilterPanel onFilterChange={onFilterChange} /> */}
+        {schemaConfig?.filters && schemaConfig?.filters.length > 0 && (
+          <FilterPanel onFilterChange={onFilterChange} />
+        )}
         <div
           style={{
             backgroundColor: '#464D54',
@@ -892,7 +949,7 @@ const Home = () => {
                   </Button>
                 </Stack>
                 <Stack direction="row" spacing={2} sx={{ marginLeft: 'auto' }}>
-                  {schemaConfig.i18n.length > 0 && (
+                  {schemaConfig.i18n.length > 0 && i18nSelectionSchema && (
                     <FieldSelect
                       schema={i18nSelectionSchema}
                       value={currentLang}

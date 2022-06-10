@@ -1,7 +1,8 @@
-import { MenuItem, Select } from '@mui/material';
+import { IconButton, MenuItem, Select } from '@mui/material';
 import { SchemaFieldSelect } from 'models/schema';
 import React from 'react';
 import styled from 'styled-components';
+import ClearIcon from '@mui/icons-material/Clear';
 import {
   PRIMARY_COLOR1,
   PRIMARY_COLOR2,
@@ -37,6 +38,7 @@ const StyledInput = styled.div`
   }
 
   position: relative;
+  display: flex;
   .input {
     background: ${PRIMARY_COLOR1};
     height: 50px;
@@ -109,7 +111,7 @@ const FieldSelect = ({
   label?: string;
   schema: SchemaFieldSelect;
   value: any;
-  onValueChange?: (value: string) => void;
+  onValueChange?: (value: any) => void;
 }) => {
   const onChange = (e: any) => {
     if (onValueChange) {
@@ -149,6 +151,18 @@ const FieldSelect = ({
         })}
       </Select>
       <div className="label title">{label}</div>
+      {schema.config.clearable && (
+        <IconButton
+          color="primary"
+          onClick={() => {
+            if (onValueChange) {
+              onValueChange(null);
+            }
+          }}
+        >
+          <ClearIcon />
+        </IconButton>
+      )}
     </StyledInput>
   );
 };
