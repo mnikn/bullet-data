@@ -81,10 +81,6 @@ const useSave = ({ valueList, schema, schemaConfig }) => {
         localStorage.getItem(RECENTE_FILE_PATHS) || '[]'
       ).concat(path);
       localStorage.setItem(RECENTE_FILE_PATHS, JSON.stringify(uniq(recents)));
-      window.electron.ipcRenderer.addRecentFile({
-        newFilePath: path,
-        all: recents,
-      });
       window.location.reload();
     };
     const onNewFile = () => {

@@ -545,15 +545,14 @@ const Home = () => {
     if (!schema) {
       return;
     }
+
+    const newItem = cloneDeep(schema.config.defaultValue);
+    newItem[HIDDEN_ID] = generateUUID();
     setValueList((prevArr: any) => {
-      const v = cloneDeep(schema.config.defaultValue);
-      v[HIDDEN_ID] = generateUUID();
-      return prevArr.concat(v);
+      return prevArr.concat(newItem);
     });
     setDisplayValueList((prevArr: any) => {
-      const v = cloneDeep(schema.config.defaultValue);
-      v[HIDDEN_ID] = generateUUID();
-      return prevArr.concat(v);
+      return prevArr.concat(newItem);
     });
   }, [schema]);
 
