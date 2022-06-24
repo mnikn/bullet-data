@@ -14,7 +14,7 @@ contextBridge.exposeInMainWorld('electron', {
     },
     readJsonFile(arg, callback) {
       return new Promise((resolve) => {
-        ipcRenderer.once('readFile', (_, res) => {
+        ipcRenderer.on('readFile', (_, res) => {
           if (res.arg.action === arg.action) {
             if (callback) {
               callback(res);
@@ -23,6 +23,19 @@ contextBridge.exposeInMainWorld('electron', {
           }
         });
         ipcRenderer.send('readFile', arg);
+      });
+    },
+    readFolder(arg, callback) {
+      return new Promise((resolve) => {
+        ipcRenderer.once('readFolder', (_, res) => {
+          if (res.arg.action === arg.action) {
+            if (callback) {
+              callback(res);
+            }
+            resolve(res);
+          }
+        });
+        ipcRenderer.send('readFolder', arg);
       });
     },
     writeJsonFile(arg, callback) {
@@ -41,8 +54,8 @@ contextBridge.exposeInMainWorld('electron', {
     newFile() {
       ipcRenderer.send('newFile', { action: 'new-file' });
     },
-    openFile() {
-      ipcRenderer.send('openFile', { action: 'open-file' });
+    openFile(extension = undefined) {
+      ipcRenderer.send('openFile', { action: 'open-file', extension });
     },
     addRecentFile(arg) {
       ipcRenderer.send('addRecentFile', arg);

@@ -18,6 +18,7 @@ import {
 import { styled } from '@mui/material/styles';
 import {
   FILE_PATH,
+  PROJECT_PATH,
   RECENTE_FILE_PATHS,
   SIDEBAR_VISIBLE,
 } from 'constatnts/storage_key';
@@ -46,6 +47,7 @@ import {
   useState,
 } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
+import Sidebar from './sidebar';
 import style from 'styled-components';
 import { generateUUID } from 'utils/uuid';
 import Confimration from './components/confirmation';
@@ -64,6 +66,9 @@ import {
   SECOND_COLOR1,
 } from './style';
 import useSave from './use_save';
+import { EVENT, eventBus } from './event';
+import ProjectSchemaConfig from './project_schema_config';
+import { DEFAULT_PROJECT_CONFIG } from './constants';
 
 const StyledCard = style.div<{ expand: boolean }>`
   clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
@@ -198,7 +203,7 @@ function getConfigPath(valuePath: string) {
     .filter((item) => item !== fileName)
     .join('\\');
   return (
-    valuePath.substring(0, 3) + baseUrl + '\\' + `.${fileName}.config.json`
+    valuePath.substring(0, 3) + baseUrl + '\\' + `.${fileName}.config.bc`
   );
 }
 
@@ -387,19 +392,34 @@ const Home = () => {
   const [schemaConfigOpen, setSchemaConfigOpen] = useState(false);
   const [previewVisible, setPreviewVisible] = useState(false);
   const [confirmationVisible, setConfirmationVisbile] = useState(false);
-  const [sidebarVisible, setSidebarVisible] = useState(
-    !!Number(localStorage.getItem(SIDEBAR_VISIBLE) || '1')
-  );
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
+  const [projectConfig, setProjectConfig] = useState<any>(
+    DEFAULT_PROJECT_CONFIG
+  );
   const [currentLang, setCurrentLang] = useState<string>('');
   const [schema, setSchema] = useState<SchemaField | null>(null);
   const [filters, setFilters] = useState<any>({});
   const [i18nSelectionSchema, setI18nSelectionSchema] =
     useState<SchemaFieldSelect | null>(null);
 
-  const [recentFiles, setRecentFiles] = useState<string[]>(
-    JSON.parse(localStorage.getItem(RECENTE_FILE_PATHS) || '[]')
-  );
+
+  useEffect(() => {
+    const projectPath = localStorage.getItem(PROJECT_PATH);
+    if (projectPath) {
+      window.electron.ipcRenderer.readJsonFile(
+        {
+          filePath: projectPath,
+          action: 'read-project-config',
+        },
+        (val: any) => {
+          if (val.data) {
+            setProjectConfig(JSON.parse(val.data));
+          }
+        }
+      );
+    }
+  }, []);
+
   const [headerAnchorEl, setHeaderAnchorEl] = useState<null | HTMLElement>(
     null
   );
@@ -422,11 +442,6 @@ const Home = () => {
   }, [schemaConfig]);
 
   const headerMenuOpen = Boolean(headerAnchorEl);
-  const handleAnchorButtonClick = (
-    event: React.MouseEvent<HTMLButtonElement>
-  ) => {
-    setHeaderAnchorEl(event.currentTarget);
-  };
   const handleHeaderMenuClose = () => {
     setHeaderAnchorEl(null);
   };
@@ -456,7 +471,7 @@ const Home = () => {
         window.electron.ipcRenderer.readJsonFile(
           {
             filePath: configUrl,
-            action: 'read-config',
+            action: 'read-file-config',
           },
           (val) => {
             if (val.data) {
@@ -486,14 +501,13 @@ const Home = () => {
     window.electron.ipcRenderer.readJsonFile(
       {
         filePath: valuePath,
-        action: 'save-value',
+        action: 'read-data',
       },
       (val: any) => {
         const data = JSON.parse(val.data);
         const formatData = data.map((item: any) => {
           return validateValue(item, item, schema, schemaConfig);
         });
-        console.log(formatData);
         const finalData = formatData.map((item: any) => {
           item[HIDDEN_ID] = generateUUID();
           return item;
@@ -718,6 +732,7 @@ const Home = () => {
         setCurrentLang,
         schemaConfig,
         schema,
+        projectConfig,
       }}
     >
       <>
@@ -783,76 +798,7 @@ const Home = () => {
               height: '100%',
             }}
           >
-            {sidebarVisible && (
-              <Stack
-                sx={{
-                  background: '#8593A1',
-                  minWidth: '200px',
-                  maxWidth: '300px',
-                  flexShrink: '0',
-                  alignItems: 'center',
-                }}
-              >
-                <div
-                  style={{
-                    padding: '10px',
-                    color: PRIMARY_COLOR1,
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Recent Files
-                </div>
-                {recentFiles.map((f: string) => {
-                  return (
-                    <Stack
-                      direction="row"
-                      sx={{
-                        justifyContent: 'space-between',
-                        width: '100%',
-                        padding: '10px',
-                      }}
-                    >
-                      <Button
-                        key={f}
-                        sx={{
-                          borderRadius: '0px',
-                          display: 'flow-root',
-                          textTransform: 'none',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          direction: 'rtl',
-                          textAlign: 'left',
-                        }}
-                        onClick={() => {
-                          localStorage.setItem(FILE_PATH, f);
-                          window.location.reload();
-                        }}
-                      >
-                        {f}
-                      </Button>
-                      <IconButton color="primary">
-                        <CloseIcon
-                          className="icon"
-                          onClick={() => {
-                            const recents: any[] = uniq(
-                              JSON.parse(
-                                localStorage.getItem(RECENTE_FILE_PATHS) || '[]'
-                              ).filter((c: any) => c !== f)
-                            );
-                            setRecentFiles(recents);
-                            localStorage.setItem(
-                              RECENTE_FILE_PATHS,
-                              JSON.stringify(recents)
-                            );
-                          }}
-                        />
-                      </IconButton>
-                    </Stack>
-                  );
-                })}
-              </Stack>
-            )}
+            <Sidebar />
             <Stack
               spacing={2}
               sx={{
@@ -887,16 +833,25 @@ const Home = () => {
                       setHeaderAnchorEl(e.currentTarget);
                       setHeaderMenuActions([
                         {
-                          title: 'New',
+                          title: 'New Project',
+                          fn: () => {
+                            save();
+                            localStorage.removeItem(FILE_PATH);
+                            localStorage.removeItem(PROJECT_PATH);
+                            window.location.reload();
+                          },
+                        },
+                        {
+                          title: 'New File',
                           fn: () => {
                             newFile();
                           },
                         },
                         {
-                          title: 'Open',
+                          title: 'Open...',
                           shortcut: 'Ctrl+O',
                           fn: () => {
-                            (window as any).electron.ipcRenderer.openFile();
+                            (window as any).electron.ipcrenderer.openfile();
                           },
                         },
                         {
@@ -932,13 +887,7 @@ const Home = () => {
                         {
                           title: 'Toogle sidebar',
                           fn: () => {
-                            setSidebarVisible((prev) => {
-                              localStorage.setItem(
-                                SIDEBAR_VISIBLE,
-                                !prev ? '1' : '0'
-                              );
-                              return !prev;
-                            });
+                            eventBus.emit(EVENT.TOGGLE_SIDEBAR);
                           },
                         },
                       ]);
@@ -1080,6 +1029,7 @@ const Home = () => {
               }}
             />
           )}
+          <ProjectSchemaConfig />
           {previewVisible && (
             <Preview
               valueList={cloneDeep(valueList).map((item) => {

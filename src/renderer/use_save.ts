@@ -16,7 +16,7 @@ function getConfigPath(valuePath: string) {
     .filter((item) => item !== fileName)
     .join('\\');
   return (
-    valuePath.substring(0, 3) + baseUrl + '\\' + `.${fileName}.config.json`
+    valuePath.substring(0, 3) + baseUrl + '\\' + `.${fileName}.config.bc`
   );
 }
 
@@ -101,7 +101,7 @@ const useSave = ({ valueList, schema, schemaConfig }) => {
 
   const newFile = () => {
     save();
-    localStorage.clear();
+    localStorage.removeItem(FILE_PATH);
     window.location.reload();
   };
 

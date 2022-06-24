@@ -17,6 +17,22 @@ import { resolveHtmlPath } from './util';
 let mainWindow: BrowserWindow | null = null;
 let needClose = false;
 
+function readFolder(dirPath: any, arrayOfFiles: any[]) {
+  const files = fs.readdirSync(dirPath);
+
+  arrayOfFiles = arrayOfFiles || [];
+
+  files.forEach(function (file) {
+    if (fs.statSync(dirPath + '/' + file).isDirectory()) {
+      arrayOfFiles = readFolder(dirPath + '/' + file, arrayOfFiles);
+    } else {
+      arrayOfFiles.push(path.join(dirPath, '/', file));
+    }
+  });
+
+  return arrayOfFiles;
+}
+
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
   console.log(msgTemplate(arg));
@@ -32,6 +48,15 @@ ipcMain.on('readFile', async (event, arg) => {
   }
 });
 
+ipcMain.on('readFolder', async (event, arg) => {
+  if (fs.existsSync(arg.filePath)) {
+    const files = readFolder(arg.filePath, []);
+    event.reply('readFolder', { filePath: arg.filePath, data: files, arg });
+  } else {
+    event.reply('readFolder', { filePath: arg.filePath, data: null, arg });
+  }
+});
+
 ipcMain.on('writeFile', async (event, arg) => {
   fs.writeFileSync(arg.filePath, arg.data);
   event.reply('writeFile', { arg });
@@ -43,7 +68,7 @@ ipcMain.on('openFile', async (_, arg) => {
     data = fs.readFileSync(arg.filePath).toString();
   } else {
     data = dialog.showOpenDialogSync(mainWindow, {
-      filters: [{ name: 'Data', extensions: ['json'] }],
+      filters: [{ name: 'Data', extensions: arg?.extensions || ['json'] }],
     });
   }
   let res: any = data;
@@ -60,7 +85,9 @@ ipcMain.on('openFile', async (_, arg) => {
 
 ipcMain.on('saveFileDialog', async (event, arg) => {
   const path = dialog.showSaveDialogSync(mainWindow, {
-    filters: [{ name: 'Data', extensions: ['json'] }],
+    filters: [
+      { name: 'Data', extensions: arg.extensions ? arg.extensions : ['json'] },
+    ],
   });
   if (path) {
     fs.writeFileSync(path, arg.data);
@@ -137,7 +164,7 @@ const createWindow = async () => {
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
-    autoHideMenuBar: true
+    autoHideMenuBar: true,
   });
 
   mainWindow.loadURL(resolveHtmlPath('index.html'));

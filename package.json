@@ -220,6 +220,7 @@
     "electron-localstorage": "^1.0.5",
     "electron-log": "^4.4.4",
     "electron-updater": "^4.6.5",
+    "eventemitter3": "^4.0.7",
     "history": "^5.2.0",
     "lodash": "^4.17.21",
     "prop-types": "^15.8.1",
