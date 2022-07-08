@@ -1,35 +1,28 @@
-import { Box, Button, Modal, Stack } from '@mui/material';
+import CloseIcon from '@mui/icons-material/Close';
+import { Box, Button, IconButton, Modal, Stack } from '@mui/material';
 import { PROJECT_PATH } from 'constatnts/storage_key';
-import { DEFAULT_CONFIG } from 'models/schema';
 import { useContext, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 import Context from './context';
+import { EVENT, eventBus } from './event';
 import { PRIMARY_COLOR1, PRIMARY_COLOR2_LIGHT1 } from './style';
 import { registerDependencyProposals } from './utils/schema_config';
 
 function ProjectSchemaConfig() {
-  const [visible] = useState(!localStorage.getItem(PROJECT_PATH));
-
+  const [visible, setVisible] = useState(false);
   const { projectConfig } = useContext(Context);
   const [config, setConfig] = useState<string>(
     JSON.stringify(projectConfig, null, 2)
   );
 
   useEffect(() => {
-    const projectPath = localStorage.getItem(PROJECT_PATH);
-    if (projectPath) {
-      window.electron.ipcRenderer.readJsonFile(
-        {
-          filePath: projectPath,
-          action: 'read-project-config',
-        },
-        (val: any) => {
-          if (val.data) {
-            setConfig(JSON.parse(val.data));
-          }
-        }
-      );
-    }
+    const show = () => {
+      setVisible(true);
+    };
+    eventBus.on(EVENT.SHOW_PROJECT_CONFIG, show);
+    return () => {
+      eventBus.off(EVENT.SHOW_PROJECT_CONFIG, show);
+    };
   }, []);
 
   const editorDidMount = (editorVal: any, monaco: any) => {
@@ -57,6 +50,19 @@ function ProjectSchemaConfig() {
           p: 4,
         }}
       >
+        <IconButton
+          color="primary"
+          sx={{
+            position: 'absolute',
+            top: '8px',
+            right: '16px',
+          }}
+          onClick={() => {
+            setVisible(false);
+          }}
+        >
+          <CloseIcon className="icon" />
+        </IconButton>
         <Stack spacing={2} sx={{ height: '100%' }}>
           <Stack spacing={2} sx={{ flexGrow: 1 }}>
             <div

@@ -1,7 +1,8 @@
 import { Box, Button, Modal, Stack } from '@mui/material';
 import { DEFAULT_CONFIG } from 'models/schema';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
+import { EVENT, eventBus } from './event';
 import { PRIMARY_COLOR2_LIGHT1 } from './style';
 
 const OBJ_JSON = {
@@ -33,13 +34,12 @@ const ARR_JSON = {
 
 const SchemaConfig = ({
   initialValue,
-  close,
   onSubmit,
 }: {
   initialValue: any;
-  close: () => void;
   onSubmit: (value: any) => void;
 }) => {
+  const [visible, setVisible] = useState(false);
   const [config, setConfig] = useState<string>(
     JSON.stringify(initialValue, null, 2)
   );
@@ -215,8 +215,27 @@ const SchemaConfig = ({
     });
   };
 
+  useEffect(() => {
+    const show = () => {
+      setVisible(true);
+    };
+    eventBus.on(EVENT.SHOW_FILE_SCHEMA_CONFIG, show);
+    return () => {
+      eventBus.off(EVENT.SHOW_FILE_SCHEMA_CONFIG, show);
+    };
+  }, []);
+
+  if (!visible) {
+    return null;
+  }
+
   return (
-    <Modal open onClose={close}>
+    <Modal
+      open
+      onClose={() => {
+        setVisible(false);
+      }}
+    >
       <Box
         sx={{
           position: 'absolute',
@@ -256,7 +275,7 @@ const SchemaConfig = ({
               onClick={() => {
                 try {
                   onSubmit(JSON.parse(config));
-                  close();
+                  setVisible(false);
                 } catch (err) {}
               }}
             >
@@ -269,7 +288,7 @@ const SchemaConfig = ({
               }}
               variant="contained"
               onClick={() => {
-                close();
+                setVisible(false);
               }}
               color="secondary"
             >

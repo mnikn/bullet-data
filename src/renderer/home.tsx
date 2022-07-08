@@ -1,4 +1,3 @@
-import CloseIcon from '@mui/icons-material/Close';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
@@ -16,59 +15,41 @@ import {
   Stack,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import {
-  FILE_PATH,
-  PROJECT_PATH,
-  RECENTE_FILE_PATHS,
-  SIDEBAR_VISIBLE,
-} from 'constatnts/storage_key';
-import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
-import throttle from 'lodash/throttle';
-import uniq from 'lodash/uniq';
 import {
   DEFAULT_CONFIG,
   SchemaField,
-  SchemaFieldArray,
-  SchemaFieldBoolean,
-  SchemaFieldNumber,
   SchemaFieldObject,
   SchemaFieldSelect,
-  SchemaFieldString,
-  SchemaFieldType,
-  validateValue,
 } from 'models/schema';
-import {
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useContext, useEffect, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
-import Sidebar from './sidebar';
+import { useLatest } from 'react-use';
 import style from 'styled-components';
-import { generateUUID } from 'utils/uuid';
+import ActionMenu from './action_menu';
 import Confimration from './components/confirmation';
 import { FieldContainer } from './components/field';
-import FieldSelect from './components/field/select_field';
 import Context from './context';
+import { EVENT, eventBus } from './event';
 import FilterPanel from './filter_panel';
 import './home.scss';
+import useDataList from './hooks/use_data_list';
+import useExplorer from './hooks/use_explorer';
+import useFile from './hooks/use_file';
+import useProject from './hooks/use_project';
+import InitPanel from './init_panel';
+import Navbar from './navbar';
 import Preview from './preview';
+import ProjectSchemaConfig from './project_schema_config';
 /* import FilterPanel from './filter_panel'; */
 import SchemaConfig from './schema_config';
+import Sidebar from './sidebar';
 import {
   PRIMARY_COLOR1,
   PRIMARY_COLOR1_LIGHT1,
   PRIMARY_COLOR2,
   SECOND_COLOR1,
 } from './style';
-import useSave from './use_save';
-import { EVENT, eventBus } from './event';
-import ProjectSchemaConfig from './project_schema_config';
-import { DEFAULT_PROJECT_CONFIG } from './constants';
 
 const StyledCard = style.div<{ expand: boolean }>`
   clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
@@ -191,86 +172,6 @@ const getListStyle = (isDraggingOver: boolean) => ({
   width: 250,
 });
 
-function getConfigPath(valuePath: string) {
-  if (!valuePath) {
-    return '';
-  }
-  const p = valuePath.replace(/\\/g, '/').slice(3);
-  const p1 = p.split('.json')[0];
-  const fileName = p1.split('/')[p1.split('/').length - 1];
-  const baseUrl = p1
-    .split('/')
-    .filter((item) => item !== fileName)
-    .join('\\');
-  return (
-    valuePath.substring(0, 3) + baseUrl + '\\' + `.${fileName}.config.bc`
-  );
-}
-
-function buildSchema(json: any): SchemaField {
-  switch (json.type) {
-    case SchemaFieldType.Object: {
-      const instance = new SchemaFieldObject();
-      instance.setup(json.config);
-      instance.fields = Object.keys(json.fields).map((key: string) => {
-        const data: any = {
-          type: json.fields[key].type,
-          config: json.fields[key].config,
-        };
-        if (json.fields[key].type === SchemaFieldType.Array) {
-          data.fieldSchema = json.fields[key].fieldSchema;
-        } else if (json.fields[key].type === SchemaFieldType.Object) {
-          data.fields = json.fields[key].fields;
-        }
-        const subfield = buildSchema(data);
-        return {
-          id: key,
-          name: json.fields[key].name,
-          data: subfield,
-        };
-      });
-      instance.config.defaultValue = instance.configDefaultValue;
-      return instance;
-    }
-    case SchemaFieldType.Array: {
-      const data: any = {
-        type: json.fieldSchema.type,
-        config: json.fieldSchema.config,
-      };
-
-      if (json.fieldSchema.type === SchemaFieldType.Array) {
-        data.fieldSchema = json.fieldSchema.fieldSchema;
-      } else if (json.fieldSchema.type === SchemaFieldType.Object) {
-        data.fields = json.fieldSchema.fields;
-      }
-      const instance = new SchemaFieldArray(buildSchema(data));
-      instance.setup(json.config);
-      return instance;
-    }
-    case SchemaFieldType.String: {
-      const instance = new SchemaFieldString();
-      instance.setup(json.config);
-      return instance;
-    }
-    case SchemaFieldType.Number: {
-      const instance = new SchemaFieldNumber();
-      instance.setup(json.config);
-      return instance;
-    }
-    case SchemaFieldType.Boolean: {
-      const instance = new SchemaFieldBoolean();
-      instance.setup(json.config);
-      return instance;
-    }
-    case SchemaFieldType.Select: {
-      const instance = new SchemaFieldSelect();
-      instance.setup(json.config);
-      return instance;
-    }
-  }
-  return new SchemaFieldObject();
-}
-
 const Item = ({
   schema,
   value,
@@ -387,42 +288,28 @@ const Item = ({
 };
 
 const Home = () => {
-  const [valueList, setActualValueList] = useState<any[]>([]);
-  const [displayValueList, setDisplayValueList] = useState<any[]>([]);
-  const [schemaConfigOpen, setSchemaConfigOpen] = useState(false);
-  const [previewVisible, setPreviewVisible] = useState(false);
+  /* const [valueList, setActualValueList] = useState<any[]>([]);
+   * const [displayValueList, setDisplayValueList] = useState<any[]>([]); */
   const [confirmationVisible, setConfirmationVisbile] = useState(false);
-  const [schemaConfig, setSchemaConfig] = useState<any>(null);
-  const [projectConfig, setProjectConfig] = useState<any>(
-    DEFAULT_PROJECT_CONFIG
-  );
+  /* const [schemaConfig, setSchemaConfig] = useState<any>(null); */
   const [currentLang, setCurrentLang] = useState<string>('');
-  const [schema, setSchema] = useState<SchemaField | null>(null);
+  /* const [schema, setSchema] = useState<SchemaField | null>(null); */
   const [filters, setFilters] = useState<any>({});
   const [i18nSelectionSchema, setI18nSelectionSchema] =
     useState<SchemaFieldSelect | null>(null);
 
+  const { projectFileTree, projectConfig } = useProject();
+  const { currentFile, recentOpenFiles } = useExplorer({ projectFileTree });
+  const { currentFileData, schemaConfig, schema, saving } = useFile({
+    currentFile,
+  });
+  const { actualValueList, displayValueList } = useDataList({
+    currentFile,
+    currentFileData,
+    schema,
+  });
 
-  useEffect(() => {
-    const projectPath = localStorage.getItem(PROJECT_PATH);
-    if (projectPath) {
-      window.electron.ipcRenderer.readJsonFile(
-        {
-          filePath: projectPath,
-          action: 'read-project-config',
-        },
-        (val: any) => {
-          if (val.data) {
-            setProjectConfig(JSON.parse(val.data));
-          }
-        }
-      );
-    }
-  }, []);
-
-  const [headerAnchorEl, setHeaderAnchorEl] = useState<null | HTMLElement>(
-    null
-  );
+  const actualValueListRef = useLatest(actualValueList);
 
   useEffect(() => {
     if (!schemaConfig) {
@@ -441,163 +328,22 @@ const Home = () => {
     setI18nSelectionSchema(i18nSchema);
   }, [schemaConfig]);
 
-  const headerMenuOpen = Boolean(headerAnchorEl);
-  const handleHeaderMenuClose = () => {
-    setHeaderAnchorEl(null);
-  };
-  const [headerMenuActions, setHeaderMenuActions] = useState<
-    { fn: () => void; title: string; shortcut?: string }[]
-  >([]);
-
-  const { saving, save, newFile } = useSave({
-    valueList,
-    schema,
-    schemaConfig,
-  });
-
-  const setValueListRef = useRef(
-    throttle((newValue) => setActualValueList(newValue), 1000)
-  );
-  const setValueList = setValueListRef.current;
-
-  useEffect(() => {
-    const valuePath = localStorage.getItem(FILE_PATH);
-    document.querySelector('title').innerText = `Bullet Data ${
-      valuePath ? '--- ' + valuePath : ''
-    }`;
-    if (valuePath) {
-      const configUrl = getConfigPath(valuePath);
-      if (configUrl) {
-        window.electron.ipcRenderer.readJsonFile(
-          {
-            filePath: configUrl,
-            action: 'read-file-config',
-          },
-          (val) => {
-            if (val.data) {
-              setSchemaConfig(JSON.parse(val.data));
-            } else {
-              setSchemaConfigOpen(true);
-            }
-          }
-        );
-      } else {
-        setSchemaConfig(DEFAULT_SCHEMA_CONFIG);
-      }
-    } else {
-      setSchemaConfig(DEFAULT_SCHEMA_CONFIG);
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!schema) {
-      return;
-    }
-    const valuePath = localStorage.getItem(FILE_PATH);
-    if (!valuePath) {
-      return;
-    }
-
-    window.electron.ipcRenderer.readJsonFile(
-      {
-        filePath: valuePath,
-        action: 'read-data',
-      },
-      (val: any) => {
-        const data = JSON.parse(val.data);
-        const formatData = data.map((item: any) => {
-          return validateValue(item, item, schema, schemaConfig);
-        });
-        const finalData = formatData.map((item: any) => {
-          item[HIDDEN_ID] = generateUUID();
-          return item;
-        }, []);
-        setValueList(finalData);
-        setDisplayValueList(finalData);
-      }
-    );
-  }, [schema, schemaConfig]);
-
-  const onItemChange = (v: any, i: number) => {
-    const ditem = displayValueList.find((_, j) => j === i);
-    setValueList((prev: any) => {
-      return prev.map((item: any) =>
-        item[HIDDEN_ID] === ditem[HIDDEN_ID] ? v : item
-      );
-    });
-    setDisplayValueList((prev: any) => {
-      return prev.map((item: any) =>
-        item[HIDDEN_ID] === ditem[HIDDEN_ID] ? v : item
-      );
-    });
-  };
-  const onItemDelete = (i: number) => {
-    const ditem = displayValueList.find((_, j) => j === i);
-    setValueList((prev: any) => {
-      return prev.filter((item: any) => item[HIDDEN_ID] !== ditem[HIDDEN_ID]);
-    });
-    setDisplayValueList((prev: any) => {
-      return prev.filter((item: any) => item[HIDDEN_ID] !== ditem[HIDDEN_ID]);
-    });
-  };
-  const onItemDuplicate = (i: number) => {
-    setValueList((prev: any) => {
-      const v = cloneDeep(prev[i]);
-      v[HIDDEN_ID] = generateUUID();
-      prev.splice(i, 0, v);
-      return [...prev];
-    });
-  };
-
   const onSchemaConfigSubmit = async (v: any) => {
-    setSchema(null);
-    await save(v);
+    /* setSchema(null); */
+    // await save(v);
     window.location.reload();
   };
-
-  const addItem = useCallback(() => {
-    if (!schema) {
-      return;
-    }
-
-    const newItem = cloneDeep(schema.config.defaultValue);
-    newItem[HIDDEN_ID] = generateUUID();
-    setValueList((prevArr: any) => {
-      return prevArr.concat(newItem);
-    });
-    setDisplayValueList((prevArr: any) => {
-      return prevArr.concat(newItem);
-    });
-  }, [schema]);
-
-  useEffect(() => {
-    if (schemaConfig) {
-      setSchema(buildSchema(schemaConfig.schema));
-      if (schemaConfig.i18n.length > 0) {
-        setCurrentLang(schemaConfig.i18n[0]);
-      }
-    }
-  }, [schemaConfig]);
-
-  useEffect(() => {
-    const showPreview = () => {
-      setPreviewVisible(true);
-    };
-    window.electron.ipcRenderer.on('addItem', addItem);
-    window.electron.ipcRenderer.on('previewFile', showPreview);
-    return () => {
-      window.electron.ipcRenderer.removeListener('addItem', addItem);
-      window.electron.ipcRenderer.removeListener('previewFile', showPreview);
-    };
-  }, [addItem]);
 
   useEffect(() => {
     const onKeyDown = (e: any) => {
       if (e.code === 'KeyS' && e.ctrlKey) {
-        save();
+        eventBus.emit(
+          EVENT.SAVE_FILE,
+          actualValueListRef.current.map((item) => item.data)
+        );
       }
       if (e.code === 'KeyL' && e.ctrlKey) {
-        setPreviewVisible(true);
+        eventBus.emit(EVENT.SHOW_FILE_PREVIEW);
       }
       if (e.code === 'KeyO' && e.ctrlKey) {
         (window as any).electron.ipcRenderer.openFile();
@@ -616,47 +362,48 @@ const Home = () => {
     return () => {
       document.removeEventListener('keydown', onKeyDown);
     };
-  }, [save, schemaConfig]);
+  }, [schemaConfig]);
 
-  useEffect(() => {
-    const onClose = async () => {
-      const valuePath = localStorage.getItem(FILE_PATH);
-      if (valuePath && schema) {
-        const currentFileValue = await window.electron.ipcRenderer.readJsonFile(
-          {
-            filePath: valuePath,
-            action: 'save-value',
-          }
-        );
+  /* useEffect(() => {
+   *   const onClose = async () => {
+   *     const valuePath = localStorage.getItem(FILE_PATH);
+   *     if (valuePath && schema) {
+   *       const currentFileValue = await window.electron.ipcRenderer.readJsonFile(
+   *         {
+   *           filePath: valuePath,
+   *           action: 'save-value',
+   *         }
+   *       );
 
-        const formatData = (JSON.parse(currentFileValue.data) || []).map(
-          (item: any) => {
-            return validateValue(item, item, schema, schemaConfig);
-          }
-        );
+   *       const formatData = (JSON.parse(currentFileValue.data) || []).map(
+   *         (item: any) => {
+   *           return validateValue(item, item, schema, schemaConfig);
+   *         }
+   *       );
 
-        if (
-          JSON.stringify(formatData) !==
-          JSON.stringify(
-            cloneDeep(valueList).map((item) => {
-              item[HIDDEN_ID] = undefined;
-              return item;
-            })
-          )
-        ) {
-          setConfirmationVisbile(true);
-        } else {
-          window.electron.ipcRenderer.close();
-        }
-      } else {
-        setConfirmationVisbile(true);
-      }
-    };
-    window.electron.ipcRenderer.on('close', onClose);
-    return () => {
-      window.electron.ipcRenderer.removeAllListeners('close');
-    };
-  }, [save, schema, schemaConfig, valueList]);
+   *       if (
+   *         JSON.stringify(formatData) !==
+   *         JSON.stringify(
+   *           cloneDeep(valueList).map((item) => {
+   *             item[HIDDEN_ID] = undefined;
+   *             return item;
+   *           })
+   *         )
+   *       ) {
+   *         setConfirmationVisbile(true);
+   *       } else {
+   *         window.electron.ipcRenderer.close();
+   *       }
+   *     } else {
+   *       setConfirmationVisbile(true);
+   *     }
+   *   };
+   *   window.electron.ipcRenderer.on('close', onClose);
+   *   return () => {
+   *     window.electron.ipcRenderer.removeAllListeners('close');
+   *   };
+   * }, [save, schema, schemaConfig, valueList]);
+   */
 
   const onExitConfimration = (confirmation: boolean) => {
     if (confirmation) {
@@ -666,53 +413,53 @@ const Home = () => {
     }
   };
 
-  const onFilterChange = (filterVal: any) => {
-    setFilters(filterVal);
-    setDisplayValueList(
-      valueList.filter((item) => {
-        const needFilter = Object.keys(filterVal).reduce((res, prop) => {
-          if (!res) {
-            return res;
-          }
-          if (!filterVal[prop].value) {
-            return res;
-          }
+  /* const onFilterChange = (filterVal: any) => {
+   *   setFilters(filterVal);
+   *   setDisplayValueList(
+   *     valueList.filter((item) => {
+   *       const needFilter = Object.keys(filterVal).reduce((res, prop) => {
+   *         if (!res) {
+   *           return res;
+   *         }
+   *         if (!filterVal[prop].value) {
+   *           return res;
+   *         }
 
-          if (filterVal[prop].schema instanceof SchemaFieldString) {
-            if (filterVal[prop].filterType === 'include') {
-              return get(item, prop).includes(filterVal[prop].value);
-            } else if (filterVal[prop].filterType === 'exclude') {
-              return !get(item, prop).includes(filterVal[prop].value);
-            } else if (filterVal[prop].filterType === 'equal') {
-              return get(item, prop) === filterVal[prop].value;
-            }
-          } else if (filterVal[prop].schema instanceof SchemaFieldNumber) {
-            if (filterVal[prop].filterType === 'less') {
-              return get(item, prop) > filterVal[prop].value;
-            } else if (filterVal[prop].filterType === 'less_equal') {
-              return get(item, prop) >= filterVal[prop].value;
-            } else if (filterVal[prop].filterType === 'bigger') {
-              return get(item, prop) < filterVal[prop].value;
-            } else if (filterVal[prop].filterType === 'bigger_equal') {
-              return get(item, prop) <= filterVal[prop].value;
-            } else if (filterVal[prop].filterType === 'equal') {
-              return get(item, prop) === filterVal[prop].value;
-            }
-          } else if (filterVal[prop].schema instanceof SchemaFieldSelect) {
-            if (filterVal[prop].filterType === 'exists') {
-              return get(item, prop) === filterVal[prop].value;
-            } else if (filterVal[prop].filterType === 'not_exists') {
-              return get(item, prop) !== filterVal[prop].value;
-            }
-          }
-          return res;
-        }, true);
-        return needFilter;
-      })
-    );
-  };
+   *         if (filterVal[prop].schema instanceof SchemaFieldString) {
+   *           if (filterVal[prop].filterType === 'include') {
+   *             return get(item, prop).includes(filterVal[prop].value);
+   *           } else if (filterVal[prop].filterType === 'exclude') {
+   *             return !get(item, prop).includes(filterVal[prop].value);
+   *           } else if (filterVal[prop].filterType === 'equal') {
+   *             return get(item, prop) === filterVal[prop].value;
+   *           }
+   *         } else if (filterVal[prop].schema instanceof SchemaFieldNumber) {
+   *           if (filterVal[prop].filterType === 'less') {
+   *             return get(item, prop) > filterVal[prop].value;
+   *           } else if (filterVal[prop].filterType === 'less_equal') {
+   *             return get(item, prop) >= filterVal[prop].value;
+   *           } else if (filterVal[prop].filterType === 'bigger') {
+   *             return get(item, prop) < filterVal[prop].value;
+   *           } else if (filterVal[prop].filterType === 'bigger_equal') {
+   *             return get(item, prop) <= filterVal[prop].value;
+   *           } else if (filterVal[prop].filterType === 'equal') {
+   *             return get(item, prop) === filterVal[prop].value;
+   *           }
+   *         } else if (filterVal[prop].schema instanceof SchemaFieldSelect) {
+   *           if (filterVal[prop].filterType === 'exists') {
+   *             return get(item, prop) === filterVal[prop].value;
+   *           } else if (filterVal[prop].filterType === 'not_exists') {
+   *             return get(item, prop) !== filterVal[prop].value;
+   *           }
+   *         }
+   *         return res;
+   *       }, true);
+   *       return needFilter;
+   *     })
+   *   );
+   * }; */
 
-  if (!schema && !schemaConfigOpen) {
+  if (!projectFileTree) {
     return (
       <CircularProgress
         sx={{
@@ -733,6 +480,10 @@ const Home = () => {
         schemaConfig,
         schema,
         projectConfig,
+        projectFileTree,
+        currentFile,
+        recentOpenFiles,
+        actualValueList,
       }}
     >
       <>
@@ -743,7 +494,8 @@ const Home = () => {
           style={{
             backgroundColor: '#464D54',
             height: '100%',
-            paddingBottom: '20px',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <CssBaseline enableColorScheme />
@@ -791,11 +543,13 @@ const Home = () => {
               </Stack>
             </StyledAlert>
           )}
+
+          <ActionMenu />
+
           <Stack
-            spacing={2}
             direction="row"
             sx={{
-              height: '100%',
+              flexGrow: 1,
             }}
           >
             <Sidebar />
@@ -805,123 +559,7 @@ const Home = () => {
                 flexGrow: 1,
               }}
             >
-              <Stack
-                spacing={2}
-                direction="row"
-                sx={{
-                  // position: 'sticky',
-                  // top: 0,
-                  // zIndex: 2,
-                  // background: 'rgb(70, 77, 84)',
-                  padding: '20px',
-                }}
-              >
-                <Stack
-                  spacing={4}
-                  direction="row"
-                  sx={{ flexGrow: 1, paddingLeft: '40px' }}
-                >
-                  <Button
-                    sx={{
-                      width: '120px',
-                      borderRadius: '0px',
-                      clipPath:
-                        'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
-                    }}
-                    variant="contained"
-                    onClick={(e) => {
-                      setHeaderAnchorEl(e.currentTarget);
-                      setHeaderMenuActions([
-                        {
-                          title: 'New Project',
-                          fn: () => {
-                            save();
-                            localStorage.removeItem(FILE_PATH);
-                            localStorage.removeItem(PROJECT_PATH);
-                            window.location.reload();
-                          },
-                        },
-                        {
-                          title: 'New File',
-                          fn: () => {
-                            newFile();
-                          },
-                        },
-                        {
-                          title: 'Open...',
-                          shortcut: 'Ctrl+O',
-                          fn: () => {
-                            (window as any).electron.ipcrenderer.openfile();
-                          },
-                        },
-                        {
-                          title: 'Save',
-                          shortcut: 'Ctrl+S',
-                          fn: () => {
-                            save();
-                          },
-                        },
-                        {
-                          title: 'Preview',
-                          shortcut: 'Ctrl+L',
-                          fn: () => {
-                            setPreviewVisible(true);
-                          },
-                        },
-                      ]);
-                    }}
-                  >
-                    File
-                  </Button>
-                  <Button
-                    sx={{
-                      width: '120px',
-                      borderRadius: '0px',
-                      clipPath:
-                        'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
-                    }}
-                    variant="contained"
-                    onClick={(e) => {
-                      setHeaderAnchorEl(e.currentTarget);
-                      setHeaderMenuActions([
-                        {
-                          title: 'Toogle sidebar',
-                          fn: () => {
-                            eventBus.emit(EVENT.TOGGLE_SIDEBAR);
-                          },
-                        },
-                      ]);
-                    }}
-                  >
-                    View
-                  </Button>
-                </Stack>
-                <Stack direction="row" spacing={2} sx={{ marginLeft: 'auto' }}>
-                  {schemaConfig.i18n.length > 0 && i18nSelectionSchema && (
-                    <FieldSelect
-                      schema={i18nSelectionSchema}
-                      value={currentLang}
-                      onValueChange={(v) => {
-                        setCurrentLang(v);
-                      }}
-                    />
-                  )}
-                  <Button
-                    sx={{
-                      width: '240px',
-                      borderRadius: '0px',
-                      clipPath:
-                        'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
-                    }}
-                    variant="contained"
-                    onClick={() => {
-                      setSchemaConfigOpen(true);
-                    }}
-                  >
-                    Schema Config
-                  </Button>
-                </Stack>
-              </Stack>
+              <Navbar />
 
               <DragDropContext
                 onDragEnd={(result: any) => {
@@ -951,9 +589,12 @@ const Home = () => {
                       }}
                     >
                       {displayValueList.map((item, i) => {
-                        const key = String(item[HIDDEN_ID]);
                         return (
-                          <Draggable key={key} draggableId={key} index={i}>
+                          <Draggable
+                            key={item.key}
+                            draggableId={item.key}
+                            index={i}
+                          >
                             {(provided, snapshot) => (
                               <div
                                 ref={provided.innerRef}
@@ -983,14 +624,27 @@ const Home = () => {
                                   </span>
                                   <Item
                                     sx={{ flexGrow: 1 }}
-                                    key={key}
+                                    key={item.key}
                                     index={i + 1}
                                     schema={schema}
                                     schemaConfig={schemaConfig}
-                                    value={displayValueList[i]}
-                                    onValueChange={(v) => onItemChange(v, i)}
-                                    onDuplicate={() => onItemDuplicate(i)}
-                                    onDelete={() => onItemDelete(i)}
+                                    value={displayValueList[i].data}
+                                    onValueChange={(v) => {
+                                      eventBus.emit(
+                                        EVENT.DATA_ITEM_CHANGED,
+                                        v,
+                                        i
+                                      );
+                                    }}
+                                    onDuplicate={() => {
+                                      eventBus.emit(
+                                        EVENT.DATA_ITEM_DUPLICATED,
+                                        i
+                                      );
+                                    }}
+                                    onDelete={() => {
+                                      eventBus.emit(EVENT.DATA_ITEM_DELETE, i);
+                                    }}
                                   />
                                 </Stack>
                               </div>
@@ -1013,34 +667,22 @@ const Home = () => {
                   marginRight: 'auto!important',
                 }}
                 variant="contained"
-                onClick={addItem}
+                onClick={() => {
+                  eventBus.emit(EVENT.DATA_ITEM_ADD);
+                }}
               >
                 Add Item
               </Button>
             </Stack>
           </Stack>
 
-          {schemaConfigOpen && (
-            <SchemaConfig
-              initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
-              onSubmit={onSchemaConfigSubmit}
-              close={() => {
-                setSchemaConfigOpen(false);
-              }}
-            />
-          )}
+          <SchemaConfig
+            initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
+            onSubmit={onSchemaConfigSubmit}
+          />
+          <InitPanel />
+          <Preview />
           <ProjectSchemaConfig />
-          {previewVisible && (
-            <Preview
-              valueList={cloneDeep(valueList).map((item) => {
-                item[HIDDEN_ID] = undefined;
-                return item;
-              })}
-              close={() => {
-                setPreviewVisible(false);
-              }}
-            />
-          )}
           {confirmationVisible && (
             <Confimration
               close={() => {
@@ -1050,41 +692,6 @@ const Home = () => {
             />
           )}
         </div>
-        <Menu
-          id="header-menu"
-          anchorEl={headerAnchorEl}
-          open={headerMenuOpen}
-          onClose={handleHeaderMenuClose}
-          MenuListProps={{
-            'aria-labelledby': 'basic-button',
-          }}
-          sx={{
-            '& .MuiPaper-root': {
-              backgroundColor: PRIMARY_COLOR1,
-              width: '150px',
-              marginTop: 2,
-              borderRadius: '32px',
-            },
-          }}
-        >
-          {headerMenuActions.map((m) => {
-            return (
-              <MenuItem
-                sx={{ display: 'flex', justifyContent: 'center' }}
-                onClick={() => {
-                  setHeaderAnchorEl(null);
-                  m.fn();
-                }}
-              >
-                {m.title}
-
-                {m.shortcut && (
-                  <span style={{ color: '#80868C' }}>( {m.shortcut} )</span>
-                )}
-              </MenuItem>
-            );
-          })}
-        </Menu>
       </>
     </Context.Provider>
   );

@@ -30,6 +30,7 @@ import { useContext, useEffect, useRef, useState } from 'react';
 import { generateUUID } from 'utils/uuid';
 import CollapseCard from './components/collapse_card';
 import Context from './context';
+import useListWithKey from './hooks/utils/use_list_with_key';
 import FieldNumber from './number_field';
 
 export const FieldContainer = ({
@@ -184,70 +185,67 @@ export const FieldArray = ({
   value: any[];
   onValueChange?: (value: any) => void;
 }) => {
-  const [list, setList] = useState<any[]>(
-    value.map((item) => {
-      return {
-        id: generateUUID(),
-        value: item,
-      };
-    })
-  );
+  /* const [list, setList] = useState<any[]>(
+   *   value.map((item) => {
+   *     return {
+   *       id: generateUUID(),
+   *       value: item,
+   *     };
+   *   })
+   * );
+   */
+  const [list, { push, removeAt, updateAt, set }] = useListWithKey(value);
 
   const addItem = () => {
-    setList((prev) => {
-      return prev.concat({
-        id: generateUUID(),
-        value: schema.fieldSchema.config.defaultValue,
-      });
-    });
+    push(schema.fieldSchema.config.defaultValue);
   };
 
   const moveUpItem = (sourceIndex: number) => {
-    setList((prev) => {
-      const targetIndex = Math.max(sourceIndex - 1, 0);
-      return prev.map((item, j) => {
-        if (j === sourceIndex) {
-          return prev[targetIndex];
-        }
-        if (j === targetIndex) {
-          return prev[sourceIndex];
-        }
-        return item;
-      }, []);
-    });
+    const targetIndex = Math.max(sourceIndex - 1, 0);
+    const newList = list.map((item, j) => {
+      if (j === sourceIndex) {
+        return list[targetIndex];
+      }
+      if (j === targetIndex) {
+        return list[sourceIndex];
+      }
+      return item;
+    }, []);
+    set(newList);
   };
   const moveDownItem = (sourceIndex: number) => {
-    setList((prev) => {
-      const targetIndex = Math.min(sourceIndex + 1, prev.length - 1);
-      return prev.map((item, j) => {
-        if (j === sourceIndex) {
-          return prev[targetIndex];
-        }
-        if (j === targetIndex) {
-          return prev[sourceIndex];
-        }
-        return item;
-      }, []);
-    });
+    const targetIndex = Math.min(sourceIndex + 1, prev.length - 1);
+    const newList = list.map((item, j) => {
+      if (j === sourceIndex) {
+        return list[targetIndex];
+      }
+      if (j === targetIndex) {
+        return list[sourceIndex];
+      }
+      return item;
+    }, []);
+    set(newList);
   };
   const deleteItem = (i: number) => {
-    setList((prev) => {
-      return prev.filter((_, j) => j !== i);
-    });
+    removeAt(i);
+    /* setList((prev) => {
+     *   return prev.filter((_, j) => j !== i);
+     * }); */
   };
 
   useEffect(() => {
     if (onValueChange) {
-      onValueChange(list.map((item) => item.value));
+      onValueChange(list.map((item) => item.data));
     }
   }, [list]);
 
   const onItemChange = (v: any, i: number) => {
-    setList((prev) => {
-      return prev.map((item, j) =>
-        j === i ? { id: item.id, value: v } : item
-      );
-    });
+    updateAt(v, i);
+    /* setList((prev) => {
+     *   return prev.map((item, j) =>
+     *     j === i ? { id: item.id, value: v } : item
+     *   );
+     * }); */
   };
 
   return (

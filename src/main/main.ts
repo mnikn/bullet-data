@@ -99,6 +99,42 @@ ipcMain.on('saveFileDialog', async (event, arg) => {
   }
 });
 
+ipcMain.on('saveFile', async (event, arg) => {
+  const path = arg.path;
+  if (path) {
+    fs.writeFileSync(path, arg.data);
+    const data = {
+      res: { path },
+      arg: { action: arg?.action },
+    };
+    event.reply('saveFile', data);
+  }
+});
+
+ipcMain.on('deleteFile', async (event, arg) => {
+  const path = arg.path;
+  if (path) {
+    fs.rmSync(path);
+    const data = {
+      res: { path },
+      arg: { action: arg?.action },
+    };
+    event.reply('deleteFile', data);
+  }
+});
+
+ipcMain.on('renameFile', async (event, arg) => {
+  const sourcePath = arg.sourcePath;
+  if (sourcePath) {
+    fs.renameSync(sourcePath, arg.targetPath);
+    const data = {
+      res: {},
+      arg: { action: arg?.action },
+    };
+    event.reply('renameFile', data);
+  }
+});
+
 ipcMain.on('addRecentFile', async (event, arg) => {
   app.addRecentDocument(arg.newFilePath);
   fs.writeFileSync(

@@ -12,3 +12,17 @@ export const DEFAULT_PROJECT_CONFIG = {
   ],
   translation_file_path: './translations.csv',
 };
+
+export const DEFAULT_SCHEMA_CONFIG = {
+  i18n: [],
+  filters: [],
+  schema: {
+    type: 'object',
+    fields: {},
+    config: {
+      ...DEFAULT_CONFIG.OBJECT,
+      initialExpand: false,
+      summary: '#{{___index}}',
+    },
+  },
+};

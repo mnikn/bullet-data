@@ -1,17 +1,38 @@
 import { Box, Button, Modal, Stack } from '@mui/material';
+import { useContext, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
+import Context from 'renderer/context';
+import { EVENT, eventBus } from './event';
 import { PRIMARY_COLOR2_LIGHT1 } from './style';
 
-const Preview = ({
-  valueList,
-  close,
-}: {
-  valueList: any;
-  close: () => void;
-}) => {
-  const content = JSON.stringify(valueList, null, 2);
+const Preview = () => {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const show = () => {
+      setVisible(true);
+    };
+    eventBus.on(EVENT.SHOW_FILE_PREVIEW, show);
+    return () => {
+      eventBus.off(EVENT.SHOW_FILE_PREVIEW, show);
+    };
+  }, []);
+  const { actualValueList } = useContext(Context);
+  const content = JSON.stringify(
+    actualValueList.map((item) => item.data),
+    null,
+    2
+  );
+
+  if (!visible) {
+    return null;
+  }
   return (
-    <Modal open onClose={close}>
+    <Modal
+      open
+      onClose={() => {
+        setVisible(false);
+      }}
+    >
       <Box
         sx={{
           position: 'absolute',
@@ -52,7 +73,7 @@ const Preview = ({
               variant="contained"
               color="secondary"
               onClick={() => {
-                close();
+                setVisible(false);
               }}
             >
               Close

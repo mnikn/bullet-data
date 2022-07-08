@@ -89,12 +89,12 @@ const useSave = ({ valueList, schema, schemaConfig }) => {
       window.location.reload();
     };
     window.electron.ipcRenderer.on('saveFile', save);
-    window.electron.ipcRenderer.on('openFile', onOpenFile);
+    // window.electron.ipcRenderer.on('openFile', onOpenFile);
     window.electron.ipcRenderer.on('newFile', onNewFile);
 
     return () => {
       window.electron.ipcRenderer.removeAllListeners('saveFile');
-      window.electron.ipcRenderer.removeAllListeners('openFile');
+      // window.electron.ipcRenderer.removeAllListeners('openFile');
       window.electron.ipcRenderer.removeAllListeners('newFile');
     };
   }, [save]);
