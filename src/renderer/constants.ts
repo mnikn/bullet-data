@@ -10,7 +10,6 @@ export const DEFAULT_PROJECT_CONFIG = {
       },
     },
   ],
-  translation_file_path: './translations.csv',
 };
 
 export const DEFAULT_SCHEMA_CONFIG = {

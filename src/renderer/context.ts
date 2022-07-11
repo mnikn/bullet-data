@@ -10,6 +10,7 @@ export default createContext<{
   schema: SchemaField | null;
   projectConfig: any;
   projectFileTree: (FileTreeFile | FileTreeFolder)[] | null;
+  projectTranslations: any;
   currentFile: FileTreeFile | null;
   recentOpenFiles: FileTreeFile[];
   actualValueList: any[];
@@ -20,6 +21,7 @@ export default createContext<{
   schema: null,
   projectConfig: DEFAULT_PROJECT_CONFIG,
   projectFileTree: null,
+  projectTranslations: {},
   currentFile: null,
   recentOpenFiles: [],
   actualValueList: [],

@@ -12,6 +12,8 @@ import {
 } from '../../style';
 import classNames from 'classnames';
 import MonacoEditor from 'react-monaco-editor';
+import { EVENT, eventBus } from 'renderer/event';
+import { get } from 'lodash';
 
 const StyledTextField = styled.div`
   @keyframes moveup {
@@ -128,24 +130,22 @@ function MyTextField({
   onValueChange?: (value: any) => void;
 }) {
   const [focus, setFocus] = useState(false);
-  const { currentLang, schemaConfig } = useContext(Context);
+  const { currentLang, schemaConfig, projectTranslations, projectConfig } =
+    useContext(Context);
+
   const [contentValue, setContentValue] = useState(
-    schemaConfig.i18n.length > 0 && schema.config.needI18n
-      ? value
-        ? value[currentLang]
-        : ''
-      : value || ''
+    schema.config.needI18n
+      ? projectTranslations[value]?.[currentLang] || ''
+      : value
   );
 
   useEffect(() => {
     setContentValue(
-      schemaConfig.i18n.length > 0 && schema.config.needI18n
-        ? value
-          ? value[currentLang] || ''
-          : ''
-        : value || ''
+      schema.config.needI18n
+        ? projectTranslations[value]?.[currentLang] || ''
+        : value
     );
-  }, [currentLang]);
+  }, [currentLang, projectTranslations, value]);
 
   const [errorText, setErrorText] = useState<string | null>(null);
   const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,11 +177,21 @@ function MyTextField({
     }
     setErrorText(null);
     if (onValueChange) {
-      onValueChange(
-        schema.config.needI18n
-          ? { ...value, [currentLang]: textValue }
-          : textValue
-      );
+      if (!schema.config.needI18n) {
+        onValueChange(textValue);
+      }
+    }
+
+    const termKey = value;
+    if (schema.config.needI18n) {
+      const newTermContent =
+        projectTranslations[termKey] ||
+        projectConfig.i18n.reduce((r, k) => {
+          r[k] = '';
+          return r;
+        }, {});
+      newTermContent[currentLang] = textValue;
+      eventBus.emit(EVENT.UPDATE_TRANSLATION, termKey, newTermContent);
     }
   };
 

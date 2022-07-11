@@ -2,7 +2,9 @@ import { FILE_PATH, PROJECT_PATH } from 'constatnts/storage_key';
 import { useCallback, useEffect, useState } from 'react';
 import { DEFAULT_PROJECT_CONFIG } from 'renderer/constants';
 import { EVENT, eventBus } from 'renderer/event';
-import { getBaseUrl } from 'renderer/utils/file';
+import { getBaseUrl, getProjectBaseUrl } from 'renderer/utils/file';
+import { parse } from 'json2csv';
+import csv from 'csvtojson';
 
 export interface FileTreeFolder {
   type: 'folder';
@@ -25,6 +27,10 @@ function useProject() {
   const [projectConfig, setProjectConfig] = useState<any>(
     DEFAULT_PROJECT_CONFIG
   );
+
+  const [currentLang, setCurrentLang] = useState<string>('');
+
+  const [projectTranslations, setProjectTranslations] = useState<any>({});
 
   useEffect(() => {
     const onRefresh = () => {
@@ -127,23 +133,96 @@ function useProject() {
   }, []);
 
   useEffect(() => {
+    const updateProjectTranslations = (key: string, term: any) => {
+      setProjectTranslations((prev: any) => {
+        return {
+          ...prev,
+          [key]: term,
+        };
+      });
+    };
+    eventBus.on(EVENT.UPDATE_TRANSLATION, updateProjectTranslations);
+    return () => {
+      eventBus.off(EVENT.UPDATE_TRANSLATION, updateProjectTranslations);
+    };
+  }, [projectConfig]);
+
+  useEffect(() => {
     const projectPath = localStorage.getItem(PROJECT_PATH);
     if (projectPath) {
-      window.electron.ipcRenderer.readJsonFile(
-        {
+      window.electron.ipcRenderer
+        .readJsonFile({
           filePath: projectPath,
           action: 'read-project-config',
-        },
-        (val: any) => {
+        })
+        .then((val: any) => {
           if (val.data) {
-            setProjectConfig(JSON.parse(val.data));
+            const v = JSON.parse(val.data);
+            setProjectConfig(v);
+            setCurrentLang(v.i18n[0]);
+
+            window.electron.ipcRenderer
+              .call('readFile', {
+                filePath: getProjectBaseUrl() + '\\' + 'translations.csv',
+              })
+              .then((val2) => {
+                if (!val2.data) {
+                  return;
+                }
+                const translations: any = {};
+                csv({
+                  output: 'csv',
+                })
+                  .fromString(val2.data)
+                  .then((str) => {
+                    str.forEach((s, i) => {
+                      s.forEach((s2, j) => {
+                        if (j === 0) {
+                          translations[s2] = {};
+                        } else {
+                          translations[s[0]][v.i18n[j - 1]] = s2;
+                        }
+                      });
+                    });
+                    setProjectTranslations(translations);
+                  });
+              });
           }
-        }
-      );
+        });
     }
   }, []);
 
-  return { projectFileTree, projectConfig };
+  useEffect(() => {
+    const onSave = () => {
+      const options = { fields: ['__id', ...projectConfig.i18n] };
+
+      const data: any[] = [];
+      Object.keys(projectTranslations).forEach((key) => {
+        data.push({
+          __id: key,
+          ...projectTranslations[key],
+        });
+      });
+      const ff = parse(data, options);
+      window.electron.ipcRenderer.call('writeFile', {
+        filePath: getProjectBaseUrl() + '\\' + 'translations.csv',
+        data: ff,
+      });
+    };
+    eventBus.on(EVENT.SAVE_TRANSLATION, onSave);
+    return () => {
+      eventBus.off(EVENT.SAVE_TRANSLATION, onSave);
+    };
+  }, [projectTranslations, projectConfig]);
+
+  useEffect(() => {
+    eventBus.on(EVENT.SWITCH_LANG, setCurrentLang);
+    return () => {
+      eventBus.off(EVENT.SWITCH_LANG, setCurrentLang);
+    };
+  }, []);
+
+  return { projectTranslations, projectFileTree, projectConfig, currentLang };
 }
 
 export default useProject;

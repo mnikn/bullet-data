@@ -1,3 +1,5 @@
+import { FILE_PATH } from 'constatnts/storage_key';
+import { readFile } from 'fs';
 import { cloneDeep } from 'lodash';
 import {
   SchemaField,
@@ -14,7 +16,7 @@ import {
 import { useEffect, useState } from 'react';
 import { DEFAULT_SCHEMA_CONFIG } from 'renderer/constants';
 import { EVENT, eventBus } from 'renderer/event';
-import { getConfigPath } from 'renderer/utils/file';
+import { getConfigPath, getProjectBaseUrl } from 'renderer/utils/file';
 import { generateUUID } from 'utils/uuid';
 import { FileTreeFile } from './use_project';
 
@@ -213,12 +215,35 @@ function useFile({ currentFile }: { currentFile: FileTreeFile | null }) {
           }, 300);
         }
       }
+      eventBus.emit(EVENT.SAVE_TRANSLATION);
     };
     eventBus.on(EVENT.SAVE_FILE, onSave);
     return () => {
       eventBus.off(EVENT.SAVE_FILE, onSave);
     };
   }, [currentFile, schema, schemaConfig]);
+
+  useEffect(() => {
+    const schemaChanged = async (config: any) => {
+      setSchemaConfig(config);
+      const configPath = getConfigPath(localStorage.getItem(FILE_PATH) || '');
+      if (configPath) {
+        await window.electron.ipcRenderer.writeJsonFile({
+          action: 'save-config-file',
+          filePath: configPath,
+          data: JSON.stringify(config, null, 2),
+        });
+        const newSchema = buildSchema(config.schema);
+        setSchema(newSchema);
+        window.location.reload();
+      }
+      // eventBus.emit(EVENT.SAVE_FILE, currentFileData);
+    };
+    eventBus.on(EVENT.FILE_SCHEMA_CHANGED, schemaChanged);
+    return () => {
+      eventBus.off(EVENT.FILE_SCHEMA_CHANGED, schemaChanged);
+    };
+  }, []);
 
   return {
     schema,

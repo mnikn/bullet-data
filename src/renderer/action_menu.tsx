@@ -1,20 +1,11 @@
 import { Button, Menu, MenuItem, Stack } from '@mui/material';
 import { FILE_PATH, PROJECT_PATH } from 'constatnts/storage_key';
-import { useState } from 'react';
+import { SchemaFieldSelect } from 'models/schema';
+import { useContext, useEffect, useState } from 'react';
+import Context from './context';
 import { EVENT, eventBus } from './event';
+import FieldSelect from './components/field/select_field';
 import { PRIMARY_COLOR1 } from './style';
-
-/* <Stack direction="row" spacing={2} sx={{ marginLeft: 'auto' }}>
- *   {schemaConfig.i18n.length > 0 && i18nSelectionSchema && (
- *     <FieldSelect
- *       schema={i18nSelectionSchema}
- *       value={currentLang}
- *       onValueChange={(v) => {
- *         setCurrentLang(v);
- *       }}
- *     />
- *   )}
- * </Stack> */
 
 function ActionMenu() {
   const [headerAnchorEl, setHeaderAnchorEl] = useState<null | HTMLElement>(
@@ -27,6 +18,27 @@ function ActionMenu() {
   const [headerMenuActions, setHeaderMenuActions] = useState<
     { fn: () => void; title: string; shortcut?: string }[]
   >([]);
+  const [i18nSelectionSchema, setI18nSelectionSchema] =
+    useState<SchemaFieldSelect | null>(null);
+
+  const { projectConfig, currentLang } = useContext(Context);
+
+  useEffect(() => {
+    if (!projectConfig) {
+      return;
+    }
+
+    const i18nSchema = new SchemaFieldSelect();
+    i18nSchema.setup({
+      options: projectConfig.i18n.map((k: any) => {
+        return {
+          label: k,
+          value: k,
+        };
+      }),
+    });
+    setI18nSelectionSchema(i18nSchema);
+  }, [projectConfig]);
 
   return (
     <Stack
@@ -72,7 +84,17 @@ function ActionMenu() {
               },
               {
                 title: 'Open project...',
-                fn: () => {},
+                fn: () => {
+                  window.electron.ipcRenderer
+                    .call('openFile', { extensions: ['bp'] })
+                    .then((res) => {
+                      if (res?.res[0]?.path) {
+                        localStorage.clear();
+                        localStorage.setItem(PROJECT_PATH, res?.res[0]?.path);
+                        window.location.reload();
+                      }
+                    });
+                },
               },
               {
                 title: 'Project settings',
@@ -143,6 +165,22 @@ function ActionMenu() {
         >
           View
         </Button>
+
+        <Stack
+          direction="row"
+          spacing={2}
+          sx={{ marginLeft: 'auto!important' }}
+        >
+          {projectConfig.i18n.length > 0 && i18nSelectionSchema && (
+            <FieldSelect
+              schema={i18nSelectionSchema}
+              value={currentLang}
+              onValueChange={(v) => {
+                eventBus.emit(EVENT.SWITCH_LANG, v);
+              }}
+            />
+          )}
+        </Stack>
       </Stack>
       <Menu
         id="header-menu"

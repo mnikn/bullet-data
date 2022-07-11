@@ -32,18 +32,18 @@ const ARR_JSON = {
   config: DEFAULT_CONFIG.ARRAY_CONFIG_DEFAULT,
 };
 
-const SchemaConfig = ({
-  initialValue,
-  onSubmit,
-}: {
-  initialValue: any;
-  onSubmit: (value: any) => void;
-}) => {
+const SchemaConfig = ({ initialValue }: { initialValue: any }) => {
   const [visible, setVisible] = useState(false);
   const [config, setConfig] = useState<string>(
     JSON.stringify(initialValue, null, 2)
   );
   const [editor, setEditor] = useState<any>(null);
+
+  useEffect(() => {
+    if (initialValue) {
+      setConfig(JSON.stringify(initialValue, null, 2));
+    }
+  }, [initialValue]);
 
   const editorDidMount = (editorVal: any, monaco: any) => {
     setEditor(editorVal);
@@ -272,11 +272,13 @@ const SchemaConfig = ({
                 clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
               }}
               variant="contained"
-              onClick={() => {
+              onClick={async () => {
                 try {
-                  onSubmit(JSON.parse(config));
+                  eventBus.emit(EVENT.FILE_SCHEMA_CHANGED, JSON.parse(config));
                   setVisible(false);
-                } catch (err) {}
+                } catch (err) {
+                  console.error(err);
+                }
               }}
             >
               Confirm

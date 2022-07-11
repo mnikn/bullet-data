@@ -30,6 +30,7 @@ import NumberField from './components/field/number_field';
 import SelectField from './components/field/select_field';
 import Context from './context';
 import { PRIMARY_COLOR1, PRIMARY_COLOR2 } from './style';
+import { EVENT, eventBus } from './event';
 
 function findChildSchema(
   schema: SchemaField | null,
@@ -198,9 +199,7 @@ const FilterPanel = ({
   }, []);
 
   useEffect(() => {
-    if (onFilterChange) {
-      onFilterChange(filterValue);
-    }
+    eventBus.emit(EVENT.FILTER_CHANGED, filterValue);
   }, [filterValue]);
 
   return (

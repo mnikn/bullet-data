@@ -15,6 +15,7 @@ import {
   Stack,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { PROJECT_PATH } from 'constatnts/storage_key';
 import get from 'lodash/get';
 import {
   DEFAULT_CONFIG,
@@ -37,6 +38,7 @@ import useDataList from './hooks/use_data_list';
 import useExplorer from './hooks/use_explorer';
 import useFile from './hooks/use_file';
 import useProject from './hooks/use_project';
+import useShortcut from './hooks/use_shortcut';
 import InitPanel from './init_panel';
 import Navbar from './navbar';
 import Preview from './preview';
@@ -292,13 +294,11 @@ const Home = () => {
    * const [displayValueList, setDisplayValueList] = useState<any[]>([]); */
   const [confirmationVisible, setConfirmationVisbile] = useState(false);
   /* const [schemaConfig, setSchemaConfig] = useState<any>(null); */
-  const [currentLang, setCurrentLang] = useState<string>('');
+  /* const [currentLang, setCurrentLang] = useState<string>(''); */
   /* const [schema, setSchema] = useState<SchemaField | null>(null); */
-  const [filters, setFilters] = useState<any>({});
-  const [i18nSelectionSchema, setI18nSelectionSchema] =
-    useState<SchemaFieldSelect | null>(null);
 
-  const { projectFileTree, projectConfig } = useProject();
+  const { projectFileTree, projectConfig, projectTranslations, currentLang } =
+    useProject();
   const { currentFile, recentOpenFiles } = useExplorer({ projectFileTree });
   const { currentFileData, schemaConfig, schema, saving } = useFile({
     currentFile,
@@ -307,63 +307,35 @@ const Home = () => {
     currentFile,
     currentFileData,
     schema,
+    projectTranslations,
   });
 
-  const actualValueListRef = useLatest(actualValueList);
+  useShortcut({ actualValueList, projectConfig });
 
-  useEffect(() => {
-    if (!schemaConfig) {
-      return;
-    }
+  /* const actualValueListRef = useLatest(actualValueList); */
 
-    const i18nSchema = new SchemaFieldSelect();
-    i18nSchema.setup({
-      options: schemaConfig.i18n.map((k: any) => {
-        return {
-          label: k,
-          value: k,
-        };
-      }),
-    });
-    setI18nSelectionSchema(i18nSchema);
-  }, [schemaConfig]);
+  /* useEffect(() => {
+   *   const onKeyDown = (e: any) => {
+   *     if (e.code === 'KeyS' && e.ctrlKey) {
+   *       eventBus.emit(
+   *         EVENT.SAVE_FILE,
+   *         actualValueListRef.current.map((item) => item.data)
+   *       );
+   *     }
+   *     if (e.code === 'KeyL' && e.ctrlKey) {
+   *       eventBus.emit(EVENT.SHOW_FILE_PREVIEW);
+   *     }
+   *     if (e.code === 'KeyO' && e.ctrlKey) {
+   *       (window as any).electron.ipcRenderer.openFile();
+   *     }
+   *   };
 
-  const onSchemaConfigSubmit = async (v: any) => {
-    /* setSchema(null); */
-    // await save(v);
-    window.location.reload();
-  };
-
-  useEffect(() => {
-    const onKeyDown = (e: any) => {
-      if (e.code === 'KeyS' && e.ctrlKey) {
-        eventBus.emit(
-          EVENT.SAVE_FILE,
-          actualValueListRef.current.map((item) => item.data)
-        );
-      }
-      if (e.code === 'KeyL' && e.ctrlKey) {
-        eventBus.emit(EVENT.SHOW_FILE_PREVIEW);
-      }
-      if (e.code === 'KeyO' && e.ctrlKey) {
-        (window as any).electron.ipcRenderer.openFile();
-      }
-
-      // switch lang shortcut
-      if (e.code.includes('Digit') && e.ctrlKey) {
-        const index = Number(e.code.split('Digit')[1]) - 1;
-        if (index >= 0 && schemaConfig.i18n.length > index) {
-          setCurrentLang(schemaConfig.i18n[index]);
-        }
-      }
-    };
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [schemaConfig]);
-
+   *   document.addEventListener('keydown', onKeyDown);
+   *   return () => {
+   *     document.removeEventListener('keydown', onKeyDown);
+   *   };
+   * }, [schemaConfig]);
+   */
   /* useEffect(() => {
    *   const onClose = async () => {
    *     const valuePath = localStorage.getItem(FILE_PATH);
@@ -413,53 +385,7 @@ const Home = () => {
     }
   };
 
-  /* const onFilterChange = (filterVal: any) => {
-   *   setFilters(filterVal);
-   *   setDisplayValueList(
-   *     valueList.filter((item) => {
-   *       const needFilter = Object.keys(filterVal).reduce((res, prop) => {
-   *         if (!res) {
-   *           return res;
-   *         }
-   *         if (!filterVal[prop].value) {
-   *           return res;
-   *         }
-
-   *         if (filterVal[prop].schema instanceof SchemaFieldString) {
-   *           if (filterVal[prop].filterType === 'include') {
-   *             return get(item, prop).includes(filterVal[prop].value);
-   *           } else if (filterVal[prop].filterType === 'exclude') {
-   *             return !get(item, prop).includes(filterVal[prop].value);
-   *           } else if (filterVal[prop].filterType === 'equal') {
-   *             return get(item, prop) === filterVal[prop].value;
-   *           }
-   *         } else if (filterVal[prop].schema instanceof SchemaFieldNumber) {
-   *           if (filterVal[prop].filterType === 'less') {
-   *             return get(item, prop) > filterVal[prop].value;
-   *           } else if (filterVal[prop].filterType === 'less_equal') {
-   *             return get(item, prop) >= filterVal[prop].value;
-   *           } else if (filterVal[prop].filterType === 'bigger') {
-   *             return get(item, prop) < filterVal[prop].value;
-   *           } else if (filterVal[prop].filterType === 'bigger_equal') {
-   *             return get(item, prop) <= filterVal[prop].value;
-   *           } else if (filterVal[prop].filterType === 'equal') {
-   *             return get(item, prop) === filterVal[prop].value;
-   *           }
-   *         } else if (filterVal[prop].schema instanceof SchemaFieldSelect) {
-   *           if (filterVal[prop].filterType === 'exists') {
-   *             return get(item, prop) === filterVal[prop].value;
-   *           } else if (filterVal[prop].filterType === 'not_exists') {
-   *             return get(item, prop) !== filterVal[prop].value;
-   *           }
-   *         }
-   *         return res;
-   *       }, true);
-   *       return needFilter;
-   *     })
-   *   );
-   * }; */
-
-  if (!projectFileTree) {
+  if (!projectFileTree && localStorage.getItem(PROJECT_PATH)) {
     return (
       <CircularProgress
         sx={{
@@ -476,11 +402,12 @@ const Home = () => {
     <Context.Provider
       value={{
         currentLang,
-        setCurrentLang,
+        setCurrentLang: () => {},
         schemaConfig,
         schema,
         projectConfig,
         projectFileTree,
+        projectTranslations,
         currentFile,
         recentOpenFiles,
         actualValueList,
@@ -488,7 +415,7 @@ const Home = () => {
     >
       <>
         {schemaConfig?.filters && schemaConfig?.filters.length > 0 && (
-          <FilterPanel onFilterChange={onFilterChange} />
+          <FilterPanel />
         )}
         <div
           style={{
@@ -557,15 +484,17 @@ const Home = () => {
               spacing={2}
               sx={{
                 flexGrow: 1,
+                backgroundColor: '#464D54',
               }}
             >
               <Navbar />
 
               <DragDropContext
                 onDragEnd={(result: any) => {
-                  setValueList(
+                  eventBus.emit(
+                    EVENT.DATA_LIST_SET,
                     reorder(
-                      valueList,
+                      actualValueList.map((item) => item.data),
                       result.source.index,
                       result.destination.index
                     )
@@ -676,10 +605,7 @@ const Home = () => {
             </Stack>
           </Stack>
 
-          <SchemaConfig
-            initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
-            onSubmit={onSchemaConfigSubmit}
-          />
+          <SchemaConfig initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG} />
           <InitPanel />
           <Preview />
           <ProjectSchemaConfig />

@@ -17,11 +17,7 @@ export default function App() {
   });
   return (
     <ThemeProvider theme={theme}>
-      <Router>
-        <Routes>
-          <Route path="/" element={<Home />} />
-        </Routes>
-      </Router>
+      <Home />
     </ThemeProvider>
   );
 }

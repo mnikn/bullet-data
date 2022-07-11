@@ -1,14 +1,12 @@
 import { Box, Button, Modal, Stack } from '@mui/material';
 import { PROJECT_PATH } from 'constatnts/storage_key';
-import { useContext, useEffect, useState } from 'react';
-import Context from './context';
-import ProjectSchemaConfig from './project_schema_config';
+import { useState } from 'react';
+import { EVENT, eventBus } from './event';
 import { PRIMARY_COLOR2_LIGHT1 } from './style';
 
 function InitPanel() {
   const [visible] = useState(!localStorage.getItem(PROJECT_PATH));
-  const [projectSchemaConfigVisible, setProjectSchemaConfigVisible] =
-    useState(false);
+  console.log('rr: ', visible);
 
   if (!visible) {
     return null;
@@ -40,7 +38,7 @@ function InitPanel() {
             }}
             variant="contained"
             onClick={() => {
-              setProjectSchemaConfigVisible(true);
+              eventBus.emit(EVENT.SHOW_PROJECT_CONFIG);
             }}
           >
             New Project
@@ -64,13 +62,6 @@ function InitPanel() {
           >
             Open Project...
           </Button>
-          {projectSchemaConfigVisible && (
-            <ProjectSchemaConfig
-              close={() => {
-                setProjectSchemaConfigVisible(false);
-              }}
-            />
-          )}
         </Stack>
       </Box>
     </Modal>

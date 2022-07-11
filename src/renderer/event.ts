@@ -7,19 +7,25 @@ export const EVENT = {
   SHOW_PROJECT_CONFIG: 'show_project_config',
   SHOW_FILE_SCHEMA_CONFIG: 'show_file_schema_config',
   SHOW_FILE_PREVIEW: 'show_file_preview',
+  SWITCH_LANG: 'switch_lang',
+  FILTER_CHANGED: 'filter_changed',
 
   REFRESH_PROJECT_FILE_TREE: 'refresh_project_file_tree',
+  UPDATE_TRANSLATION: 'update_translation',
+  SAVE_TRANSLATION: 'save_translation',
   NEW_FILE: 'new_file',
   SAVE_FILE: 'save_file',
   DELETE_FILE: 'delete_file',
   CLOSE_FILE: 'close_file',
   RENAME_FILE: 'rename_file',
   CHECK_FILE_CHANGED: 'check_file_changed',
+  FILE_SCHEMA_CHANGED: 'file_schema_changed',
 
   DATA_ITEM_CHANGED: 'data_item_changed',
   DATA_ITEM_ADD: 'data_item_add',
   DATA_ITEM_DELETE: 'data_item_delete',
   DATA_ITEM_DUPLICATED: 'data_item_duplicated',
+  DATA_LIST_SET: 'data_list_set',
 };
 
 export const eventBus = new EventEmitter();

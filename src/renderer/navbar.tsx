@@ -1,10 +1,9 @@
-import { IconButton, Stack, Tab, Tabs } from '@mui/material';
-import { useContext, useEffect, useState } from 'react';
-import { FileTreeFile } from './hooks/use_project';
 import CloseIcon from '@mui/icons-material/Close';
+import { IconButton, Tab, Tabs } from '@mui/material';
+import { useContext } from 'react';
 import Context from 'renderer/context';
-import { PRIMARY_COLOR1 } from './style';
 import { EVENT, eventBus } from './event';
+import { PRIMARY_COLOR1 } from './style';
 
 function Navbar() {
   const { currentFile, recentOpenFiles } = useContext(Context);

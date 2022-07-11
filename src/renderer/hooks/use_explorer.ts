@@ -143,10 +143,12 @@ function useExplorer({
             file.fullPath = getProjectBaseUrl() + '\\' + targetPath;
 
             eventBus.emit(EVENT.REFRESH_PROJECT_FILE_TREE);
-            console.log(currentFile?.currentPath, sourcePath);
-            if (currentFile?.currentPath === targetPath) {
-              setCurrentFile(file);
+            if (
+              getProjectBaseUrl() + '\\' + sourcePath ===
+              localStorage.getItem(FILE_PATH)
+            ) {
               localStorage.setItem(FILE_PATH, finalTargetPath);
+              setCurrentFile(file);
             }
           }
         });

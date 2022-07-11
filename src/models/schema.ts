@@ -1,3 +1,5 @@
+import { generateUUID } from 'utils/uuid';
+
 export function validateValue(
   totalObjValue: any,
   value: any,
@@ -59,14 +61,17 @@ export function validateValue(
   }
 
   if (schema.type === SchemaFieldType.String) {
-    if (schema.config.needI18n) {
-      if (typeof value === 'object' && value !== null) {
-        return value;
-      } else {
-        return schemaConfig.i18n.reduce((res, item) => {
-          return { ...res, [item]: schema.config.defaultValue };
-        }, '');
-      }
+    // if (schema.config.needI18n) {
+    //   if (typeof value === 'object' && value !== null) {
+    //     return value;
+    //   } else {
+    //     return schemaConfig.i18n.reduce((res, item) => {
+    //       return { ...res, [item]: schema.config.defaultValue };
+    //     }, '');
+    //   }
+    // }
+    if (schema.config.needI18n && !value) {
+      return generateUUID();
     }
     if (typeof value === 'string') {
       return value;
@@ -267,7 +272,9 @@ export class SchemaFieldObject extends SchemaField {
         return field.config.defaultValue;
       }
       case SchemaFieldType.String: {
-        return field.config.defaultValue;
+        return field.config.needI18n
+          ? generateUUID()
+          : field.config.defaultValue;
       }
       case SchemaFieldType.Number: {
         return field.config.defaultValue;
