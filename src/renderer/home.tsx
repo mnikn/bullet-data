@@ -207,7 +207,7 @@ const Item = ({
     setAnchorEl(null);
   };
 
-  const { currentLang } = useContext(Context);
+  const { currentLang, projectTranslations } = useContext(Context);
   const summary = schema.config.summary.replace(
     /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
     (all: any) => {
@@ -216,8 +216,8 @@ const Item = ({
         return index;
       }
       const v = get(value, item, '');
-      if (typeof v === 'object') {
-        return v[currentLang] || '';
+      if (projectTranslations[v]) {
+        return projectTranslations[v][currentLang] || '';
       }
       return v;
     }
@@ -308,6 +308,8 @@ const Home = () => {
     currentFileData,
     schema,
     projectTranslations,
+    currentLang,
+    projectConfig,
   });
 
   useShortcut({ actualValueList, projectConfig });

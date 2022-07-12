@@ -196,6 +196,7 @@ function useProject() {
     const onSave = () => {
       const options = { fields: ['__id', ...projectConfig.i18n] };
 
+      console.log('vv: ', projectTranslations);
       const data: any[] = [];
       Object.keys(projectTranslations).forEach((key) => {
         data.push({

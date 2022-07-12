@@ -202,7 +202,7 @@ export const FieldArray = ({
       };
     })
   );
-  const { currentLang } = useContext(Context);
+  const { currentLang, projectTranslations } = useContext(Context);
 
   const addItem = () => {
     setList((prev) => {
@@ -283,7 +283,7 @@ export const FieldArray = ({
                   if (schema.fieldSchema.type !== 'object') {
                     return schema.fieldSchema.type === 'string' &&
                       schema.fieldSchema.config.needI18n
-                      ? item.value[currentLang]
+                      ? projectTranslations[item.value][currentLang]
                       : item.value;
                   } else {
                     const wpath = word.split('.').splice(1).join('.');

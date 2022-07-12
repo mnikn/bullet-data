@@ -1,5 +1,43 @@
 import { generateUUID } from 'utils/uuid';
 
+export function findChildSchema(
+  schema: SchemaField | null,
+  prop: string
+): SchemaField | null {
+  if (schema instanceof SchemaFieldObject) {
+    const propArr = prop.split('.');
+
+    const directChild = schema.fields.find((f) => {
+      return f.id === propArr[0];
+    });
+    if (directChild) {
+      return findChildSchema(directChild.data, prop);
+    } else {
+      return null;
+    }
+  } else if (schema instanceof SchemaFieldArray) {
+    return schema.fieldSchema;
+  } else {
+    return schema;
+  }
+}
+
+export function iterSchema(
+  schema: SchemaField | null,
+  fn: (item: SchemaField, path: string) => void,
+  path = ''
+) {
+  if (!schema) {
+    return;
+  }
+  fn(schema, path);
+  if (schema instanceof SchemaFieldObject) {
+    schema.fields.forEach((f) => {
+      iterSchema(f.data, fn, f.name);
+    });
+  }
+}
+
 export function validateValue(
   totalObjValue: any,
   value: any,

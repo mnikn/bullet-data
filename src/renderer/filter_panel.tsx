@@ -123,7 +123,7 @@ const FilterPanel = ({
         let fieldSchema = null;
         let filterSchema = null;
         if (originSchema) {
-          if (originSchema.type === 'string') {
+          if (originSchema instanceof SchemaFieldString) {
             fieldSchema = new SchemaFieldString();
             filterSchema = new SchemaFieldSelect();
             filterSchema.setup({
@@ -196,7 +196,7 @@ const FilterPanel = ({
         };
       })
     );
-  }, []);
+  }, [schemaConfig, schema]);
 
   useEffect(() => {
     eventBus.emit(EVENT.FILTER_CHANGED, filterValue);
@@ -206,7 +206,8 @@ const FilterPanel = ({
     <div
       style={{
         position: 'fixed',
-        width: '100%',
+        left: '50%',
+        transform: 'translateX(-50%)',
         zIndex: 5,
       }}
     >
@@ -220,6 +221,7 @@ const FilterPanel = ({
             padding: '30px',
             paddingLeft: '5%',
             paddingRight: '5%',
+            width: '800px',
             background: PRIMARY_COLOR2,
             color: PRIMARY_COLOR1,
           }}

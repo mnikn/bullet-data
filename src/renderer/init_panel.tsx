@@ -6,7 +6,6 @@ import { PRIMARY_COLOR2_LIGHT1 } from './style';
 
 function InitPanel() {
   const [visible] = useState(!localStorage.getItem(PROJECT_PATH));
-  console.log('rr: ', visible);
 
   if (!visible) {
     return null;

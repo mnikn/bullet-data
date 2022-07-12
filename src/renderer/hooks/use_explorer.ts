@@ -29,40 +29,45 @@ function useExplorer({
       const newFile: FileTreeFile = {
         fullPath:
           getProjectBaseUrl() + '\\' + (path ? `${path}\\` : '') + fileName,
-        currentPath: path ? path + '\\' + fileName : '__utiled',
+        currentPath: (path ? `${path}\\` : '') + fileName,
         partName: fileName,
         type: 'file',
       };
       setRecentOpenFiles((prev2) => prev2.concat(newFile));
 
-      if (path && projectFileTree) {
-        const folder = findFolderInTree(
+      let folder: FileTreeFolder | null = null;
+      if (path) {
+        folder = findFolderInTree(
           {
             currentPath: '',
             partName: '',
-            children: projectFileTree,
+            children: projectFileTree || [],
             type: 'folder',
           },
           path
         );
-        if (folder) {
-          folder.children.push(newFile);
-          window.electron.ipcRenderer
-            .call('saveFile', {
-              path: newFile.fullPath,
-              data: '[]',
-            })
-            .then(() => {
-              return window.electron.ipcRenderer.call('saveFile', {
-                path: getConfigPath(newFile.fullPath as string),
-                data: JSON.stringify(DEFAULT_SCHEMA_CONFIG, null, 2),
-              });
-            })
-            .then(() => {
-              eventBus.emit(EVENT.REFRESH_PROJECT_FILE_TREE);
-            });
+      }
+      if (folder) {
+        folder.children.push(newFile);
+      } else {
+        if (projectFileTree) {
+          projectFileTree?.push(newFile);
         }
       }
+      window.electron.ipcRenderer
+        .call('saveFile', {
+          path: newFile.fullPath,
+          data: '[]',
+        })
+        .then(() => {
+          return window.electron.ipcRenderer.call('saveFile', {
+            path: getConfigPath(newFile.fullPath as string),
+            data: JSON.stringify(DEFAULT_SCHEMA_CONFIG, null, 2),
+          });
+        })
+        .then(() => {
+          eventBus.emit(EVENT.REFRESH_PROJECT_FILE_TREE);
+        });
     };
 
     const deleteFile = (path: string) => {

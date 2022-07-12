@@ -1,11 +1,12 @@
 import { add, cloneDeep, get } from 'lodash';
 import {
+  iterSchema,
   SchemaField,
   SchemaFieldNumber,
   SchemaFieldSelect,
   SchemaFieldString,
 } from 'models/schema';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLatest } from 'react-use';
 import { EVENT, eventBus } from 'renderer/event';
 import { iterObject } from 'utils/object';
@@ -20,11 +21,15 @@ function useDataList({
   currentFileData,
   schema,
   projectTranslations,
+  projectConfig,
+  currentLang,
 }: {
   currentFile: FileTreeFile | null;
   currentFileData: any[];
   schema: SchemaField | null;
   projectTranslations: any;
+  projectConfig: any;
+  currentLang: string;
 }) {
   const [
     actualValueList,
@@ -38,52 +43,64 @@ function useDataList({
   ] = useListWithKey<any>(currentFileData);
   const currentFileRef = useLatest(currentFile);
   const actualValueListRef = useLatest(actualValueList);
+  const projectTranslationsRef = useLatest(projectTranslations);
   const [filters, setFilters] = useState<any>({});
 
-  const displayValueList = useMemo(() => {
-    return (actualValueList || []).filter((v) => {
-      const filterVal = filters;
-      const item = v.data;
-      const needFilter = Object.keys(filterVal).reduce((res, prop) => {
-        if (!res) {
-          return res;
-        }
-        if (!filterVal[prop].value) {
-          return res;
-        }
+  const [displayValueList, setDisplayValueList] =
+    useState<any[]>(actualValueList);
+  const displayValueListRef = useLatest(displayValueList);
+  const projectConfigRef = useLatest(projectConfig);
 
-        if (filterVal[prop].schema instanceof SchemaFieldString) {
-          if (filterVal[prop].filterType === 'include') {
-            return get(item, prop).includes(filterVal[prop].value);
-          } else if (filterVal[prop].filterType === 'exclude') {
-            return !get(item, prop).includes(filterVal[prop].value);
-          } else if (filterVal[prop].filterType === 'equal') {
-            return get(item, prop) === filterVal[prop].value;
+  useEffect(() => {
+    setDisplayValueList(
+      (actualValueListRef.current || []).filter((v) => {
+        const filterVal = filters;
+        const item = v.data;
+        const needFilter = Object.keys(filterVal).reduce((res, prop) => {
+          if (!res) {
+            return res;
           }
-        } else if (filterVal[prop].schema instanceof SchemaFieldNumber) {
-          if (filterVal[prop].filterType === 'less') {
-            return get(item, prop) > filterVal[prop].value;
-          } else if (filterVal[prop].filterType === 'less_equal') {
-            return get(item, prop) >= filterVal[prop].value;
-          } else if (filterVal[prop].filterType === 'bigger') {
-            return get(item, prop) < filterVal[prop].value;
-          } else if (filterVal[prop].filterType === 'bigger_equal') {
-            return get(item, prop) <= filterVal[prop].value;
-          } else if (filterVal[prop].filterType === 'equal') {
-            return get(item, prop) === filterVal[prop].value;
+          if (!filterVal[prop].value) {
+            return res;
           }
-        } else if (filterVal[prop].schema instanceof SchemaFieldSelect) {
-          if (filterVal[prop].filterType === 'exists') {
-            return get(item, prop) === filterVal[prop].value;
-          } else if (filterVal[prop].filterType === 'not_exists') {
-            return get(item, prop) !== filterVal[prop].value;
+          if (filterVal[prop].schema instanceof SchemaFieldString) {
+            let value = get(item, prop);
+            console.log(filterVal[prop].schema, filterVal);
+            if (projectTranslationsRef.current[value]) {
+              value = projectTranslationsRef.current[value][currentLang];
+            }
+            if (filterVal[prop].filterType === 'include') {
+              return value.includes(filterVal[prop].value);
+            } else if (filterVal[prop].filterType === 'exclude') {
+              return !value.includes(filterVal[prop].value);
+            } else if (filterVal[prop].filterType === 'equal') {
+              return value === filterVal[prop].value;
+            }
+          } else if (filterVal[prop].schema instanceof SchemaFieldNumber) {
+            if (filterVal[prop].filterType === 'less') {
+              return get(item, prop) > filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'less_equal') {
+              return get(item, prop) >= filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'bigger') {
+              return get(item, prop) < filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'bigger_equal') {
+              return get(item, prop) <= filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'equal') {
+              return get(item, prop) === filterVal[prop].value;
+            }
+          } else if (filterVal[prop].schema instanceof SchemaFieldSelect) {
+            if (filterVal[prop].filterType === 'exists') {
+              return get(item, prop) === filterVal[prop].value;
+            } else if (filterVal[prop].filterType === 'not_exists') {
+              return get(item, prop) !== filterVal[prop].value;
+            }
           }
-        }
-        return res;
-      }, true);
-      return needFilter;
-    });
-  }, [filters]);
+          return res;
+        }, true);
+        return needFilter;
+      })
+    );
+  }, [filters, currentLang]);
 
   useEffect(() => {
     if (
@@ -91,16 +108,34 @@ function useDataList({
       cacheFileDataList[currentFileRef.current.fullPath]
     ) {
       setActualValueList(cacheFileDataList[currentFileRef.current.fullPath]);
+      setFilters((prev) => ({ ...prev }));
       return;
     }
     setActualValueList(currentFileData);
-    setFilters({});
+    setFilters((prev) => ({ ...prev }));
   }, [currentFileData, setActualValueList]);
 
   useEffect(() => {
     const onChanged = (d: any, index: number) => {
-      updateActualValueList(index, d);
-      setFilters((prev) => ({ ...prev }));
+      // updateActualValueList(index, d);
+
+      let changeItem: any = null;
+      setDisplayValueList((prev) => {
+        changeItem = prev[index];
+        return prev.map((item, j) =>
+          j === index ? { key: item.key, data: d } : item
+        );
+      });
+
+      if (changeItem) {
+        updateActualValueList(
+          actualValueListRef.current.findIndex(
+            (item) => item.key === changeItem.key
+          ),
+          d
+        );
+      }
+      // setFilters((prev) => ({ ...prev }));
     };
     eventBus.on(EVENT.DATA_ITEM_CHANGED, onChanged);
     return () => {
@@ -114,6 +149,21 @@ function useDataList({
         return;
       }
       const newItem = cloneDeep(schema.config.defaultValue);
+      iterSchema(schema, (s, path) => {
+        if (s.config.needI18n) {
+          const key = get(newItem, path);
+          if (typeof key === 'string') {
+            eventBus.emit(
+              EVENT.UPDATE_TRANSLATION,
+              key,
+              projectConfigRef.current.i18n.reduce((r, k) => {
+                r[k] = '';
+                return r;
+              }, {})
+            );
+          }
+        }
+      });
       pushActualValueList(newItem);
       setFilters((prev) => ({ ...prev }));
     };
@@ -133,6 +183,14 @@ function useDataList({
       iterObject(v, (k, d) => {
         if (typeof d === 'string' && projectTranslations[d]) {
           v[k] = generateUUID();
+          eventBus.emit(
+            EVENT.UPDATE_TRANSLATION,
+            v[k],
+            projectConfigRef.current.i18n.reduce((r, k) => {
+              r[k] = '';
+              return r;
+            }, {})
+          );
         }
       });
       insertActualValueList(v, i + 1);
@@ -146,7 +204,11 @@ function useDataList({
 
   useEffect(() => {
     const onDelete = (i: number) => {
-      removeActualValueList(i);
+      const dItem = displayValueListRef.current[i];
+      const index = actualValueListRef.current.findIndex(
+        (item) => item.key === dItem.key
+      );
+      removeActualValueList(index);
       setFilters((prev) => ({ ...prev }));
     };
     eventBus.on(EVENT.DATA_ITEM_DELETE, onDelete);
@@ -176,6 +238,7 @@ function useDataList({
 
   useEffect(() => {
     const onFilterChanged = (filterVal: any) => {
+      console.log('eww: ', filterVal);
       setFilters(filterVal);
     };
 
