@@ -19,7 +19,7 @@ export default createContext<{
   setCurrentLang: () => {},
   schemaConfig: {},
   schema: null,
-  projectConfig: DEFAULT_PROJECT_CONFIG,
+  projectConfig: null,
   projectFileTree: null,
   projectTranslations: {},
   currentFile: null,

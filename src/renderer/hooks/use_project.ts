@@ -24,9 +24,7 @@ function useProject() {
   const [projectFileTree, setProjectFileTree] = useState<
     (FileTreeFolder | FileTreeFile)[] | null
   >(null);
-  const [projectConfig, setProjectConfig] = useState<any>(
-    DEFAULT_PROJECT_CONFIG
-  );
+  const [projectConfig, setProjectConfig] = useState<any>(null);
 
   const [currentLang, setCurrentLang] = useState<string>('');
 
@@ -59,7 +57,8 @@ function useProject() {
         action: 'read-project-config',
       },
       (val: any) => {
-        if (val.data) {
+        //console.log(val.dirs);
+        if (val.data || val.dirs) {
           const allFiles = val.data.filter((item: string) =>
             item.includes('.json')
           );
@@ -67,6 +66,15 @@ function useProject() {
           let formatFiles = allFiles.map((item) => {
             return item.substr(baseUrl.length + 1).split('\\');
           });
+
+          // let formatFolders = val.dirs
+          //   .filter((item) => {
+          //     return !allFiles.find((a) => a.includes(item));
+          //   })
+          //   .map((item) => {
+          //     return item.substr(baseUrl.length + 1).split('\\');
+          //   });
+          // formatFiles = formatFiles.concat(formatFolders);
 
           let fileGroups = {
             type: 'folder',
@@ -86,13 +94,22 @@ function useProject() {
               return;
             }
             if (pathArr.length === 1) {
-              parent.children.push({
-                type: 'file',
-                partName: pathArr[0],
-                currentPath: (path ? path + '\\' : '') + pathArr[0],
-                fullPath:
-                  baseUrl + '\\' + (path ? path + '\\' : '') + pathArr[0],
-              });
+              if (pathArr[0].includes('.json')) {
+                parent.children.push({
+                  type: 'file',
+                  partName: pathArr[0],
+                  currentPath: (path ? path + '\\' : '') + pathArr[0],
+                  fullPath:
+                    baseUrl + '\\' + (path ? path + '\\' : '') + pathArr[0],
+                });
+              } else {
+                parent.children.push({
+                  type: 'folder',
+                  partName: pathArr[0],
+                  currentPath: (path ? path + '\\' : '') + pathArr[0],
+                  children: [],
+                });
+              }
               return;
             }
 

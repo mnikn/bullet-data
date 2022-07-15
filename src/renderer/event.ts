@@ -7,6 +7,7 @@ export const EVENT = {
   SHOW_PROJECT_CONFIG: 'show_project_config',
   SHOW_FILE_SCHEMA_CONFIG: 'show_file_schema_config',
   SHOW_FILE_PREVIEW: 'show_file_preview',
+  SHOW_NAME_DIALOG: 'show_name_dialog',
   SWITCH_LANG: 'switch_lang',
   FILTER_CHANGED: 'filter_changed',
 
@@ -18,6 +19,7 @@ export const EVENT = {
   DELETE_FILE: 'delete_file',
   CLOSE_FILE: 'close_file',
   RENAME_FILE: 'rename_file',
+  NEW_FOLDER: 'new_folder',
   CHECK_FILE_CHANGED: 'check_file_changed',
   FILE_SCHEMA_CHANGED: 'file_schema_changed',
 

@@ -20,17 +20,44 @@ import Context from 'renderer/context';
 import { EVENT, eventBus } from './event';
 import { FileTreeFile, FileTreeFolder } from './hooks/use_project';
 import { PRIMARY_COLOR1, PRIMARY_COLOR2, PRIMARY_COLOR2_LIGHT1 } from './style';
+import { findFolderInTree } from './utils/file';
 
-function RenameDialog({
-  close,
-  submit,
-  initialVal,
-}: {
-  initialVal: string;
-  close: () => void;
-  submit: (name: string) => void;
-}) {
-  const [name, setName] = useState<string>(initialVal);
+function NameDialog() {
+  const [name, setName] = useState<string>('');
+  const [source, setSource] = useState<FileTreeFile | FileTreeFolder | null>(
+    null
+  );
+  const [action, setAction] = useState<
+    'create_file' | 'create_folder' | 'rename_file' | 'rename_folder'
+  >('create_file');
+  const [visible, setVisible] = useState<boolean>(false);
+
+  useEffect(() => {
+    const show = ({
+      source = null,
+      action = 'create_file',
+    }: {
+      source: FileTreeFile | FileTreeFolder | null;
+      action: 'create_file' | 'create_folder' | 'rename_file' | 'rename_folder';
+    }) => {
+      setSource(source);
+      setAction(action);
+      setName(
+        action === 'rename_file' || action === 'rename_folder'
+          ? source?.partName.replace('.json', '') || ''
+          : ''
+      );
+      setVisible(true);
+    };
+    eventBus.on(EVENT.SHOW_NAME_DIALOG, show);
+    return () => {
+      eventBus.off(EVENT.SHOW_NAME_DIALOG, show);
+    };
+  }, []);
+
+  if (!visible) {
+    return null;
+  }
   return (
     <Dialog
       open
@@ -45,7 +72,7 @@ function RenameDialog({
         },
       }}
     >
-      <DialogTitle>Rename file</DialogTitle>
+      <DialogTitle>Name</DialogTitle>
       <DialogContent>
         <TextField
           sx={{}}
@@ -65,13 +92,66 @@ function RenameDialog({
         />
       </DialogContent>
       <DialogActions sx={{ justifyContent: 'center' }}>
-        <Button variant="contained" onClick={close} color="secondary">
+        <Button
+          variant="contained"
+          onClick={() => {
+            setVisible(false);
+          }}
+          color="secondary"
+        >
           Cancel
         </Button>
         <Button
           onClick={() => {
-            submit(name);
-            close();
+            console.log('dsdd: ', action);
+            if (action === 'create_file') {
+              /**
+                const folderPath = source.currentPath.substring(
+                  0,
+                  source.currentPath.lastIndexOf('\\')
+                );
+                eventBus.emit(
+                  EVENT.RENAME_FILE,
+                  currentRename.currentPath,
+                  (folderPath ? folderPath + '\\' : '') + s + '.json'
+                );
+               **/
+
+              eventBus.emit(
+                EVENT.NEW_FILE,
+                (source?.currentPath ? source?.currentPath + '\\' : '') +
+                  name +
+                  '.json',
+                name + '.json'
+              );
+            } else if (action === 'rename_file') {
+              /**
+                const folderPath = source.currentPath.substring(
+                  0,
+                  source.currentPath.lastIndexOf('\\')
+                );
+                eventBus.emit(
+                  EVENT.RENAME_FILE,
+                  currentRename.currentPath,
+                  (folderPath ? folderPath + '\\' : '') + s + '.json'
+                );
+               **/
+              const folderPath = source?.currentPath?.substring(
+                0,
+                source?.currentPath?.lastIndexOf('\\')
+              );
+              eventBus.emit(
+                EVENT.RENAME_FILE,
+                source?.currentPath,
+                folderPath + `${name}.json`
+              );
+            } else if (action === 'create_folder') {
+              eventBus.emit(
+                EVENT.NEW_FOLDER,
+                (source?.currentPath ? source?.currentPath + '\\' : '') + name
+              );
+            }
+            setVisible(false);
           }}
           variant="contained"
           color="primary"
@@ -212,11 +292,6 @@ function Sidebar() {
     { fn: () => void; title: string }[]
   >([]);
 
-  const [renameDialogVisible, setRenameDialogVisible] = useState(false);
-  const [currentRename, setCurrentRename] = useState<
-    FileTreeFile | FileTreeFolder | null
-  >(null);
-
   useEffect(() => {
     eventBus.on(EVENT.TOGGLE_SIDEBAR, () => {
       setSidebarVisible((prev) => {
@@ -231,13 +306,37 @@ function Sidebar() {
     return null;
   }
 
-  const newFile = (path?: string) => {
-    eventBus.emit(EVENT.NEW_FILE, path);
+  const newFile = (folder?: FileTreeFolder) => {
+    eventBus.emit(EVENT.SHOW_NAME_DIALOG, {
+      source: folder,
+      action: 'create_file',
+    });
   };
+
+  const renameFile = (file: FileTreeFile) => {
+    eventBus.emit(EVENT.SHOW_NAME_DIALOG, {
+      source: file,
+      action: 'rename_file',
+    });
+  };
+
+  /* const renameFolder = (folder?: FileTreeFolder) => {
+   *   eventBus.emit(EVENT.SHOW_NAME_DIALOG, {
+   *     source: folder,
+   *     action: 'rename_folder',
+   *   });
+   * }; */
 
   const deleteFile = (path: string) => {
     eventBus.emit(EVENT.DELETE_FILE, path);
   };
+
+  /* const newFolder = (folder?: FileTreeFolder) => {
+   *   eventBus.emit(EVENT.SHOW_NAME_DIALOG, {
+   *     source: folder,
+   *     action: 'create_folder',
+   *   });
+   * }; */
 
   return (
     <Stack
@@ -262,7 +361,7 @@ function Sidebar() {
             },
             {
               title: 'New folder',
-              fn: () => {},
+              fn: newFolder,
             },
           ]);
         }}
@@ -282,8 +381,7 @@ function Sidebar() {
                     {
                       title: 'Rename...',
                       fn: () => {
-                        setCurrentRename(d);
-                        setRenameDialogVisible(true);
+                        renameFile(d);
                       },
                     },
                     {
@@ -298,23 +396,8 @@ function Sidebar() {
                     {
                       title: 'New file',
                       fn: () => {
-                        newFile(d.currentPath);
+                        newFile(d);
                       },
-                    },
-                    {
-                      title: 'New folder',
-                      fn: () => {},
-                    },
-                    {
-                      title: 'Rename...',
-                      fn: () => {
-                        setCurrentRename(d);
-                        setRenameDialogVisible(true);
-                      },
-                    },
-                    {
-                      title: 'Delete folder',
-                      fn: () => {},
                     },
                   ]);
                 }
@@ -358,31 +441,7 @@ function Sidebar() {
           );
         })}
       </Menu>
-      {renameDialogVisible && (
-        <RenameDialog
-          initialVal={currentRename?.partName?.replace('.json', '') || ''}
-          close={() => {
-            setRenameDialogVisible(false);
-          }}
-          submit={(s) => {
-            if (!currentRename || !currentRename.currentPath) {
-              return;
-            }
-
-            if (currentRename?.type == 'file') {
-              const folderPath = currentRename.currentPath.substring(
-                0,
-                currentRename.currentPath.lastIndexOf('\\')
-              );
-              eventBus.emit(
-                EVENT.RENAME_FILE,
-                currentRename.currentPath,
-                (folderPath ? folderPath + '\\' : '') + s + '.json'
-              );
-            }
-          }}
-        />
-      )}
+      <NameDialog />
     </Stack>
   );
 }

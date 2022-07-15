@@ -302,6 +302,7 @@ const Home = () => {
   const { currentFile, recentOpenFiles } = useExplorer({ projectFileTree });
   const { currentFileData, schemaConfig, schema, saving } = useFile({
     currentFile,
+    projectConfig
   });
   const { actualValueList, displayValueList } = useDataList({
     currentFile,
@@ -505,14 +506,16 @@ const Home = () => {
               >
                 <Droppable droppableId="droppable">
                   {(provided, snapshot) => (
-                    <div
+                    <Stack
                       {...provided.droppableProps}
                       ref={provided.innerRef}
                       style={{
                         ...getListStyle(snapshot.isDraggingOver),
                         ...{
                           width: '100%',
+                          flexGrow: 1,
                           overflow: 'auto',
+                          height: '400px',
                           background: snapshot.isDraggingOver
                             ? PRIMARY_COLOR1_LIGHT1
                             : '#464D54',
@@ -584,7 +587,7 @@ const Home = () => {
                         );
                       })}
                       {provided.placeholder}
-                    </div>
+                    </Stack>
                   )}
                 </Droppable>
               </DragDropContext>
@@ -596,6 +599,7 @@ const Home = () => {
                   clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
                   marginLeft: 'auto!important',
                   marginRight: 'auto!important',
+                  marginBottom: '20px!important'
                 }}
                 variant="contained"
                 onClick={() => {

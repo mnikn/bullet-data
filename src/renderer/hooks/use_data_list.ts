@@ -3,6 +3,7 @@ import {
   iterSchema,
   SchemaField,
   SchemaFieldNumber,
+  SchemaFieldObject,
   SchemaFieldSelect,
   SchemaFieldString,
 } from 'models/schema';
@@ -148,7 +149,9 @@ function useDataList({
       if (!schema) {
         return;
       }
-      const newItem = cloneDeep(schema.config.defaultValue);
+      const newItem = cloneDeep(
+        (schema as SchemaFieldObject).configDefaultValue
+      );
       iterSchema(schema, (s, path) => {
         if (s.config.needI18n) {
           const key = get(newItem, path);

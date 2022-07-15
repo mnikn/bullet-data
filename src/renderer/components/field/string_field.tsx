@@ -1,4 +1,4 @@
-import { TextField } from '@mui/material';
+import { Stack, TextField } from '@mui/material';
 import styled from 'styled-components';
 import { SchemaFieldString } from 'models/schema';
 import { useContext, useEffect, useRef, useState } from 'react';
@@ -13,7 +13,7 @@ import {
 import classNames from 'classnames';
 import MonacoEditor from 'react-monaco-editor';
 import { EVENT, eventBus } from 'renderer/event';
-import { get } from 'lodash';
+import { get, uniq } from 'lodash';
 
 const StyledTextField = styled.div`
   @keyframes moveup {
@@ -117,6 +117,80 @@ const StyledTextField = styled.div`
     white-space: nowrap;
   }
 `;
+
+const CodeFieldSchema = new SchemaFieldString();
+
+const Editor = ({
+  schema,
+  contentValue,
+  onValueChange,
+}: {
+  schema: SchemaFieldString;
+  contentValue: any;
+  onValueChange?: (value: any) => void;
+}) => {
+  const fields = uniq(
+    (schema.config.template || '')
+      .match(/(\{{2}\w*\}{2})/g)
+      ?.map((item) => item.substring(2, item.length - 2)) || []
+  );
+
+  let finalValue = !schema.config.template
+    ? contentValue.value
+    : schema.config.template || '';
+  if (schema.config.template) {
+    fields.forEach((f) => {
+      finalValue = finalValue.replaceAll(`{{${f}}}`, contentValue.fields[f] || `{{${f}}}`);
+    });
+  }
+
+  return (
+    <Stack direction="row" spacing={1}>
+      <MonacoEditor
+        width="100%"
+        height={schema.config.height}
+        language={schema.config.codeLang}
+        theme="vs-dark"
+        value={finalValue}
+        options={{
+          readOnly: !!schema.config.template,
+        }}
+        onChange={(v) => {
+          if (onValueChange) {
+            onValueChange({
+              fields: [],
+              value: v,
+            });
+          }
+        }}
+      />
+      {fields.length > 0 && (
+        <Stack spacing={1}>
+          {fields.map((f) => {
+            return (
+              <MyTextField
+                label={f}
+                schema={CodeFieldSchema}
+                value={contentValue.fields[f] || ''}
+                onValueChange={(v) => {
+                  if (onValueChange) {
+                    onValueChange({
+                      fields: { ...contentValue.fields, [f]: v },
+                      value: (schema.config.template || '').replaceAll(
+                        `{{${f}}}`,
+                        v
+                      ),
+                    });
+                  }
+                }}
+              />
+            );
+          })}
+        </Stack>
+      )}
+    </Stack>
+  );
+};
 
 function MyTextField({
   label,
@@ -225,18 +299,13 @@ function MyTextField({
         />
       )}
       {schema.config.type === 'code' && (
-        <MonacoEditor
-          width="100%"
-          height={schema.config.height}
-          language={schema.config.codeLang}
-          theme="vs-dark"
-          value={contentValue}
-          onChange={(v) => {
+        <Editor
+          schema={schema}
+          contentValue={contentValue}
+          onValueChange={(v) => {
             setContentValue(v);
             if (onValueChange) {
-              onValueChange(
-                schema.config.needI18n ? { ...value, [currentLang]: v } : v
-              );
+              onValueChange(v);
             }
           }}
         />

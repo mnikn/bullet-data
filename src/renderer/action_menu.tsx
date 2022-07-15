@@ -49,7 +49,7 @@ function ActionMenu() {
         // top: 0,
         // zIndex: 2,
         // background: 'rgb(70, 77, 84)',
-        padding: '5px',
+        padding: '10px',
         backgroundColor: '#707C87',
       }}
     >
@@ -171,7 +171,7 @@ function ActionMenu() {
           spacing={2}
           sx={{ marginLeft: 'auto!important' }}
         >
-          {projectConfig.i18n.length > 0 && i18nSelectionSchema && (
+          {projectConfig?.i18n?.length > 0 && i18nSelectionSchema && (
             <FieldSelect
               schema={i18nSelectionSchema}
               value={currentLang}

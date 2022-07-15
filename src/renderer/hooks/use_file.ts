@@ -1,28 +1,25 @@
 import { FILE_PATH } from 'constatnts/storage_key';
-import { readFile } from 'fs';
 import { cloneDeep } from 'lodash';
 import {
   SchemaField,
-  DEFAULT_CONFIG,
-  SchemaFieldType,
-  SchemaFieldObject,
   SchemaFieldArray,
-  SchemaFieldString,
-  SchemaFieldNumber,
   SchemaFieldBoolean,
+  SchemaFieldNumber,
+  SchemaFieldObject,
   SchemaFieldSelect,
+  SchemaFieldString,
+  SchemaFieldType,
   validateValue,
 } from 'models/schema';
 import { useEffect, useState } from 'react';
 import { DEFAULT_SCHEMA_CONFIG } from 'renderer/constants';
 import { EVENT, eventBus } from 'renderer/event';
-import { getConfigPath, getProjectBaseUrl } from 'renderer/utils/file';
-import { generateUUID } from 'utils/uuid';
+import { getConfigPath } from 'renderer/utils/file';
 import { FileTreeFile } from './use_project';
 
 // const HIDDEN_ID = '$$__index';
 
-function buildSchema(json: any): SchemaField {
+function buildSchema(json: any, cacheSchemaMap: any = {}): SchemaField {
   switch (json.type) {
     case SchemaFieldType.Object: {
       const instance = new SchemaFieldObject();
@@ -37,7 +34,7 @@ function buildSchema(json: any): SchemaField {
         } else if (json.fields[key].type === SchemaFieldType.Object) {
           data.fields = json.fields[key].fields;
         }
-        const subfield = buildSchema(data);
+        const subfield = buildSchema(data, cacheSchemaMap);
         return {
           id: key,
           name: json.fields[key].name,
@@ -58,12 +55,15 @@ function buildSchema(json: any): SchemaField {
       } else if (json.fieldSchema.type === SchemaFieldType.Object) {
         data.fields = json.fieldSchema.fields;
       }
-      const instance = new SchemaFieldArray(buildSchema(data));
+      const instance = new SchemaFieldArray(buildSchema(data, cacheSchemaMap));
       instance.setup(json.config);
       return instance;
     }
     case SchemaFieldType.String: {
-      const instance = new SchemaFieldString();
+      let instance = new SchemaFieldString();
+      if (cacheSchemaMap[json.config.extends]) {
+        instance = cacheSchemaMap[json.config.extends];
+      }
       instance.setup(json.config);
       return instance;
     }
@@ -88,13 +88,22 @@ function buildSchema(json: any): SchemaField {
 
 const fileDataCache: any = {};
 
-function useFile({ currentFile }: { currentFile: FileTreeFile | null }) {
+function useFile({
+  currentFile,
+  projectConfig,
+}: {
+  currentFile: FileTreeFile | null;
+  projectConfig: any;
+}) {
   const [currentFileData, setCurrentFileData] = useState<any[]>([]);
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
   const [schema, setSchema] = useState<SchemaField | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
+    if (!projectConfig) {
+      return;
+    }
     if (!currentFile || !currentFile.fullPath) {
       setCurrentFileData([]);
       setSchemaConfig(null);
@@ -141,7 +150,14 @@ function useFile({ currentFile }: { currentFile: FileTreeFile | null }) {
         schemaConfig: newSchemaConfig,
       };
 
-      const newSchema = buildSchema(newSchemaConfig.schema);
+      const projectSchemaMap = Object.keys(projectConfig.schemas).reduce(
+        (res: any, key) => {
+          res[key] = buildSchema(projectConfig.schemas[key]);
+          return res;
+        },
+        {}
+      );
+      const newSchema = buildSchema(newSchemaConfig.schema, projectSchemaMap);
       setSchema(newSchema);
 
       // set data
@@ -169,7 +185,7 @@ function useFile({ currentFile }: { currentFile: FileTreeFile | null }) {
     };
 
     readFile();
-  }, [currentFile]);
+  }, [currentFile, projectConfig]);
 
   useEffect(() => {
     const onSave = async (valueList: any[]) => {

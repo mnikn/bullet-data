@@ -9,12 +9,13 @@ import { PRIMARY_COLOR1, PRIMARY_COLOR2_LIGHT1 } from './style';
 import { getProjectBaseUrl } from './utils/file';
 import { registerDependencyProposals } from './utils/schema_config';
 import { parse } from 'json2csv';
+import { DEFAULT_PROJECT_CONFIG } from './constants';
 
 function ProjectSchemaConfig() {
   const [visible, setVisible] = useState(false);
   const { projectConfig } = useContext(Context);
   const [config, setConfig] = useState<string>(
-    JSON.stringify(projectConfig, null, 2)
+    JSON.stringify(projectConfig || DEFAULT_PROJECT_CONFIG, null, 2)
   );
 
   useEffect(() => {

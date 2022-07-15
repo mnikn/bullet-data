@@ -1,17 +1,14 @@
-import { useContext, useEffect, useState } from 'react';
-import { FileTreeFile, FileTreeFolder } from './use_project';
-import Context from 'renderer/context';
+import { FILE_PATH } from 'constatnts/storage_key';
+import { useEffect, useState } from 'react';
+import { DEFAULT_SCHEMA_CONFIG } from 'renderer/constants';
+import { EVENT, eventBus } from 'renderer/event';
 import {
   findFileInTree,
   findFolderInTree,
-  getBaseUrl,
   getConfigPath,
   getProjectBaseUrl,
 } from 'renderer/utils/file';
-import { FILE_PATH, PROJECT_PATH } from 'constatnts/storage_key';
-import { EVENT, eventBus } from 'renderer/event';
-import { generateUUID } from 'utils/uuid';
-import { DEFAULT_SCHEMA_CONFIG } from 'renderer/constants';
+import { FileTreeFile, FileTreeFolder } from './use_project';
 
 function useExplorer({
   projectFileTree,
@@ -24,17 +21,16 @@ function useExplorer({
   );
 
   useEffect(() => {
-    const newFile = (path?: string) => {
-      const fileName = generateUUID() + '.json';
+    const newFile = (path: string, name: string) => {
       const newFile: FileTreeFile = {
-        fullPath:
-          getProjectBaseUrl() + '\\' + (path ? `${path}\\` : '') + fileName,
-        currentPath: (path ? `${path}\\` : '') + fileName,
-        partName: fileName,
+        fullPath: getProjectBaseUrl() + '\\' + path,
+        currentPath: path,
+        partName: name,
         type: 'file',
       };
       setRecentOpenFiles((prev2) => prev2.concat(newFile));
 
+      const folderPath = path.substring(0, path.lastIndexOf('\\'));
       let folder: FileTreeFolder | null = null;
       if (path) {
         folder = findFolderInTree(
@@ -44,7 +40,7 @@ function useExplorer({
             children: projectFileTree || [],
             type: 'folder',
           },
-          path
+          folderPath
         );
       }
       if (folder) {
@@ -96,7 +92,7 @@ function useExplorer({
               },
               path.substring(0, path.lastIndexOf('\\'))
             );
-            if (folder) {
+            if (folder && folder.currentPath) {
               folder.children = folder.children.filter(
                 (d) => d.currentPath !== path
               );
@@ -158,13 +154,41 @@ function useExplorer({
           }
         });
     };
+
+    const newFolder = (path: string) => {
+      // let parentFolder: FileTreeFolder | null = null;
+      // if (path) {
+      //   parentFolder = findFolderInTree(
+      //     {
+      //       currentPath: path,
+      //       partName: '',
+      //       children: projectFileTree || [],
+      //       type: 'folder',
+      //     },
+      //     path
+      //   );
+      // }
+
+      // console.log('ss: ', parentFolder);
+      const finalPath = getProjectBaseUrl() + '\\' + path;
+      console.log('vee: ', finalPath);
+      window.electron.ipcRenderer
+        .call('newFolder', {
+          path: finalPath,
+        })
+        .then(() => {
+          eventBus.emit(EVENT.REFRESH_PROJECT_FILE_TREE);
+        });
+    };
     eventBus.on(EVENT.NEW_FILE, newFile);
     eventBus.on(EVENT.DELETE_FILE, deleteFile);
     eventBus.on(EVENT.RENAME_FILE, renameFile);
+    eventBus.on(EVENT.NEW_FOLDER, newFolder);
     return () => {
       eventBus.off(EVENT.NEW_FILE, newFile);
       eventBus.off(EVENT.DELETE_FILE, deleteFile);
       eventBus.off(EVENT.RENAME_FILE, renameFile);
+      eventBus.off(EVENT.NEW_FOLDER, newFolder);
     };
   }, [projectFileTree, currentFile]);
 
@@ -209,6 +233,7 @@ function useExplorer({
     const projectBaseUrl = getProjectBaseUrl() || '';
     if (p) {
       p = p.substring(projectBaseUrl.length + 1);
+      console.log(projectFileTree, p);
       const file = projectFileTree.reduce((res, t) => {
         return res ? res : findFileInTree(t, p);
       }, null) as FileTreeFile;

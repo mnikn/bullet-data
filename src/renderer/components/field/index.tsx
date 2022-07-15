@@ -208,7 +208,9 @@ export const FieldArray = ({
     setList((prev) => {
       return prev.concat({
         id: generateUUID(),
-        value: schema.fieldSchema.config.defaultValue,
+        value: schema.fieldSchema.config.needI18n
+          ? generateUUID()
+          : schema.fieldSchema.config.defaultValue,
       });
     });
   };

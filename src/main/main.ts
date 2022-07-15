@@ -17,14 +17,16 @@ import { resolveHtmlPath } from './util';
 let mainWindow: BrowserWindow | null = null;
 let needClose = false;
 
-function readFolder(dirPath: any, arrayOfFiles: any[]) {
+function readFolder(dirPath: any, arrayOfFiles: any[], arrayOfDirs: any[]) {
   const files = fs.readdirSync(dirPath);
 
   arrayOfFiles = arrayOfFiles || [];
+  arrayOfDirs = arrayOfDirs || [];
 
   files.forEach(function (file) {
     if (fs.statSync(dirPath + '/' + file).isDirectory()) {
-      arrayOfFiles = readFolder(dirPath + '/' + file, arrayOfFiles);
+      arrayOfDirs.push(dirPath + '\\' + file);
+      arrayOfFiles = readFolder(dirPath + '/' + file, arrayOfFiles, arrayOfDirs);
     } else {
       arrayOfFiles.push(path.join(dirPath, '/', file));
     }
@@ -50,10 +52,11 @@ ipcMain.on('readFile', async (event, arg) => {
 
 ipcMain.on('readFolder', async (event, arg) => {
   if (fs.existsSync(arg.filePath)) {
-    const files = readFolder(arg.filePath, []);
-    event.reply('readFolder', { filePath: arg.filePath, data: files, arg });
+    const dirs: string[] = [];
+    const files = readFolder(arg.filePath, [], dirs);
+    event.reply('readFolder', { filePath: arg.filePath, data: files, arg, dirs });
   } else {
-    event.reply('readFolder', { filePath: arg.filePath, data: null, arg });
+    event.reply('readFolder', { filePath: arg.filePath, data: null, arg, dirs: [] });
   }
 });
 
@@ -132,6 +135,30 @@ ipcMain.on('renameFile', async (event, arg) => {
       arg: { action: arg?.action },
     };
     event.reply('renameFile', data);
+  }
+});
+
+ipcMain.on('newFolder', async (event, arg) => {
+  const path = arg.path;
+  if (path) {
+    fs.mkdirSync(path);
+    const data = {
+      res: { path },
+      arg: { action: arg?.action },
+    };
+    event.reply('newFolder', data);
+  }
+});
+
+ipcMain.on('renameFolder', async (event, arg) => {
+  const sourcePath = arg.sourcePath;
+  if (sourcePath) {
+    fs.renameSync(sourcePath, arg.targetPath);
+    const data = {
+      res: {},
+      arg: { action: arg?.action },
+    };
+    event.reply('renameFolder', data);
   }
 });
 
