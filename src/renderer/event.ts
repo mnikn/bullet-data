@@ -8,11 +8,13 @@ export const EVENT = {
   SHOW_FILE_SCHEMA_CONFIG: 'show_file_schema_config',
   SHOW_FILE_PREVIEW: 'show_file_preview',
   SHOW_NAME_DIALOG: 'show_name_dialog',
+  SHOW_TRANSLATION_MANAGER_DIALOG: 'show_translation_manager_dialog',
   SWITCH_LANG: 'switch_lang',
   FILTER_CHANGED: 'filter_changed',
 
   REFRESH_PROJECT_FILE_TREE: 'refresh_project_file_tree',
   UPDATE_TRANSLATION: 'update_translation',
+  SET_TRANSLATION: 'set_translation',
   SAVE_TRANSLATION: 'save_translation',
   NEW_FILE: 'new_file',
   SAVE_FILE: 'save_file',

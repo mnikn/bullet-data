@@ -353,7 +353,7 @@ function Sidebar() {
         sx={{ width: '100%', flexGrow: 1, padding: '5px' }}
         onContextMenu={(e) => {
           setMenuAnchorEl(e.currentTarget);
-          setMenuPos({ x: e.screenX, y: e.screenY });
+          setMenuPos({ x: e.pageX, y: e.pageY });
           setMenuActions([
             {
               title: 'New file',
@@ -375,7 +375,7 @@ function Sidebar() {
               data={f}
               level={0}
               showMenu={(e, d) => {
-                setMenuPos({ x: e.screenX, y: e.screenY });
+                setMenuPos({ x: e.pageX, y: e.pageY });
                 e.stopPropagation();
                 setMenuAnchorEl(e.currentTarget);
                 if (d.type === 'file') {

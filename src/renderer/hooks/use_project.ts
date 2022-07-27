@@ -158,9 +158,12 @@ function useProject() {
         };
       });
     };
+
     eventBus.on(EVENT.UPDATE_TRANSLATION, updateProjectTranslations);
+    eventBus.on(EVENT.SET_TRANSLATION, setProjectTranslations);
     return () => {
       eventBus.off(EVENT.UPDATE_TRANSLATION, updateProjectTranslations);
+      eventBus.off(EVENT.SET_TRANSLATION, setProjectTranslations);
     };
   }, [projectConfig]);
 
@@ -211,13 +214,12 @@ function useProject() {
 
   useEffect(() => {
     const onSave = () => {
-      const options = { fields: ['__id', ...projectConfig.i18n] };
+      const options = { fields: ['keys', ...projectConfig.i18n] };
 
-      console.log('vv: ', projectTranslations);
       const data: any[] = [];
       Object.keys(projectTranslations).forEach((key) => {
         data.push({
-          __id: key,
+          keys: key,
           ...projectTranslations[key],
         });
       });

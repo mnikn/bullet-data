@@ -75,7 +75,6 @@ function ActionMenu() {
               {
                 title: 'New project',
                 fn: () => {
-                  //save();
                   eventBus.emit(EVENT.SAVE_FILE);
                   localStorage.removeItem(FILE_PATH);
                   localStorage.removeItem(PROJECT_PATH);
@@ -100,6 +99,12 @@ function ActionMenu() {
                 title: 'Project settings',
                 fn: () => {
                   eventBus.emit(EVENT.SHOW_PROJECT_CONFIG);
+                },
+              },
+              {
+                title: 'Translation manager',
+                fn: () => {
+                  eventBus.emit(EVENT.SHOW_TRANSLATION_MANAGER_DIALOG);
                 },
               },
             ]);

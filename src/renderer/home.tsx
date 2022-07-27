@@ -16,12 +16,14 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import { PROJECT_PATH } from 'constatnts/storage_key';
+import { cloneDeep } from 'lodash';
 import get from 'lodash/get';
 import {
   DEFAULT_CONFIG,
   SchemaField,
   SchemaFieldObject,
   SchemaFieldSelect,
+  validateValue,
 } from 'models/schema';
 import { useContext, useEffect, useState } from 'react';
 import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
@@ -52,6 +54,7 @@ import {
   PRIMARY_COLOR2,
   SECOND_COLOR1,
 } from './style';
+import TranslationManageDialog from './translation_manage_dialog';
 
 const StyledCard = style.div<{ expand: boolean }>`
   clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
@@ -302,7 +305,7 @@ const Home = () => {
   const { currentFile, recentOpenFiles } = useExplorer({ projectFileTree });
   const { currentFileData, schemaConfig, schema, saving } = useFile({
     currentFile,
-    projectConfig
+    projectConfig,
   });
   const { actualValueList, displayValueList } = useDataList({
     currentFile,
@@ -339,46 +342,38 @@ const Home = () => {
    *   };
    * }, [schemaConfig]);
    */
-  /* useEffect(() => {
-   *   const onClose = async () => {
-   *     const valuePath = localStorage.getItem(FILE_PATH);
-   *     if (valuePath && schema) {
-   *       const currentFileValue = await window.electron.ipcRenderer.readJsonFile(
-   *         {
-   *           filePath: valuePath,
-   *           action: 'save-value',
-   *         }
-   *       );
+  useEffect(() => {
+    const onClose = async () => {
+      if (!schema || !currentFile) {
+        return;
+      }
 
-   *       const formatData = (JSON.parse(currentFileValue.data) || []).map(
-   *         (item: any) => {
-   *           return validateValue(item, item, schema, schemaConfig);
-   *         }
-   *       );
+      const fileData = await window.electron.ipcRenderer.readJsonFile({
+        filePath: currentFile.fullPath,
+        action: 'read-data',
+      });
+      if (!fileData?.data) {
+        setConfirmationVisbile(true);
+        return;
+      }
+      const formatData = (JSON.parse(fileData.data) || []).map((item: any) => {
+        return validateValue(item, item, schema, schemaConfig);
+      });
 
-   *       if (
-   *         JSON.stringify(formatData) !==
-   *         JSON.stringify(
-   *           cloneDeep(valueList).map((item) => {
-   *             item[HIDDEN_ID] = undefined;
-   *             return item;
-   *           })
-   *         )
-   *       ) {
-   *         setConfirmationVisbile(true);
-   *       } else {
-   *         window.electron.ipcRenderer.close();
-   *       }
-   *     } else {
-   *       setConfirmationVisbile(true);
-   *     }
-   *   };
-   *   window.electron.ipcRenderer.on('close', onClose);
-   *   return () => {
-   *     window.electron.ipcRenderer.removeAllListeners('close');
-   *   };
-   * }, [save, schema, schemaConfig, valueList]);
-   */
+      if (
+        JSON.stringify(formatData) !==
+        JSON.stringify(actualValueList.map((item) => item.data))
+      ) {
+        setConfirmationVisbile(true);
+      } else {
+        window.electron.ipcRenderer.close();
+      }
+    };
+    window.electron.ipcRenderer.on('close', onClose);
+    return () => {
+      window.electron.ipcRenderer.removeAllListeners('close');
+    };
+  }, [currentFile, schema, schemaConfig, actualValueList]);
 
   const onExitConfimration = (confirmation: boolean) => {
     if (confirmation) {
@@ -599,7 +594,7 @@ const Home = () => {
                   clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
                   marginLeft: 'auto!important',
                   marginRight: 'auto!important',
-                  marginBottom: '20px!important'
+                  marginBottom: '20px!important',
                 }}
                 variant="contained"
                 onClick={() => {
@@ -615,6 +610,7 @@ const Home = () => {
           <InitPanel />
           <Preview />
           <ProjectSchemaConfig />
+          <TranslationManageDialog />
           {confirmationVisible && (
             <Confimration
               close={() => {
