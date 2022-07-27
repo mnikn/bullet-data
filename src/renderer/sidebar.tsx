@@ -359,10 +359,12 @@ function Sidebar() {
               title: 'New file',
               fn: newFile,
             },
+            /**
             {
               title: 'New folder',
               fn: newFolder,
             },
+            **/
           ]);
         }}
       >
