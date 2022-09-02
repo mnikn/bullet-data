@@ -108,7 +108,7 @@ const StyledInput = styled.div`
   }
 `;
 
-function MyFieldNumber({
+function NumberField({
   label,
   schema,
   value,
@@ -119,7 +119,6 @@ function MyFieldNumber({
   value: number;
   onValueChange?: (value: any) => void;
 }) {
-  const [focus, setFocus] = useState(false);
   const [valueText, setValueText] = useState<string>('');
   const [errorText, setErrorText] = useState<string | null>(null);
 
@@ -130,8 +129,6 @@ function MyFieldNumber({
         schema.config.suffix
     );
   }, [value, schema]);
-
-  const hasValue = valueText || value === 0;
 
   const onTextChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let textValue = e.target.value
@@ -186,28 +183,23 @@ function MyFieldNumber({
     }
   };
   return (
-    <StyledInput>
+    <div className="w-full flex flex-col items-center">
+      {label && <div className="text-sm font-bold mb-3">{label}</div>}
       <input
-        onFocus={() => {
-          setFocus(true);
-        }}
-        onBlur={() => {
-          setFocus(false);
-        }}
+        className="text-md w-full outline-none p-2 focus:outline-2 focus:outline-zinc-900 transition-all"
         value={valueText}
         onChange={onTextChange}
+        style={{
+          outlineOffset: 0,
+        }}
       />
-      <div
-        className={classNames('label', {
-          title: focus || hasValue,
-        })}
-      >
-        {label}
+      <div className="absoulte bottom-0">
+        {errorText && (
+          <div className="error text-rose-500 text-sm">{errorText}</div>
+        )}
       </div>
-
-      {errorText && <div className="error">{errorText}</div>}
-    </StyledInput>
+    </div>
   );
 }
 
-export default MyFieldNumber;
+export default NumberField;

@@ -15,109 +15,6 @@ import MonacoEditor from 'react-monaco-editor';
 import { EVENT, eventBus } from 'renderer/event';
 import { get, uniq } from 'lodash';
 
-const StyledTextField = styled.div`
-  @keyframes moveup {
-    from {
-      top: 50%;
-      transform: translateX(-50%) translateY(-50%);
-      color: ${PRIMARY_COLOR2_LIGHT1};
-    }
-    to {
-      top: -15px;
-      transform: translateX(-50%) translateY(-50%);
-      color: ${PRIMARY_COLOR1};
-    }
-  }
-
-  @keyframes movedown {
-    from {
-      top: -25%;
-      transform: translateX(-50%) translateY(-50%);
-      color: ${PRIMARY_COLOR1};
-    }
-    to {
-      top: 50%;
-      transform: translateX(-50%) translateY(-50%);
-      color: ${PRIMARY_COLOR2_LIGHT1};
-    }
-  }
-
-  position: relative;
-  input {
-    background: ${PRIMARY_COLOR1};
-    height: 50px;
-    font-size: 16px;
-    color: ${PRIMARY_COLOR2};
-    width: 100%;
-    border: none;
-    border-radius: 32px;
-    padding: 6px;
-    padding-left: 12px;
-    padding-right: 12px;
-    outline: none;
-    font-family: system-ui;
-    font-weight: bold;
-  }
-
-  textarea {
-    background: ${PRIMARY_COLOR1};
-    height: 150px;
-    font-size: 16px;
-    color: ${PRIMARY_COLOR2};
-    width: 100%;
-    border: none;
-    border-radius: 32px;
-    padding: 20px;
-    outline: none;
-    resize: none;
-    font-family: system-ui;
-    font-weight: bold;
-  }
-
-  .label {
-    position: absolute;
-    overflow: hidden;
-    top: 50%;
-    left: 50%;
-    width: 80%;
-    text-align: center;
-    user-select: none;
-    pointer-events: none;
-    transform: translateX(-50%) translateY(-50%);
-    color: ${PRIMARY_COLOR2_LIGHT2};
-    text-overflow: ellipsis;
-  }
-
-  .label.title {
-    top: -15px;
-    transform: translateX(-50%) translateY(-50%);
-    color: ${PRIMARY_COLOR1};
-    animation: 0.3s moveup;
-    font-weight: bold;
-  }
-
-  .bottom {
-    position: absolute;
-    bottom: -50%;
-    left: 50%;
-    width: 80%;
-    font-weight: bold;
-    user-select: none;
-    pointer-events: none;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .error {
-    color: ${SECOND_COLOR1};
-    text-overflow: ellipsis;
-    overflow: hidden;
-    white-space: nowrap;
-  }
-`;
-
 const CodeFieldSchema = new SchemaFieldString();
 
 const Editor = ({
@@ -129,25 +26,29 @@ const Editor = ({
   contentValue: any;
   onValueChange?: (value: any) => void;
 }) => {
-  const fields = uniq(
-    (schema.config.template || '')
-      .match(/(\{{2}\w*\}{2})/g)
-      ?.map((item) => item.substring(2, item.length - 2)) || []
-  );
+  const fields =
+    uniq(
+      (schema.config.template || '')
+        .match(/(\{{2}\w*\}{2})/g)
+        ?.map((item) => item.substring(2, item.length - 2)) || []
+    ) || [];
 
   let finalValue = !schema.config.template
     ? contentValue.value
     : schema.config.template || '';
   if (schema.config.template) {
     fields.forEach((f) => {
-      finalValue = finalValue.replaceAll(`{{${f}}}`, contentValue.fields[f] || `{{${f}}}`);
+      finalValue = finalValue.replaceAll(
+        `{{${f}}}`,
+        contentValue?.fields[f] || `{{${f}}}`
+      );
     });
   }
 
   return (
-    <Stack direction="row" spacing={1}>
+    <div className="flex flex-grow w-full">
       <MonacoEditor
-        width="100%"
+        className="flex-grow mr-2"
         height={schema.config.height}
         language={schema.config.codeLang}
         theme="vs-dark"
@@ -168,14 +69,14 @@ const Editor = ({
         <Stack spacing={1}>
           {fields.map((f) => {
             return (
-              <MyTextField
+              <StringField
                 label={f}
                 schema={CodeFieldSchema}
-                value={contentValue.fields[f] || ''}
+                value={contentValue?.fields[f] || ''}
                 onValueChange={(v) => {
                   if (onValueChange) {
                     onValueChange({
-                      fields: { ...contentValue.fields, [f]: v },
+                      fields: { ...contentValue?.fields, [f]: v },
                       value: (schema.config.template || '').replaceAll(
                         `{{${f}}}`,
                         v
@@ -188,11 +89,11 @@ const Editor = ({
           })}
         </Stack>
       )}
-    </Stack>
+    </div>
   );
 };
 
-function MyTextField({
+function StringField({
   label,
   schema,
   value,
@@ -203,7 +104,6 @@ function MyTextField({
   value: any;
   onValueChange?: (value: any) => void;
 }) {
-  const [focus, setFocus] = useState(false);
   const { currentLang, schemaConfig, projectTranslations, projectConfig } =
     useContext(Context);
 
@@ -270,31 +170,28 @@ function MyTextField({
   };
 
   return (
-    <StyledTextField>
+    <div className="w-full flex flex-col items-center">
+      {label && (
+        <div className="text-md font-bold mb-2 text-zinc-900">{label}</div>
+      )}
       {schema.config.type === 'singleline' && (
         <input
-          onFocus={() => {
-            setFocus(true);
-          }}
-          onBlur={() => {
-            setFocus(false);
-          }}
+          className="text-md w-full outline-none p-2 focus:outline-2 focus:outline-zinc-900 transition-all text-zinc-900"
           value={contentValue}
           onChange={onTextChange}
+          style={{
+            outlineOffset: 0,
+          }}
         />
       )}
       {schema.config.type === 'multiline' && (
         <textarea
-          onFocus={() => {
-            setFocus(true);
-          }}
-          onBlur={() => {
-            setFocus(false);
-          }}
+          className="resize-none text-md font-normal w-full outline-none p-2 focus:outline-2 focus:outline-zinc-900 transition-all text-zinc-900"
           value={contentValue}
           onChange={onTextChange}
           style={{
             height: schema.config.height,
+            outlineOffset: 0,
           }}
         />
       )}
@@ -310,19 +207,13 @@ function MyTextField({
           }}
         />
       )}
-      <div
-        className={classNames('label', {
-          title: focus || contentValue || schema.config.type === 'code',
-        })}
-      >
-        {label}
+      <div className="absoulte bottom-0">
+        {errorText && (
+          <div className="error text-rose-500 text-sm">{errorText}</div>
+        )}
       </div>
-
-      <div className="bottom">
-        {errorText && <div className="error">{errorText}</div>}
-      </div>
-    </StyledTextField>
+    </div>
   );
 }
 
-export default MyTextField;
+export default StringField;

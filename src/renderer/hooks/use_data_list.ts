@@ -120,18 +120,17 @@ function useDataList({
     const onChanged = (d: any, index: number) => {
       // updateActualValueList(index, d);
 
-      let changeItem: any = null;
+      let changeItemKey: any = displayValueListRef.current[index].key;
       setDisplayValueList((prev) => {
-        changeItem = prev[index];
         return prev.map((item, j) =>
           j === index ? { key: item.key, data: d } : item
         );
       });
 
-      if (changeItem) {
+      if (changeItemKey) {
         updateActualValueList(
           actualValueListRef.current.findIndex(
-            (item) => item.key === changeItem.key
+            (item) => item.key === changeItemKey
           ),
           d
         );
@@ -241,7 +240,6 @@ function useDataList({
 
   useEffect(() => {
     const onFilterChanged = (filterVal: any) => {
-      console.log('eww: ', filterVal);
       setFilters(filterVal);
     };
 

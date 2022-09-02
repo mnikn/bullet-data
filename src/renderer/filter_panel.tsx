@@ -56,7 +56,19 @@ function findChildSchema(
 
 const ExpandMore = styled((props: any) => {
   const { expand, ...other } = props;
-  return <Button sx={{ borderRadius: '0' }} variant="contained" {...other} />;
+  return (
+    <Button
+      {...other}
+      sx={{
+        borderRadius: '0',
+        background: '#64748b',
+        padding: '5px 20px',
+        '&:hover': {
+          background: '#94a3b8',
+        },
+      }}
+    />
+  );
 })(({ theme, expand }) => ({
   transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
   marginLeft: 'auto',
@@ -82,22 +94,19 @@ const CollapseCard = ({
 
   return (
     <Stack>
-      <Card
+      <div
+        className="bg-slate-400 w-full"
         style={{
           width: '100%',
           marginTop: expanded ? '10px' : '0px',
-          background: PRIMARY_COLOR1,
-          clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
           paddingLeft: '40px',
           paddingRight: '40px',
         }}
       >
         <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <CardContent sx={{ padding: '10px!important' }}>
-            {children}
-          </CardContent>
+          <div className="p-4">{children}</div>
         </Collapse>
-      </Card>
+      </div>
       <ExpandMore expand={expanded} onClick={handleExpandClick}>
         <ExpandMoreIcon />
       </ExpandMore>
@@ -206,7 +215,7 @@ const FilterPanel = ({
     <div
       style={{
         position: 'fixed',
-        left: '50%',
+        left: '58%',
         transform: 'translateX(-50%)',
         zIndex: 5,
       }}
@@ -215,15 +224,9 @@ const FilterPanel = ({
         <Stack
           spacing={2}
           direction="row"
+          className="w-4/6 p-10 items-center text-zinc-50"
           sx={{
-            alignItems: 'center',
-            clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-            padding: '30px',
-            paddingLeft: '5%',
-            paddingRight: '5%',
             width: '800px',
-            background: PRIMARY_COLOR2,
-            color: PRIMARY_COLOR1,
           }}
         >
           <Grid container spacing={4} direction="row">
@@ -231,7 +234,7 @@ const FilterPanel = ({
               .filter((item: any) => !!item.schema)
               .map((item: any, i: number) => {
                 return (
-                  <Grid item xs={4} key={i}>
+                  <Grid item xs={6} key={i}>
                     {item.schema instanceof SchemaFieldString && (
                       <Stack
                         spacing={1}
@@ -243,6 +246,7 @@ const FilterPanel = ({
                         }}
                       >
                         <SelectField
+                          label={'Filter type'}
                           schema={item.filterSchema}
                           value={
                             filterValue?.[item.prop]?.filterType ||

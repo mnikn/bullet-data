@@ -233,29 +233,29 @@ const SchemaConfig = ({ initialValue }: { initialValue: any }) => {
     <Modal
       open
       onClose={() => {
-        setVisible(false);
+        // setVisible(false);
+        return false;
       }}
     >
-      <Box
-        sx={{
-          position: 'absolute',
+      <div
+        className="absolute bg-slate-400 p-4"
+        style={{
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 720,
-          height: 620,
-          bgcolor: PRIMARY_COLOR2_LIGHT1,
+          width: 750,
+          height: 650,
           borderRadius: '0px',
-          clipPath:
-            'polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%)',
-          p: 4,
         }}
       >
-        <Stack spacing={2} sx={{ height: '100%' }}>
-          <Stack spacing={2} sx={{ flexGrow: 1 }}>
+        <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full items-center">
+            <div className="text-slate-900 font-bold text-2xl mb-5">
+              File Schema Config
+            </div>
             <MonacoEditor
               width="100%"
-              height="100%"
+              height="88%"
               language="json"
               theme="vs-dark"
               value={config}
@@ -264,14 +264,18 @@ const SchemaConfig = ({ initialValue }: { initialValue: any }) => {
               }}
               editorDidMount={editorDidMount}
             />
-          </Stack>
-          <Stack spacing={2} direction="row">
-            <Button
-              sx={{
-                flexGrow: 1,
-                clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
+          </div>
+          <div className="flex h-12">
+            <button
+              className="flex-grow bg-rose-600 text-zinc-50 font-bold border-zinc-900 border-r-2 border-b-2 mr-4 hover:bg-rose-500 transition-all"
+              onClick={() => {
+                setVisible(false);
               }}
-              variant="contained"
+            >
+              Cancel
+            </button>
+            <button
+              className="flex-grow bg-yellow-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-yellow-200 transition-all"
               onClick={async () => {
                 try {
                   eventBus.emit(EVENT.FILE_SCHEMA_CHANGED, JSON.parse(config));
@@ -282,23 +286,10 @@ const SchemaConfig = ({ initialValue }: { initialValue: any }) => {
               }}
             >
               Confirm
-            </Button>
-            <Button
-              sx={{
-                flexGrow: 1,
-                clipPath: 'polygon(0 0, 90% 0, 100% 100%, 10% 100%)',
-              }}
-              variant="contained"
-              onClick={() => {
-                setVisible(false);
-              }}
-              color="secondary"
-            >
-              Cancel
-            </Button>
-          </Stack>
-        </Stack>
-      </Box>
+            </button>
+          </div>
+        </div>
+      </div>
     </Modal>
   );
 };

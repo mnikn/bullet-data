@@ -114,12 +114,14 @@ export function validateValue(
     }
 
     if (schema.config.type === 'code') {
-      if (!!schema.config.template) {
-        const fields = uniq(
-          (schema.config.template || '')
-            .match(/(\{{2}\w*\}{2})/g)
-            ?.map((item2) => item2.substring(2, item2.length - 2)) || []
-        );
+      if (!!schema.config.template && value && value === 'object') {
+        value = { value: null, fields: {}, ...value };
+        const fields =
+          uniq(
+            (schema.config.template || '')
+              .match(/(\{{2}\w*\}{2})/g)
+              ?.map((item2) => item2.substring(2, item2.length - 2)) || []
+          ) || [];
 
         value.fields = fields.reduce((res: any, k) => {
           res[k] = value.fields[k] || null;

@@ -1,108 +1,7 @@
-import { IconButton, MenuItem, Select } from '@mui/material';
 import { SchemaFieldSelect } from 'models/schema';
-import React from 'react';
-import styled from 'styled-components';
-import ClearIcon from '@mui/icons-material/Clear';
-import {
-  PRIMARY_COLOR1,
-  PRIMARY_COLOR2,
-  PRIMARY_COLOR2_LIGHT1,
-  PRIMARY_COLOR2_LIGHT2,
-} from '../../style';
+import Select from 'react-select';
 
-const StyledInput = styled.div`
-  @keyframes moveup {
-    from {
-      top: 50%;
-      transform: translateX(-50%) translateY(-50%);
-      color: ${PRIMARY_COLOR2_LIGHT1};
-    }
-    to {
-      top: -15px;
-      transform: translateX(-50%) translateY(-50%);
-      color: ${PRIMARY_COLOR1};
-    }
-  }
-
-  @keyframes movedown {
-    from {
-      top: -25%;
-      transform: translateX(-50%) translateY(-50%);
-      color: ${PRIMARY_COLOR1};
-    }
-    to {
-      top: 50%;
-      transform: translateX(-50%) translateY(-50%);
-      color: ${PRIMARY_COLOR2_LIGHT1};
-    }
-  }
-
-  position: relative;
-  display: flex;
-  .input {
-    background: ${PRIMARY_COLOR1};
-    height: 50px;
-    font-size: 16px;
-    color: ${PRIMARY_COLOR2};
-    font-weight: bold;
-    width: 100%;
-    border: none;
-    border-radius: 32px;
-    padding: 6px;
-    padding-left: 12px;
-    padding-right: 12px;
-    outline: none;
-    font-family: system-ui;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .expand-btn {
-    position: absolute;
-    top: 50%;
-    right: 5%;
-    transform: translateY(-50%);
-    color: ${PRIMARY_COLOR2_LIGHT1};
-  }
-
-  .label {
-    position: absolute;
-    overflow: hidden;
-    top: 50%;
-    left: 50%;
-    width: 80%;
-    text-align: center;
-    user-select: none;
-    pointer-events: none;
-    transform: translateX(-50%) translateY(-50%);
-    color: ${PRIMARY_COLOR2_LIGHT2};
-    text-overflow: ellipsis;
-  }
-
-  .label.title {
-    top: -15px;
-    transform: translateX(-50%) translateY(-50%);
-    color: ${PRIMARY_COLOR1};
-    animation: 0.3s moveup;
-    font-weight: bold;
-  }
-
-  .list {
-    position: absolute;
-    overflow: hidden;
-    bottom: calc(-50% - 300px);
-    left: 50%;
-    width: 80%;
-    height: 300px;
-    text-align: center;
-    transform: translateX(-50%);
-    background: ${PRIMARY_COLOR1};
-  }
-`;
-
-const FieldSelect = ({
+function FieldSelect({
   label,
   schema,
   value,
@@ -112,59 +11,76 @@ const FieldSelect = ({
   schema: SchemaFieldSelect;
   value: any;
   onValueChange?: (value: any) => void;
-}) => {
+}) {
   const onChange = (e: any) => {
     if (onValueChange) {
-      onValueChange(e.target.value);
+      onValueChange(e.value);
     }
   };
+
   return (
-    <StyledInput>
-      <Select
-        value={value}
-        onChange={onChange}
-        size="small"
-        sx={{
-          width: '100%',
-          background: PRIMARY_COLOR1,
-          height: '50px',
-          border: 'none',
-          borderRadius: '32px',
-          fontWeight: 'bold',
-        }}
-        MenuProps={{
-          PaperProps: {
-            sx: {
-              marginTop: 2,
-              background: PRIMARY_COLOR1,
-              borderRadius: '32px',
-            },
-          },
-        }}
-      >
-        {schema.config.options.map((item, i) => {
-          return (
-            <MenuItem key={i} value={item.value} sx={{ fontWeight: 'bold' }}>
-              {item.label}
-            </MenuItem>
-          );
-        })}
-      </Select>
-      <div className="label title">{label}</div>
-      {schema.config.clearable && (
-        <IconButton
-          color="primary"
-          onClick={() => {
-            if (onValueChange) {
-              onValueChange(null);
-            }
-          }}
-        >
-          <ClearIcon />
-        </IconButton>
+    <div className="w-full flex flex-col items-center">
+      {label && (
+        <div className="text-md font-bold mb-2 text-zinc-900">{label}</div>
       )}
-    </StyledInput>
+      <Select
+        className="text-sm block outline-none cursor-pointer w-full"
+        value={schema.config.options.find((d) => d.value === value)}
+        onChange={onChange}
+        options={schema.config.options}
+        styles={{
+          input: (provided) => ({
+            ...provided,
+            padding: '0 15px',
+          }),
+          control: (provided) => ({
+            ...provided,
+            outline: 'none',
+            backgroundColor: '#fff',
+            border: 'none',
+            fontWeight: 'bold',
+            '&:hover': {
+              border: 'none',
+            },
+            cursor: 'pointer',
+            borderRadius: 0,
+          }),
+
+          indicatorsContainer: (provided) => ({
+            ...provided,
+            flexGrow: 0,
+          }),
+          indicatorSeparator: (provided) => ({
+            ...provided,
+            backgroundColor: '#52525b',
+            width: '2px',
+          }),
+          dropdownIndicator: (provided) => ({
+            ...provided,
+            color: '#52525b',
+            '&:hover': {
+              color: '#71717a',
+            },
+          }),
+          menu: (provided) => ({
+            ...provided,
+            color: '#27272a',
+            backgroundColor: '#f1f5f9',
+          }),
+
+          option: (provided, state) => ({
+            ...provided,
+            fontWeight: 'bold',
+            backgroundColor: state.isSelected ? '#94a3b8' : '#f1f5f9',
+            '&:hover': {
+              backgroundColor: state.isSelected ? '#94a3b8' : '#fff',
+            },
+            cursor: 'pointer',
+          }),
+        }}
+      />
+    </div>
   );
-};
+}
 
 export default FieldSelect;

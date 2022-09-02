@@ -13,25 +13,23 @@ const FieldBoolean = ({
   value: boolean;
   onValueChange?: (value: boolean) => void;
 }) => {
-  const onChange = (e: any) => {
-    if (onValueChange) {
-      onValueChange(e.target.checked);
-    }
-  };
   return (
-    <FormGroup>
-      <FormControlLabel
-        control={
-          <Checkbox
-            checked={value}
-            color="primary"
-            sx={{ color: PRIMARY_COLOR1 }}
-          />
-        }
-        label={label || ''}
-        onChange={onChange}
+    <div className="w-full h-full flex flex-col items-center">
+      {label && <div className="text-sm font-bold mb-5">{label}</div>}
+      <input
+        className="w-full accent-blue-300 outline-none cursor-pointer transition-all flex-shrink-0"
+        style={{
+          height: '16px',
+        }}
+        type="checkbox"
+        checked={value}
+        onChange={(e) => {
+          if (onValueChange) {
+            onValueChange(e.target.checked);
+          }
+        }}
       />
-    </FormGroup>
+    </div>
   );
 };
 

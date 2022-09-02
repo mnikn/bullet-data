@@ -34,6 +34,7 @@ const Preview = () => {
       }}
     >
       <Box
+        className="bg-slate-400 p-4"
         sx={{
           position: 'absolute',
           top: '50%',
@@ -41,18 +42,18 @@ const Preview = () => {
           transform: 'translate(-50%, -50%)',
           width: 720,
           height: 620,
-          bgcolor: PRIMARY_COLOR2_LIGHT1,
           borderRadius: '0px',
-          clipPath:
-            'polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%)',
-          p: 4,
         }}
       >
-        <Stack spacing={2} sx={{ height: '100%' }}>
-          <Stack spacing={2} sx={{ flexGrow: 1 }}>
+        <Stack
+          className="w-full items-center"
+          spacing={2}
+          sx={{ height: '100%' }}
+        >
+          <div className="text-slate-900 font-bold text-2xl mb-2">Preview</div>
+          <Stack className="w-full" spacing={2} sx={{ flexGrow: 1 }}>
             <MonacoEditor
-              width="100%"
-              height="100%"
+              className="w-full h-full"
               language="json"
               theme="vs-dark"
               value={content}
@@ -62,22 +63,16 @@ const Preview = () => {
             />
           </Stack>
           <Stack spacing={2} direction="row">
-            <Button
-              sx={{
-                flexGrow: 1,
-                borderRadius: '0px',
-                clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-                marginLeft: 'auto!important',
-                marginRight: 'auto!important',
-              }}
+            <button
+              className="flex-grow bg-rose-600 text-zinc-50 font-bold border-zinc-900 border-r-2 border-b-2 mr-4 hover:bg-rose-500 transition-all py-2 px-32"
               variant="contained"
-              color="secondary"
               onClick={() => {
                 setVisible(false);
               }}
+              color="secondary"
             >
-              Close
-            </Button>
+              Cancel
+            </button>
           </Stack>
         </Stack>
       </Box>

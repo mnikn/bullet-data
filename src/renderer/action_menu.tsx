@@ -7,6 +7,9 @@ import { EVENT, eventBus } from './event';
 import FieldSelect from './components/field/select_field';
 import { PRIMARY_COLOR1 } from './style';
 
+const BUTTON_CLASS =
+  'bg-yellow-300 mr-4 p-2 h-full font-bold text-md text-slate-800 border-slate-800 hover:bg-yellow-200 transition-all w-24 flex items-center justify-center text-zinc-900';
+
 function ActionMenu() {
   const [headerAnchorEl, setHeaderAnchorEl] = useState<null | HTMLElement>(
     null
@@ -41,34 +44,10 @@ function ActionMenu() {
   }, [projectConfig]);
 
   return (
-    <Stack
-      spacing={1}
-      direction="row"
-      sx={{
-        // position: 'sticky',
-        // top: 0,
-        // zIndex: 2,
-        // background: 'rgb(70, 77, 84)',
-        padding: '10px',
-        backgroundColor: '#707C87',
-      }}
-    >
-      <Stack
-        spacing={2}
-        direction="row"
-        sx={{
-          flexGrow: 1,
-          paddingLeft: '10px',
-        }}
-      >
-        <Button
-          sx={{
-            width: '120px',
-            borderRadius: '0px',
-            clipPath:
-              'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
-          }}
-          variant="contained"
+    <div className="flex items-center p-4 bg-slate-800">
+      <div className="flex items-center flex-grow pl-5">
+        <button
+          className={BUTTON_CLASS}
           onClick={(e) => {
             setHeaderAnchorEl(e.currentTarget);
             setHeaderMenuActions([
@@ -111,15 +90,9 @@ function ActionMenu() {
           }}
         >
           Project
-        </Button>
-        <Button
-          sx={{
-            width: '120px',
-            borderRadius: '0px',
-            clipPath:
-              'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
-          }}
-          variant="contained"
+        </button>
+        <button
+          className={BUTTON_CLASS}
           onClick={(e) => {
             setHeaderAnchorEl(e.currentTarget);
             setHeaderMenuActions([
@@ -147,15 +120,9 @@ function ActionMenu() {
           }}
         >
           File
-        </Button>
-        <Button
-          sx={{
-            width: '120px',
-            borderRadius: '0px',
-            clipPath:
-              'polygon(0 0, 100% 0, 85% 50%, 100% 100%, 0 100%, 15% 50%)',
-          }}
-          variant="contained"
+        </button>
+        <button
+          className={BUTTON_CLASS}
           onClick={(e) => {
             setHeaderAnchorEl(e.currentTarget);
             setHeaderMenuActions([
@@ -169,13 +136,9 @@ function ActionMenu() {
           }}
         >
           View
-        </Button>
+        </button>
 
-        <Stack
-          direction="row"
-          spacing={2}
-          sx={{ marginLeft: 'auto!important' }}
-        >
+        <div className="flex items-center ml-auto">
           {projectConfig?.i18n?.length > 0 && i18nSelectionSchema && (
             <FieldSelect
               schema={i18nSelectionSchema}
@@ -185,8 +148,8 @@ function ActionMenu() {
               }}
             />
           )}
-        </Stack>
-      </Stack>
+        </div>
+      </div>
       <Menu
         id="header-menu"
         anchorEl={headerAnchorEl}
@@ -197,18 +160,21 @@ function ActionMenu() {
         }}
         sx={{
           '& .MuiPaper-root': {
-            backgroundColor: PRIMARY_COLOR1,
-            width: '200px',
+            backgroundColor: '#cbd5e1',
+            width: '240px',
             marginTop: 2,
-            borderRadius: '32px',
+            borderRadius: 0,
+            boxShadow: 0,
+            borderBottom: '4px solid #18181b',
+            borderRight: '4px solid #18181b',
           },
         }}
       >
         {headerMenuActions.map((m) => {
           return (
-            <MenuItem
+            <button
               key={m.title}
-              sx={{ display: 'flex', justifyContent: 'center' }}
+              className="outline-none py-2 px-4 text-md flex items-center font-bold justify-center hover:bg-slate-400 w-full transition-all"
               onClick={() => {
                 setHeaderAnchorEl(null);
                 m.fn();
@@ -219,11 +185,11 @@ function ActionMenu() {
               {m.shortcut && (
                 <span style={{ color: '#80868C' }}>( {m.shortcut} )</span>
               )}
-            </MenuItem>
+            </button>
           );
         })}
       </Menu>
-    </Stack>
+    </div>
   );
 }
 

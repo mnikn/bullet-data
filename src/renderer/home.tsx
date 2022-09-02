@@ -2,6 +2,12 @@ import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import {
+  RiArrowDownSLine,
+  RiArrowUpSLine,
+  RiGridFill,
+  RiMore2Fill,
+} from 'react-icons/ri';
+import {
   Alert,
   Button,
   CardContent,
@@ -55,46 +61,7 @@ import {
   SECOND_COLOR1,
 } from './style';
 import TranslationManageDialog from './translation_manage_dialog';
-
-const StyledCard = style.div<{ expand: boolean }>`
-  clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
-  padding: 30px;
-  min-width: 500px;
-  background: ${PRIMARY_COLOR1}!important;
-  position: relative;
-  color: ${PRIMARY_COLOR1}!important;
-  flex-grow: 1;
-
-  .bg {
-    position: absolute;
-    background: ${PRIMARY_COLOR2};
-    height: ${({ expand }) => (expand ? 'calc(100% - 40px)' : '70%')};
-    width: calc(100% - 40px);
-  clip-path: polygon(0px 25px, 50px 0px, calc(60% - 25px) 0px, 60% 25px, 100% 25px, 100% calc(100% - 10px), calc(100% - 15px) calc(100% - 10px), calc(80% - 10px) calc(100% - 10px), calc(80% - 15px) 100%, 80px calc(100% - 0px), 65px calc(100% - 15px), 0% calc(100% - 15px));
-    z-index: -2;
-  }
-
-  .header {
-    display: flex;
-    flex-direction: row;
-    color: ${PRIMARY_COLOR2};
-    padding-top: 25px;
-    padding-left: 20px;
-    .btn-group {
-      margin-left: auto;
-    }
-    .summary {
-      z-index: 1;
-      color: ${PRIMARY_COLOR1};
-      font-size: 18px;
-      font-weight: bold;
-    }
-  }
-
- .icon {
-    color: ${PRIMARY_COLOR1};
-  }
-`;
+import { classNames } from 'react-select/dist/declarations/src/utils';
 
 const StyledAlert = style(Alert)`
   @keyframes showup {
@@ -118,6 +85,9 @@ const StyledAlert = style(Alert)`
   clip-path: polygon(75% 0%, 100% 50%, 75% 100%, 0% 100%, 10% 50%, 0% 0%);
   animation: 0.3s cubic-bezier(.73,.2,0,.88) showup;
 `;
+
+const ACITON_ICON_CLASS =
+  'cursor-pointer font-bold text-2xl text-zinc-900 hover:text-zinc-500 transition-all z-10';
 
 const DEFAULT_SCHEMA_CONFIG = {
   i18n: [],
@@ -164,15 +134,12 @@ const getItemStyle = (isDragging: boolean, draggableStyle: any) => ({
   padding: grid * 2,
   margin: `0 0 ${grid}px 0`,
 
-  // change background colour if dragging
-  background: isDragging ? 'lightgreen' : '#464D54',
-
   // styles we need to apply on draggables
   ...draggableStyle,
 });
 
 const getListStyle = (isDraggingOver: boolean) => ({
-  background: isDraggingOver ? 'lightblue' : '#464D54',
+  background: isDraggingOver ? '#71717a' : '#52525b',
   padding: grid,
   width: 250,
 });
@@ -202,7 +169,7 @@ const Item = ({
       return !prev;
     });
   };
-  const handleSettingsClick = (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSettingsClick = (event: React.MouseEvent<any>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -227,25 +194,26 @@ const Item = ({
   );
 
   return (
-    <StyledCard expand={expanded}>
-      <div className="bg" />
-      <div className="header">
-        <div className="summary">{summary}</div>
-        <div className="btn-group">
-          <IconButton
-            aria-label="settings"
+    <div className="flex flex-col bg-yellow-300 w-full p-5 border-b-4 border-r-4 border-zinc-900">
+      <div className="flex items-center">
+        <div className="font-bold text-lg text-zinc-900">{summary}</div>
+        <div className="flex items-center ml-auto">
+          <RiMore2Fill
+            className={`${ACITON_ICON_CLASS} mr-4`}
             onClick={handleSettingsClick}
-            color="primary"
-          >
-            <MoreVertIcon className="icon" />
-          </IconButton>
-          <ExpandMore
-            expand={expanded}
-            onClick={handleExpandClick}
-            color="primary"
-          >
-            <ExpandMoreIcon className="icon" />
-          </ExpandMore>
+          />
+          {!expanded && (
+            <RiArrowDownSLine
+              className={ACITON_ICON_CLASS}
+              onClick={handleExpandClick}
+            />
+          )}
+          {expanded && (
+            <RiArrowUpSLine
+              className={ACITON_ICON_CLASS}
+              onClick={handleExpandClick}
+            />
+          )}
         </div>
       </div>
       <Collapse in={expanded} timeout="auto" unmountOnExit>
@@ -267,28 +235,34 @@ const Item = ({
         }}
         sx={{
           '& .MuiPaper-root': {
-            backgroundColor: PRIMARY_COLOR1,
+            backgroundColor: '#cbd5e1',
+            borderBottom: '4px solid #18181b',
+            borderRight: '4px solid #18181b',
+            borderRadius: 0,
+            boxShadow: 0,
           },
         }}
       >
-        <MenuItem
+        <button
+          className="outline-none py-2 px-4 text-md flex items-center font-bold justify-center hover:bg-slate-400 transition-all"
           onClick={() => {
             onDuplicate();
             handleSettingsClose();
           }}
         >
           Duplicate
-        </MenuItem>
-        <MenuItem
+        </button>
+        <button
+          className="outline-none py-2 px-4 text-md flex items-center font-bold justify-center hover:bg-slate-400 w-full transition-all"
           onClick={() => {
             onDelete();
             handleSettingsClose();
           }}
         >
           Delete
-        </MenuItem>
+        </button>
       </Menu>
-    </StyledCard>
+    </div>
   );
 };
 
@@ -416,75 +390,37 @@ const Home = () => {
           <FilterPanel />
         )}
         <div
+          className="bg-zinc-600"
           style={{
-            backgroundColor: '#464D54',
+            //backgroundColor: '#464D54',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
           }}
         >
-          <CssBaseline enableColorScheme />
-          <GlobalStyles
-            styles={{
-              scrollBaseColor: 'rgba(0, 0, 0, 0)',
-
-              /* webkit */
-              '*::-webkit-scrollbar': {
-                width: '6px',
-                height: '6px',
-              },
-              '*::-webkit-scrollbar-corner': {
-                backgroundColor: 'transparent',
-              },
-
-              /* firefox */
-              scrollbarWidth: 'thin',
-              scrollbarFaceColor: '#cccccc',
-              scrollbarShadowColor: '#cccccc',
-              scrollbarArrowColor: '#cccccc',
-              scrollbarHighlightColor: '#cccccc',
-              scrollbarDarkshadowColor: '#cccccc',
-              scrollbarTrackColor: 'rgb(245, 245, 245)',
-              /* firefox */
-              scrollbarColor: '#e8e8e8 rgba(0, 0, 0, 0)',
-              /* webkit */
-              '*::-webkit-scrollbar-thumb': {
-                backgroundColor: '#5c5c5c',
-                borderRadius: '3px',
-              },
-            }}
-          />
           {saving && (
-            <StyledAlert icon={<></>} variant="standard" color="info">
-              <Stack
-                spacing={2}
-                direction="row"
-                sx={{ alignItems: 'center', height: '100%', width: '100%' }}
-              >
-                <CircularProgress />
+            <div
+              className="absolute fixed p-10 bg-slate-700 font-bold text-slate-50 z-10"
+              style={{
+                left: '50%',
+                top: '50px',
+                transform: 'translateX(-50%)',
+              }}
+            >
+              <div className="f-full w-full items-center flex items-center">
+                <CircularProgress className="text-yellow-300 mr-5" />
                 <div style={{ fontSize: '18px', zIndex: 3 }}>
                   Saving...Please wait for a while
                 </div>
-              </Stack>
-            </StyledAlert>
+              </div>
+            </div>
           )}
 
           <ActionMenu />
 
-          <Stack
-            direction="row"
-            sx={{
-              flexGrow: 1,
-            }}
-          >
+          <div className="flex-grow flex">
             <Sidebar />
-            <Stack
-              spacing={2}
-              sx={{
-                flexGrow: 1,
-                backgroundColor: '#464D54',
-              }}
-            >
+            <div className="flex-grow flex flex-col">
               <Navbar />
 
               <DragDropContext
@@ -501,7 +437,7 @@ const Home = () => {
               >
                 <Droppable droppableId="droppable">
                   {(provided, snapshot) => (
-                    <Stack
+                    <div
                       {...provided.droppableProps}
                       ref={provided.innerRef}
                       style={{
@@ -511,11 +447,12 @@ const Home = () => {
                           flexGrow: 1,
                           overflow: 'auto',
                           height: '400px',
-                          background: snapshot.isDraggingOver
-                            ? PRIMARY_COLOR1_LIGHT1
-                            : '#464D54',
+                          // background: snapshot.isDraggingOver
+                          //   ? PRIMARY_COLOR1_LIGHT1
+                          //   : '#464D54',
                         },
                       }}
+                      className="w-full flex-grow flex flex-col"
                     >
                       {displayValueList.map((item, i) => {
                         return (
@@ -534,22 +471,16 @@ const Home = () => {
                                     provided.draggableProps.style
                                   ),
                                   background: snapshot.isDragging
-                                    ? SECOND_COLOR1
-                                    : '#464D54',
+                                    ? '#ef4444'
+                                    : '#52525b',
                                 }}
                               >
-                                <Stack
-                                  spacing={1}
-                                  direction="row"
-                                  style={{
-                                    width: '100%',
-                                    alignItems: 'center',
-                                  }}
-                                >
-                                  <span {...provided.dragHandleProps}>
-                                    <DragIndicatorIcon
-                                      sx={{ color: PRIMARY_COLOR1 }}
-                                    />
+                                <div className="flex items-center w-full">
+                                  <span
+                                    {...provided.dragHandleProps}
+                                    className="mr-4"
+                                  >
+                                    <RiGridFill className="font-bold text-2xl text-yellow-300" />
                                   </span>
                                   <Item
                                     sx={{ flexGrow: 1 }}
@@ -575,36 +506,27 @@ const Home = () => {
                                       eventBus.emit(EVENT.DATA_ITEM_DELETE, i);
                                     }}
                                   />
-                                </Stack>
+                                </div>
                               </div>
                             )}
                           </Draggable>
                         );
                       })}
                       {provided.placeholder}
-                    </Stack>
+                    </div>
                   )}
                 </Droppable>
               </DragDropContext>
-              <Button
-                sx={{
-                  width: '90%',
-                  padding: '10px',
-                  borderRadius: '0px',
-                  clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-                  marginLeft: 'auto!important',
-                  marginRight: 'auto!important',
-                  marginBottom: '20px!important',
-                }}
-                variant="contained"
+              <button
+                className="w-4/6 p-4 mx-auto mb-4 bg-yellow-300 border-b-4 border-r-4 border-t-2 border-l-2 border-zinc-900 text-zinc-900 font-bold text-md hover:bg-yellow-200 transition-all"
                 onClick={() => {
                   eventBus.emit(EVENT.DATA_ITEM_ADD);
                 }}
               >
                 Add Item
-              </Button>
-            </Stack>
-          </Stack>
+              </button>
+            </div>
+          </div>
 
           <SchemaConfig initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG} />
           <InitPanel />

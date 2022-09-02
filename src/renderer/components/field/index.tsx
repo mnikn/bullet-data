@@ -2,6 +2,7 @@ import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { Button, Grid, IconButton, Stack } from '@mui/material';
+import classNames from 'classnames';
 import get from 'lodash/get';
 import {
   SchemaField,
@@ -14,6 +15,11 @@ import {
   SchemaFieldType,
 } from 'models/schema';
 import { useContext, useEffect, useState } from 'react';
+import {
+  RiArrowDownFill,
+  RiArrowUpFill,
+  RiDeleteBin2Fill,
+} from 'react-icons/ri';
 import { generateUUID } from 'utils/uuid';
 import Context from '../../context';
 import CollapseCard from '../collapse_card';
@@ -21,6 +27,9 @@ import FieldBoolean from './boolean_field';
 import FieldNumber from './number_field';
 import FieldSelect from './select_field';
 import FieldString from './string_field';
+
+const ACITON_ICON_CLASS =
+  'cursor-pointer font-bold text-2xl text-zinc-900 hover:text-zinc-500 transition-all z-10';
 
 export const FieldContainer = ({
   schema,
@@ -269,7 +278,7 @@ export const FieldArray = ({
         title={label || ''}
         initialExpand={schema.config.initialExpand}
       >
-        <Stack spacing={4}>
+        <div className="flex flex-col">
           {list.map((item, i) => {
             const summary = schema.config.summary.replace(
               /\{\{[A-Za-z0-9_.\[\]]+\}\}/g,
@@ -305,14 +314,10 @@ export const FieldArray = ({
               }
             );
             return (
-              <Stack
-                key={item.id}
-                spacing={1}
-                direction="row"
-                style={{ width: '100%', alignItems: 'center' }}
-              >
-                <Stack spacing="2" direction="row" sx={{ flexGrow: 1 }}>
+              <div key={item.id} className="w-full flex items-center mb-10">
+                <div className="flex w-full items-center">
                   <CollapseCard
+                    className="bg-yellow-700 mr-2"
                     title={summary}
                     initialExpand={schema.config.initialExpand}
                   >
@@ -322,34 +327,29 @@ export const FieldArray = ({
                       onValueChange={(v) => onItemChange(v, i)}
                     />
                   </CollapseCard>
-                  <IconButton onClick={() => moveUpItem(i)} color="primary">
-                    <ArrowUpwardIcon />
-                  </IconButton>
-                  <IconButton onClick={() => moveDownItem(i)} color="primary">
-                    <ArrowDownwardIcon />
-                  </IconButton>
-                  <IconButton onClick={() => deleteItem(i)} color="primary">
-                    <DeleteIcon />
-                  </IconButton>
-                </Stack>
-              </Stack>
+                  <RiArrowUpFill
+                    className={classNames(ACITON_ICON_CLASS, 'mr-2')}
+                    onClick={() => moveUpItem(i)}
+                  />
+                  <RiArrowDownFill
+                    className={classNames(ACITON_ICON_CLASS, 'mr-2')}
+                    onClick={() => moveDownItem(i)}
+                  />
+                  <RiDeleteBin2Fill
+                    className={ACITON_ICON_CLASS}
+                    onClick={() => deleteItem(i)}
+                  />
+                </div>
+              </div>
             );
           })}
-          <Button
-            variant="contained"
+          <button
+            className="mt-12 w-4/6 p-4 mx-auto mb-4 bg-yellow-300 border-b-4 border-zinc-900 text-zinc-900 font-bold text-md hover:bg-yellow-200 transition-all"
             onClick={addItem}
-            sx={{
-              width: '80%',
-              padding: '10px',
-              borderRadius: '0px',
-              clipPath: 'polygon(5% 0%, 100% 0%, 95% 100%, 0% 100%)',
-              marginLeft: 'auto!important',
-              marginRight: 'auto!important',
-            }}
           >
             Add Item
-          </Button>
-        </Stack>
+          </button>
+        </div>
       </CollapseCard>
     </Grid>
   );

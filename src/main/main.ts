@@ -26,7 +26,11 @@ function readFolder(dirPath: any, arrayOfFiles: any[], arrayOfDirs: any[]) {
   files.forEach(function (file) {
     if (fs.statSync(dirPath + '/' + file).isDirectory()) {
       arrayOfDirs.push(dirPath + '\\' + file);
-      arrayOfFiles = readFolder(dirPath + '/' + file, arrayOfFiles, arrayOfDirs);
+      arrayOfFiles = readFolder(
+        dirPath + '/' + file,
+        arrayOfFiles,
+        arrayOfDirs
+      );
     } else {
       arrayOfFiles.push(path.join(dirPath, '/', file));
     }
@@ -34,6 +38,24 @@ function readFolder(dirPath: any, arrayOfFiles: any[], arrayOfDirs: any[]) {
 
   return arrayOfFiles;
 }
+
+// function readFolderV2(dirPath: any, arrayOfFiles: any[], arrayOfDirs: any[]) {
+//   const files = fs.readdirSync(dirPath);
+
+//   arrayOfFiles = arrayOfFiles || [];
+//   arrayOfDirs = arrayOfDirs || [];
+
+//   files.forEach(function (file) {
+//     if (fs.statSync(dirPath + '/' + file).isDirectory()) {
+//       arrayOfDirs.push(dirPath + '\\' + file);
+//       arrayOfFiles = readFolder(dirPath + '/' + file, arrayOfFiles, arrayOfDirs);
+//     } else {
+//       arrayOfFiles.push(path.join(dirPath, '/', file));
+//     }
+//   });
+
+//   return arrayOfFiles;
+// }
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -54,9 +76,19 @@ ipcMain.on('readFolder', async (event, arg) => {
   if (fs.existsSync(arg.filePath)) {
     const dirs: string[] = [];
     const files = readFolder(arg.filePath, [], dirs);
-    event.reply('readFolder', { filePath: arg.filePath, data: files, arg, dirs });
+    event.reply('readFolder', {
+      filePath: arg.filePath,
+      data: files,
+      arg,
+      dirs,
+    });
   } else {
-    event.reply('readFolder', { filePath: arg.filePath, data: null, arg, dirs: [] });
+    event.reply('readFolder', {
+      filePath: arg.filePath,
+      data: null,
+      arg,
+      dirs: [],
+    });
   }
 });
 

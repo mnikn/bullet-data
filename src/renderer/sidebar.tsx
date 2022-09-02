@@ -3,7 +3,6 @@ import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import {
   Box,
   Button,
-  Dialog,
   DialogActions,
   DialogContent,
   DialogContentText,
@@ -14,12 +13,14 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
+import classNames from 'classnames';
 import { FILE_PATH, SIDEBAR_VISIBLE } from 'constatnts/storage_key';
 import { useContext, useEffect, useState } from 'react';
 import Context from 'renderer/context';
 import { EVENT, eventBus } from './event';
 import { FileTreeFile, FileTreeFolder } from './hooks/use_project';
 import { PRIMARY_COLOR1, PRIMARY_COLOR2, PRIMARY_COLOR2_LIGHT1 } from './style';
+import Dialog from './components/dialog';
 import { findFolderInTree } from './utils/file';
 
 function NameDialog() {
@@ -59,51 +60,31 @@ function NameDialog() {
     return null;
   }
   return (
-    <Dialog
-      open
-      onClose={close}
-      aria-labelledby="draggable-dialog-title"
-      PaperProps={{
-        sx: {
-          background: PRIMARY_COLOR2,
-          color: '#fff',
-          clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
-          padding: '20px 60px',
-        },
-      }}
-    >
-      <DialogTitle>Name</DialogTitle>
-      <DialogContent>
-        <TextField
-          sx={{}}
-          inputProps={{
-            sx: {
-              padding: '20px',
-              background: PRIMARY_COLOR2_LIGHT1,
-              color: PRIMARY_COLOR1,
-            },
-          }}
-          autoFocus
-          placeholder="file name"
+    <Dialog open title={'Name'}>
+      <div className="flex flex-col p-2 mb-5">
+        <input
+          className="text-md w-full outline-none p-2 focus:outline-2 focus:outline-zinc-900 transition-all text-zinc-900"
           value={name}
           onChange={(e) => {
             setName(e.target.value);
           }}
+          style={{
+            outlineOffset: 0,
+          }}
         />
-      </DialogContent>
-      <DialogActions sx={{ justifyContent: 'center' }}>
-        <Button
-          variant="contained"
+      </div>
+      <div className="flex h-12 px-6">
+        <button
+          className="flex-grow bg-rose-600 text-zinc-50 font-bold border-zinc-900 border-r-2 border-b-2 mr-4 hover:bg-rose-500 transition-all"
           onClick={() => {
             setVisible(false);
           }}
-          color="secondary"
         >
           Cancel
-        </Button>
-        <Button
+        </button>
+        <button
+          className="flex-grow bg-yellow-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-yellow-200 transition-all"
           onClick={() => {
-            console.log('dsdd: ', action);
             if (action === 'create_file') {
               /**
                 const folderPath = source.currentPath.substring(
@@ -153,12 +134,10 @@ function NameDialog() {
             }
             setVisible(false);
           }}
-          variant="contained"
-          color="primary"
         >
           Confirm
-        </Button>
-      </DialogActions>
+        </button>
+      </div>
     </Dialog>
   );
 }
@@ -175,11 +154,17 @@ function FileTree({
   const [expanded, setExpanded] = useState(data.expanded);
   if (data.type === 'file') {
     return (
-      <Button
+      <button
         onContextMenu={(e) => {
           showMenu(e, data);
         }}
-        sx={{
+        className={classNames(
+          'p-2 pl-5 pr-5 text-md text-zinc-900 font-bold transition-all',
+          {
+            'bg-slate-300': localStorage.getItem(FILE_PATH) === data.fullPath,
+          }
+        )}
+        style={{
           borderRadius: '0px',
           display: 'flow-root',
           textTransform: 'none',
@@ -189,10 +174,6 @@ function FileTree({
           direction: 'rtl',
           textAlign: 'left',
           marginLeft: `${level * 20}px`,
-          backgroundColor:
-            localStorage.getItem(FILE_PATH) === data.fullPath
-              ? 'rgba(240, 233, 108, 0.20)'
-              : undefined,
         }}
         onClick={() => {
           localStorage.setItem(FILE_PATH, data.fullPath);
@@ -201,7 +182,7 @@ function FileTree({
         }}
       >
         {data.partName}
-      </Button>
+      </button>
     );
   }
   return (
@@ -339,16 +320,13 @@ function Sidebar() {
    * }; */
 
   return (
-    <Stack
-      sx={{
-        background: '#8593A1',
+    <div
+      className="flex flex-col items-center p-2 bg-slate-500 flex-shrink-0"
+      style={{
         width: '300px',
-        flexShrink: '0',
-        alignItems: 'center',
-        padding: '10px',
       }}
     >
-      <div style={{ color: PRIMARY_COLOR1, fontWeight: 'bold' }}>FOLDERS</div>
+      <div className="text-slate-50 font-bold text-lg mt-2">Folders</div>
       <Stack
         sx={{ width: '100%', flexGrow: 1, padding: '5px' }}
         onContextMenu={(e) => {
@@ -422,29 +400,32 @@ function Sidebar() {
         }}
         sx={{
           '& .MuiPaper-root': {
-            backgroundColor: PRIMARY_COLOR1,
+            backgroundColor: '#cbd5e1',
             width: '200px',
-            borderRadius: '32px',
+            borderRadius: 0,
+            boxShadow: 0,
+            borderBottom: '4px solid #18181b',
+            borderRight: '4px solid #18181b',
           },
         }}
       >
         {menuActions.map((m) => {
           return (
-            <MenuItem
+            <button
               key={m.title}
-              sx={{ display: 'flex', justifyContent: 'center' }}
+              className="outline-none py-2 px-4 text-md flex items-center font-bold justify-center hover:bg-slate-400 w-full transition-all"
               onClick={() => {
                 setMenuAnchorEl(null);
                 m.fn();
               }}
             >
               {m.title}
-            </MenuItem>
+            </button>
           );
         })}
       </Menu>
       <NameDialog />
-    </Stack>
+    </div>
   );
 }
 
