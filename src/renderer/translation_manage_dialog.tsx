@@ -37,7 +37,7 @@ function iterObject(
       return match;
     });
     return currentPath;
-  } else if (typeof val === 'object') {
+  } else if (typeof val === 'object' && val) {
     let currentPath = null;
     Object.keys(val).find((item) => {
       let match = iterObject(

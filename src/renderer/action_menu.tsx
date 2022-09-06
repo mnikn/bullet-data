@@ -8,7 +8,7 @@ import FieldSelect from './components/field/select_field';
 import { PRIMARY_COLOR1 } from './style';
 
 const BUTTON_CLASS =
-  'bg-yellow-300 mr-4 p-2 h-full font-bold text-md text-slate-800 border-slate-800 hover:bg-yellow-200 transition-all w-24 flex items-center justify-center text-zinc-900';
+  'bg-slate-300 mr-4 p-2 h-full font-bold text-md text-slate-800 border-slate-800 hover:bg-slate-200 transition-all w-24 flex items-center justify-center text-zinc-900';
 
 function ActionMenu() {
   const [headerAnchorEl, setHeaderAnchorEl] = useState<null | HTMLElement>(

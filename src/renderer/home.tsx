@@ -1,40 +1,27 @@
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import MoreVertIcon from '@mui/icons-material/MoreVert';
+import {
+  CardContent,
+  CircularProgress,
+  Collapse,
+  IconButton,
+  Menu,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
+import { PROJECT_PATH } from 'constatnts/storage_key';
+import get from 'lodash/get';
+import {
+  DEFAULT_CONFIG,
+  SchemaField,
+  SchemaFieldObject,
+  validateValue,
+} from 'models/schema';
+import { useContext, useEffect, useRef, useState } from 'react';
+import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
 import {
   RiArrowDownSLine,
   RiArrowUpSLine,
   RiGridFill,
   RiMore2Fill,
 } from 'react-icons/ri';
-import {
-  Alert,
-  Button,
-  CardContent,
-  CircularProgress,
-  Collapse,
-  CssBaseline,
-  GlobalStyles,
-  IconButton,
-  Menu,
-  MenuItem,
-  Stack,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
-import { PROJECT_PATH } from 'constatnts/storage_key';
-import { cloneDeep } from 'lodash';
-import get from 'lodash/get';
-import {
-  DEFAULT_CONFIG,
-  SchemaField,
-  SchemaFieldObject,
-  SchemaFieldSelect,
-  validateValue,
-} from 'models/schema';
-import { useContext, useEffect, useState } from 'react';
-import { DragDropContext, Draggable, Droppable } from 'react-beautiful-dnd';
-import { useLatest } from 'react-use';
-import style from 'styled-components';
 import ActionMenu from './action_menu';
 import Confimration from './components/confirmation';
 import { FieldContainer } from './components/field';
@@ -48,43 +35,12 @@ import useFile from './hooks/use_file';
 import useProject from './hooks/use_project';
 import useShortcut from './hooks/use_shortcut';
 import InitPanel from './init_panel';
-import Navbar from './navbar';
 import Preview from './preview';
 import ProjectSchemaConfig from './project_schema_config';
 /* import FilterPanel from './filter_panel'; */
 import SchemaConfig from './schema_config';
 import Sidebar from './sidebar';
-import {
-  PRIMARY_COLOR1,
-  PRIMARY_COLOR1_LIGHT1,
-  PRIMARY_COLOR2,
-  SECOND_COLOR1,
-} from './style';
 import TranslationManageDialog from './translation_manage_dialog';
-import { classNames } from 'react-select/dist/declarations/src/utils';
-
-const StyledAlert = style(Alert)`
-  @keyframes showup {
-    from {
-      transform: translateX(-50%);
-    }
-    to {
-      transform: translateX(50%);
-    }
-  }
-  position: fixed;
-  width: 50%;
-  transform: translateX(50%);
-  z-index: 10;
-  top: 50px;
-  height: 100px;
-  padding-left: 5%;
-  background: ${SECOND_COLOR1};
-  color: ${PRIMARY_COLOR1};
-  border-radius: 0px;
-  clip-path: polygon(75% 0%, 100% 50%, 75% 100%, 0% 100%, 10% 50%, 0% 0%);
-  animation: 0.3s cubic-bezier(.73,.2,0,.88) showup;
-`;
 
 const ACITON_ICON_CLASS =
   'cursor-pointer font-bold text-2xl text-zinc-900 hover:text-zinc-500 transition-all z-10';
@@ -194,7 +150,7 @@ const Item = ({
   );
 
   return (
-    <div className="flex flex-col bg-yellow-300 w-full p-5 border-b-4 border-r-4 border-zinc-900">
+    <div className="flex flex-col bg-slate-300 w-full p-5 border-b-4 border-r-4 border-zinc-900">
       <div className="flex items-center">
         <div className="font-bold text-lg text-zinc-900">{summary}</div>
         <div className="flex items-center ml-auto">
@@ -267,55 +223,36 @@ const Item = ({
 };
 
 const Home = () => {
-  /* const [valueList, setActualValueList] = useState<any[]>([]);
-   * const [displayValueList, setDisplayValueList] = useState<any[]>([]); */
   const [confirmationVisible, setConfirmationVisbile] = useState(false);
-  /* const [schemaConfig, setSchemaConfig] = useState<any>(null); */
-  /* const [currentLang, setCurrentLang] = useState<string>(''); */
-  /* const [schema, setSchema] = useState<SchemaField | null>(null); */
 
-  const { projectFileTree, projectConfig, projectTranslations, currentLang } =
-    useProject();
-  const { currentFile, recentOpenFiles } = useExplorer({ projectFileTree });
+  const {
+    projectFileTree,
+    projectConfig,
+    projectTranslations,
+    currentLang,
+    projectFiles,
+  } = useProject();
+  const { currentFile } = useExplorer({
+    projectFiles,
+  });
+
   const { currentFileData, schemaConfig, schema, saving } = useFile({
     currentFile,
     projectConfig,
+    projectTranslations,
   });
   const { actualValueList, displayValueList } = useDataList({
-    currentFile,
     currentFileData,
     schema,
     projectTranslations,
     currentLang,
     projectConfig,
   });
+  const projectTransltionsRef = useRef<any>(projectTranslations);
+  projectTransltionsRef.current = projectTranslations;
 
   useShortcut({ actualValueList, projectConfig });
 
-  /* const actualValueListRef = useLatest(actualValueList); */
-
-  /* useEffect(() => {
-   *   const onKeyDown = (e: any) => {
-   *     if (e.code === 'KeyS' && e.ctrlKey) {
-   *       eventBus.emit(
-   *         EVENT.SAVE_FILE,
-   *         actualValueListRef.current.map((item) => item.data)
-   *       );
-   *     }
-   *     if (e.code === 'KeyL' && e.ctrlKey) {
-   *       eventBus.emit(EVENT.SHOW_FILE_PREVIEW);
-   *     }
-   *     if (e.code === 'KeyO' && e.ctrlKey) {
-   *       (window as any).electron.ipcRenderer.openFile();
-   *     }
-   *   };
-
-   *   document.addEventListener('keydown', onKeyDown);
-   *   return () => {
-   *     document.removeEventListener('keydown', onKeyDown);
-   *   };
-   * }, [schemaConfig]);
-   */
   useEffect(() => {
     const onClose = async () => {
       if (!schema || !currentFile) {
@@ -331,7 +268,13 @@ const Home = () => {
         return;
       }
       const formatData = (JSON.parse(fileData.data) || []).map((item: any) => {
-        return validateValue(item, item, schema, schemaConfig);
+        return validateValue(
+          item,
+          item,
+          schema,
+          schemaConfig,
+          projectTransltionsRef.current
+        );
       });
 
       if (
@@ -381,7 +324,6 @@ const Home = () => {
         projectFileTree,
         projectTranslations,
         currentFile,
-        recentOpenFiles,
         actualValueList,
       }}
     >
@@ -408,7 +350,7 @@ const Home = () => {
               }}
             >
               <div className="f-full w-full items-center flex items-center">
-                <CircularProgress className="text-yellow-300 mr-5" />
+                <CircularProgress className="text-slate-300 mr-5" />
                 <div style={{ fontSize: '18px', zIndex: 3 }}>
                   Saving...Please wait for a while
                 </div>
@@ -420,112 +362,115 @@ const Home = () => {
 
           <div className="flex-grow flex">
             <Sidebar />
-            <div className="flex-grow flex flex-col">
-              <Navbar />
-
-              <DragDropContext
-                onDragEnd={(result: any) => {
-                  eventBus.emit(
-                    EVENT.DATA_LIST_SET,
-                    reorder(
-                      actualValueList.map((item) => item.data),
-                      result.source.index,
-                      result.destination.index
-                    )
-                  );
-                }}
-              >
-                <Droppable droppableId="droppable">
-                  {(provided, snapshot) => (
-                    <div
-                      {...provided.droppableProps}
-                      ref={provided.innerRef}
-                      style={{
-                        ...getListStyle(snapshot.isDraggingOver),
-                        ...{
-                          width: '100%',
-                          flexGrow: 1,
-                          overflow: 'auto',
-                          height: '400px',
-                          // background: snapshot.isDraggingOver
-                          //   ? PRIMARY_COLOR1_LIGHT1
-                          //   : '#464D54',
-                        },
-                      }}
-                      className="w-full flex-grow flex flex-col"
-                    >
-                      {displayValueList.map((item, i) => {
-                        return (
-                          <Draggable
-                            key={item.key}
-                            draggableId={item.key}
-                            index={i}
-                          >
-                            {(provided, snapshot) => (
-                              <div
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                style={{
-                                  ...getItemStyle(
-                                    snapshot.isDragging,
-                                    provided.draggableProps.style
-                                  ),
-                                  background: snapshot.isDragging
-                                    ? '#ef4444'
-                                    : '#52525b',
-                                }}
-                              >
-                                <div className="flex items-center w-full">
-                                  <span
-                                    {...provided.dragHandleProps}
-                                    className="mr-4"
-                                  >
-                                    <RiGridFill className="font-bold text-2xl text-yellow-300" />
-                                  </span>
-                                  <Item
-                                    sx={{ flexGrow: 1 }}
-                                    key={item.key}
-                                    index={i + 1}
-                                    schema={schema}
-                                    schemaConfig={schemaConfig}
-                                    value={displayValueList[i].data}
-                                    onValueChange={(v) => {
-                                      eventBus.emit(
-                                        EVENT.DATA_ITEM_CHANGED,
-                                        v,
-                                        i
-                                      );
-                                    }}
-                                    onDuplicate={() => {
-                                      eventBus.emit(
-                                        EVENT.DATA_ITEM_DUPLICATED,
-                                        i
-                                      );
-                                    }}
-                                    onDelete={() => {
-                                      eventBus.emit(EVENT.DATA_ITEM_DELETE, i);
-                                    }}
-                                  />
+            {schema && (
+              <div className="flex-grow flex flex-col">
+                <DragDropContext
+                  onDragEnd={(result: any) => {
+                    eventBus.emit(
+                      EVENT.DATA_LIST_SET,
+                      reorder(
+                        actualValueList.map((item) => item.data),
+                        result.source.index,
+                        result.destination.index
+                      )
+                    );
+                  }}
+                >
+                  <Droppable droppableId="droppable">
+                    {(provided, snapshot) => (
+                      <div
+                        {...provided.droppableProps}
+                        ref={provided.innerRef}
+                        style={{
+                          ...getListStyle(snapshot.isDraggingOver),
+                          ...{
+                            width: '100%',
+                            flexGrow: 1,
+                            overflow: 'auto',
+                            height: '400px',
+                            // background: snapshot.isDraggingOver
+                            //   ? PRIMARY_COLOR1_LIGHT1
+                            //   : '#464D54',
+                          },
+                        }}
+                        className="w-full flex-grow flex flex-col"
+                      >
+                        {displayValueList.map((item, i) => {
+                          return (
+                            <Draggable
+                              key={item.key}
+                              draggableId={item.key}
+                              index={i}
+                            >
+                              {(provided, snapshot) => (
+                                <div
+                                  ref={provided.innerRef}
+                                  {...provided.draggableProps}
+                                  style={{
+                                    ...getItemStyle(
+                                      snapshot.isDragging,
+                                      provided.draggableProps.style
+                                    ),
+                                    background: snapshot.isDragging
+                                      ? '#ef4444'
+                                      : '#52525b',
+                                  }}
+                                >
+                                  <div className="flex items-center w-full">
+                                    <span
+                                      {...provided.dragHandleProps}
+                                      className="mr-4"
+                                    >
+                                      <RiGridFill className="font-bold text-2xl text-slate-300" />
+                                    </span>
+                                    <Item
+                                      sx={{ flexGrow: 1 }}
+                                      key={item.key}
+                                      index={i + 1}
+                                      schema={schema}
+                                      schemaConfig={schemaConfig}
+                                      value={displayValueList[i].data}
+                                      onValueChange={(v) => {
+                                        eventBus.emit(
+                                          EVENT.DATA_ITEM_CHANGED,
+                                          v,
+                                          i
+                                        );
+                                      }}
+                                      onDuplicate={() => {
+                                        eventBus.emit(
+                                          EVENT.DATA_ITEM_DUPLICATED,
+                                          i
+                                        );
+                                      }}
+                                      onDelete={() => {
+                                        eventBus.emit(
+                                          EVENT.DATA_ITEM_DELETE,
+                                          i
+                                        );
+                                      }}
+                                    />
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-                          </Draggable>
-                        );
-                      })}
-                      {provided.placeholder}
-                    </div>
-                  )}
-                </Droppable>
-              </DragDropContext>
-              <button
-                className="w-4/6 p-4 mx-auto mb-4 bg-yellow-300 border-b-4 border-r-4 border-t-2 border-l-2 border-zinc-900 text-zinc-900 font-bold text-md hover:bg-yellow-200 transition-all"
-                onClick={() => {
-                  eventBus.emit(EVENT.DATA_ITEM_ADD);
-                }}
-              >
-                Add Item
-              </button>
-            </div>
+                              )}
+                            </Draggable>
+                          );
+                        })}
+                        {provided.placeholder}
+                      </div>
+                    )}
+                  </Droppable>
+                </DragDropContext>
+                <button
+                  className="w-4/6 p-4 mx-auto mb-4 bg-slate-300 border-b-4 border-r-4 border-t-2 border-l-2 border-zinc-900 text-zinc-900 font-bold text-md hover:bg-slate-200 transition-all"
+                  onClick={() => {
+                    eventBus.emit(EVENT.DATA_ITEM_ADD);
+                  }}
+                >
+                  Add Item
+                </button>
+              </div>
+            )}
           </div>
 
           <SchemaConfig initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG} />

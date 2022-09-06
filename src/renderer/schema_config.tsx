@@ -275,7 +275,7 @@ const SchemaConfig = ({ initialValue }: { initialValue: any }) => {
               Cancel
             </button>
             <button
-              className="flex-grow bg-yellow-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-yellow-200 transition-all"
+              className="flex-grow bg-slate-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-slate-200 transition-all"
               onClick={async () => {
                 try {
                   eventBus.emit(EVENT.FILE_SCHEMA_CHANGED, JSON.parse(config));

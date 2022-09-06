@@ -14,6 +14,7 @@ export const EVENT = {
 
   REFRESH_PROJECT_FILE_TREE: 'refresh_project_file_tree',
   UPDATE_TRANSLATION: 'update_translation',
+  UPDATE_TERM_TRANSLATION: 'update_term_translation',
   SET_TRANSLATION: 'set_translation',
   SAVE_TRANSLATION: 'save_translation',
   NEW_FILE: 'new_file',

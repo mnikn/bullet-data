@@ -45,48 +45,24 @@ function ProjectSchemaConfig() {
   return (
     <Modal open>
       <Box
+        className="absolute bg-slate-400 p-4"
         sx={{
-          position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
           width: 720,
-          height: 620,
-          bgcolor: PRIMARY_COLOR2_LIGHT1,
+          height: 650,
           borderRadius: '0px',
-          clipPath:
-            'polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%)',
-          p: 4,
         }}
       >
-        <IconButton
-          color="primary"
-          sx={{
-            position: 'absolute',
-            top: '8px',
-            right: '16px',
-          }}
-          onClick={() => {
-            setVisible(false);
-          }}
-        >
-          <CloseIcon className="icon" />
-        </IconButton>
-        <Stack spacing={2} sx={{ height: '100%' }}>
-          <Stack spacing={2} sx={{ flexGrow: 1 }}>
-            <div
-              style={{
-                alignSelf: 'center',
-                color: PRIMARY_COLOR1,
-                fontWeight: 'bold',
-                fontSize: '18px',
-              }}
-            >
+        <Stack className="items-center" spacing={1} sx={{ height: '100%' }}>
+          <Stack className="items-center" spacing={2} sx={{ flexGrow: 1 }}>
+            <div className="text-slate-900 font-bold text-2xl mb-2">
               New Project Schema Config
             </div>
             <MonacoEditor
               width="100%"
-              height="100%"
+              height="88%"
               language="json"
               theme="vs-dark"
               value={config}
@@ -96,13 +72,9 @@ function ProjectSchemaConfig() {
               editorDidMount={editorDidMount}
             />
           </Stack>
-          <Stack spacing={2} direction="row">
-            <Button
-              sx={{
-                flexGrow: 1,
-                clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
-              }}
-              variant="contained"
+          <Stack className="h-12 w-4/6" spacing={2} direction="row">
+            <button
+              className="flex-grow bg-slate-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-slate-200 transition-all"
               onClick={async () => {
                 try {
                   const v = JSON.parse(config);
@@ -142,7 +114,7 @@ function ProjectSchemaConfig() {
               }}
             >
               Confirm
-            </Button>
+            </button>
           </Stack>
         </Stack>
       </Box>

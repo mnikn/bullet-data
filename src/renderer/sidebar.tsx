@@ -1,33 +1,16 @@
-import FolderIcon from '@mui/icons-material/Folder';
-import FolderOpenIcon from '@mui/icons-material/FolderOpen';
-import {
-  Box,
-  Button,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Input,
-  Menu,
-  MenuItem,
-  Stack,
-  TextField,
-} from '@mui/material';
+import { Box, Button, Menu, Stack } from '@mui/material';
 import classNames from 'classnames';
 import { FILE_PATH, SIDEBAR_VISIBLE } from 'constatnts/storage_key';
 import { useContext, useEffect, useState } from 'react';
+import { RiFolderFill, RiFolderOpenFill } from 'react-icons/ri';
 import Context from 'renderer/context';
+import Dialog from './components/dialog';
 import { EVENT, eventBus } from './event';
 import { FileTreeFile, FileTreeFolder } from './hooks/use_project';
-import { PRIMARY_COLOR1, PRIMARY_COLOR2, PRIMARY_COLOR2_LIGHT1 } from './style';
-import Dialog from './components/dialog';
-import { findFolderInTree } from './utils/file';
 
 function NameDialog() {
   const [name, setName] = useState<string>('');
-  const [source, setSource] = useState<FileTreeFile | FileTreeFolder | null>(
-    null
-  );
+  const [source, setSource] = useState<any | null>(null);
   const [action, setAction] = useState<
     'create_file' | 'create_folder' | 'rename_file' | 'rename_folder'
   >('create_file');
@@ -83,49 +66,12 @@ function NameDialog() {
           Cancel
         </button>
         <button
-          className="flex-grow bg-yellow-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-yellow-200 transition-all"
+          className="flex-grow bg-slate-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-slate-200 transition-all"
           onClick={() => {
             if (action === 'create_file') {
-              /**
-                const folderPath = source.currentPath.substring(
-                  0,
-                  source.currentPath.lastIndexOf('\\')
-                );
-                eventBus.emit(
-                  EVENT.RENAME_FILE,
-                  currentRename.currentPath,
-                  (folderPath ? folderPath + '\\' : '') + s + '.json'
-                );
-               **/
-
-              eventBus.emit(
-                EVENT.NEW_FILE,
-                (source?.currentPath ? source?.currentPath + '\\' : '') +
-                  name +
-                  '.json',
-                name + '.json'
-              );
+              eventBus.emit(EVENT.NEW_FILE, source, name);
             } else if (action === 'rename_file') {
-              /**
-                const folderPath = source.currentPath.substring(
-                  0,
-                  source.currentPath.lastIndexOf('\\')
-                );
-                eventBus.emit(
-                  EVENT.RENAME_FILE,
-                  currentRename.currentPath,
-                  (folderPath ? folderPath + '\\' : '') + s + '.json'
-                );
-               **/
-              const folderPath = source?.currentPath?.substring(
-                0,
-                source?.currentPath?.lastIndexOf('\\')
-              );
-              eventBus.emit(
-                EVENT.RENAME_FILE,
-                source?.currentPath,
-                folderPath + `${name}.json`
-              );
+              eventBus.emit(EVENT.RENAME_FILE, source, name);
             } else if (action === 'create_folder') {
               eventBus.emit(
                 EVENT.NEW_FOLDER,
@@ -159,9 +105,10 @@ function FileTree({
           showMenu(e, data);
         }}
         className={classNames(
-          'p-2 pl-5 pr-5 text-md text-zinc-900 font-bold transition-all',
+          'p-2 pl-5 pr-5 text-md text-slate-300 font-bold transition-all',
           {
-            'bg-slate-300': localStorage.getItem(FILE_PATH) === data.fullPath,
+            'bg-slate-300 text-slate-700':
+              localStorage.getItem(FILE_PATH) === data.fullPath,
           }
         )}
         style={{
@@ -181,7 +128,7 @@ function FileTree({
           // window.location.reload();
         }}
       >
-        {data.partName}
+        {data.partName.replace('.json', '')}
       </button>
     );
   }
@@ -200,7 +147,7 @@ function FileTree({
         }}
       >
         <Box
-          className="icon"
+          className="icon transition-all"
           sx={{
             width: 0,
             height: 0,
@@ -209,8 +156,8 @@ function FileTree({
               : '6px solid transparent',
             marginTop: expanded ? '8px' : undefined,
             marginRight: expanded ? '6px' : '4px',
-            borderTop: expanded ? `8px solid ${PRIMARY_COLOR1}` : undefined,
-            borderLeft: expanded ? undefined : `10px solid ${PRIMARY_COLOR1}`,
+            borderTop: expanded ? `8px solid #cbd5e1` : undefined,
+            borderLeft: expanded ? undefined : `10px solid #cbd5e1`,
             cursor: 'pointer',
             '&:hover': {
               filter: 'brightness(1.5)',
@@ -218,9 +165,9 @@ function FileTree({
           }}
         />
         {expanded ? (
-          <FolderOpenIcon sx={{ color: PRIMARY_COLOR1 }} />
+          <RiFolderOpenFill className="font-bold text-2xl text-slate-300" />
         ) : (
-          <FolderIcon sx={{ color: PRIMARY_COLOR1 }} />
+          <RiFolderFill className="font-bold text-2xl text-slate-300" />
         )}
 
         <Button
@@ -234,6 +181,8 @@ function FileTree({
             direction: 'rtl',
             textAlign: 'left',
             flexGrow: 1,
+            fontWeight: 'bold',
+            fontSize: '16px',
           }}
         >
           {data.partName}
@@ -244,7 +193,7 @@ function FileTree({
           {data.children.map((d) => {
             return (
               <FileTree
-                key={d.currentPath}
+                key={d.id}
                 data={d}
                 level={level + 1}
                 showMenu={showMenu}
@@ -308,8 +257,8 @@ function Sidebar() {
    *   });
    * }; */
 
-  const deleteFile = (path: string) => {
-    eventBus.emit(EVENT.DELETE_FILE, path);
+  const deleteFile = (file: any) => {
+    eventBus.emit(EVENT.DELETE_FILE, file);
   };
 
   /* const newFolder = (folder?: FileTreeFolder) => {
@@ -349,7 +298,7 @@ function Sidebar() {
         {(projectFileTree || []).map((f: any) => {
           return (
             <FileTree
-              key={f.currentPath}
+              key={f.id}
               data={f}
               level={0}
               showMenu={(e, d) => {
@@ -367,7 +316,7 @@ function Sidebar() {
                     {
                       title: 'Delete file',
                       fn: () => {
-                        deleteFile(d.currentPath || '');
+                        deleteFile(d);
                       },
                     },
                   ]);

@@ -11,8 +11,6 @@ export const DEFAULT_PROJECT_CONFIG = {
 };
 
 export const DEFAULT_SCHEMA_CONFIG = {
-  i18n: [],
-  filters: [],
   schema: {
     type: 'object',
     fields: {},

@@ -27,7 +27,7 @@ const CollapseCard = ({
   return (
     <div
       className={classNames(
-        'flex flex-col bg-yellow-600 w-full p-5 border-r-4 border-b-4 border-t-2 border-l-2 border-zinc-900',
+        'flex flex-col bg-slate-400 w-full p-5 border-r-4 border-b-4 border-t-2 border-l-2 border-zinc-900',
         className
       )}
     >

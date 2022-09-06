@@ -13,9 +13,28 @@ import fs from 'fs';
 import { app, BrowserWindow, shell, ipcMain, dialog } from 'electron';
 // import MenuBuilder from './menu';
 import { resolveHtmlPath } from './util';
+import { duration } from '@mui/material';
 
 let mainWindow: BrowserWindow | null = null;
 let needClose = false;
+
+function generateUUID(): string {
+  // Public Domain/MIT
+  let d = new Date().getTime();
+  if (
+    typeof performance !== 'undefined' &&
+    typeof performance.now === 'function'
+  ) {
+    d += performance.now(); // use high-precision timer if available
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'
+    .replace(/[xy]/g, (c) => {
+      const r = (d + Math.random() * 16) % 16 | 0;
+      d = Math.floor(d / 16);
+      return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+    })
+    .replace('-', '');
+}
 
 function readFolder(dirPath: any, arrayOfFiles: any[], arrayOfDirs: any[]) {
   const files = fs.readdirSync(dirPath);
@@ -39,23 +58,44 @@ function readFolder(dirPath: any, arrayOfFiles: any[], arrayOfDirs: any[]) {
   return arrayOfFiles;
 }
 
-// function readFolderV2(dirPath: any, arrayOfFiles: any[], arrayOfDirs: any[]) {
-//   const files = fs.readdirSync(dirPath);
+function readFolderV2(
+  dirPath: any,
+  parentDir: any = null,
+  arrayOfFiles: any[],
+  arrayOfDirs: any[]
+) {
+  const files = fs.readdirSync(dirPath);
 
-//   arrayOfFiles = arrayOfFiles || [];
-//   arrayOfDirs = arrayOfDirs || [];
+  arrayOfFiles = arrayOfFiles || [];
+  arrayOfDirs = arrayOfDirs || [];
 
-//   files.forEach(function (file) {
-//     if (fs.statSync(dirPath + '/' + file).isDirectory()) {
-//       arrayOfDirs.push(dirPath + '\\' + file);
-//       arrayOfFiles = readFolder(dirPath + '/' + file, arrayOfFiles, arrayOfDirs);
-//     } else {
-//       arrayOfFiles.push(path.join(dirPath, '/', file));
-//     }
-//   });
+  files.forEach(function (file) {
+    if (fs.statSync(dirPath + '/' + file).isDirectory()) {
+      const folder = {
+        id: generateUUID(),
+        parentFolderId: parentDir?.id || null,
+        path: path.join(dirPath, '/', file),
+      };
+      arrayOfDirs.push(folder);
+      arrayOfFiles = readFolderV2(
+        dirPath + '/' + file,
+        folder,
+        arrayOfFiles,
+        arrayOfDirs
+      );
+    } else {
+      arrayOfFiles.push({
+        id: generateUUID(),
+        path: path.join(dirPath, '/', file),
+        parentFolderId:
+          arrayOfDirs.find((item) => item.path === path.join(dirPath, ''))
+            ?.id || null,
+      });
+    }
+  });
 
-//   return arrayOfFiles;
-// }
+  return arrayOfFiles;
+}
 
 ipcMain.on('ipc-example', async (event, arg) => {
   const msgTemplate = (pingPong: string) => `IPC test: ${pingPong}`;
@@ -84,6 +124,26 @@ ipcMain.on('readFolder', async (event, arg) => {
     });
   } else {
     event.reply('readFolder', {
+      filePath: arg.filePath,
+      data: null,
+      arg,
+      dirs: [],
+    });
+  }
+});
+
+ipcMain.on('readFolderV2', async (event, arg) => {
+  if (fs.existsSync(arg.filePath)) {
+    const dirs: string[] = [];
+    const files = readFolderV2(arg.filePath, null, [], dirs);
+    event.reply('readFolderV2', {
+      filePath: arg.filePath,
+      data: files,
+      arg,
+      dirs,
+    });
+  } else {
+    event.reply('readFolderV2', {
       filePath: arg.filePath,
       data: null,
       arg,

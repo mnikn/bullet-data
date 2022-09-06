@@ -8,10 +8,10 @@ export default function App() {
   const theme = createTheme({
     palette: {
       primary: {
-        main: PRIMARY_COLOR1,
+        main: '#cbd5e1',
       },
       secondary: {
-        main: SECOND_COLOR1,
+        main: '#d4d4d8',
       },
     },
   });

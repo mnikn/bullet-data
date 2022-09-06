@@ -1,7 +1,4 @@
-import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
-import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
-import DeleteIcon from '@mui/icons-material/Delete';
-import { Button, Grid, IconButton, Stack } from '@mui/material';
+import { Grid } from '@mui/material';
 import classNames from 'classnames';
 import get from 'lodash/get';
 import {
@@ -317,7 +314,7 @@ export const FieldArray = ({
               <div key={item.id} className="w-full flex items-center mb-10">
                 <div className="flex w-full items-center">
                   <CollapseCard
-                    className="bg-yellow-700 mr-2"
+                    className="bg-slate-400 mr-2"
                     title={summary}
                     initialExpand={schema.config.initialExpand}
                   >
@@ -344,7 +341,7 @@ export const FieldArray = ({
             );
           })}
           <button
-            className="mt-12 w-4/6 p-4 mx-auto mb-4 bg-yellow-300 border-b-4 border-zinc-900 text-zinc-900 font-bold text-md hover:bg-yellow-200 transition-all"
+            className="mt-12 w-4/6 p-4 mx-auto mb-4 bg-slate-300 border-b-4 border-zinc-900 text-zinc-900 font-bold text-md hover:bg-slate-200 transition-all"
             onClick={addItem}
           >
             Add Item

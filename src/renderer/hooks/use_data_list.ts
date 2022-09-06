@@ -1,4 +1,4 @@
-import { add, cloneDeep, get } from 'lodash';
+import { cloneDeep, get, set } from 'lodash';
 import {
   iterSchema,
   SchemaField,
@@ -7,25 +7,20 @@ import {
   SchemaFieldSelect,
   SchemaFieldString,
 } from 'models/schema';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLatest } from 'react-use';
 import { EVENT, eventBus } from 'renderer/event';
 import { iterObject } from 'utils/object';
 import { generateUUID } from 'utils/uuid';
-import { FileTreeFile } from './use_project';
 import useListWithKey from './utils/use_list_with_key';
 
-const cacheFileDataList: any = {};
-
 function useDataList({
-  currentFile,
   currentFileData,
   schema,
   projectTranslations,
   projectConfig,
   currentLang,
 }: {
-  currentFile: FileTreeFile | null;
   currentFileData: any[];
   schema: SchemaField | null;
   projectTranslations: any;
@@ -41,8 +36,7 @@ function useDataList({
       push: pushActualValueList,
       removeAt: removeActualValueList,
     },
-  ] = useListWithKey<any>(currentFileData);
-  const currentFileRef = useLatest(currentFile);
+  ] = useListWithKey<any>(currentFileData || []);
   const actualValueListRef = useLatest(actualValueList);
   const projectTranslationsRef = useLatest(projectTranslations);
   const [filters, setFilters] = useState<any>({});
@@ -104,15 +98,7 @@ function useDataList({
   }, [filters, currentLang]);
 
   useEffect(() => {
-    if (
-      currentFileRef.current &&
-      cacheFileDataList[currentFileRef.current.fullPath]
-    ) {
-      setActualValueList(cacheFileDataList[currentFileRef.current.fullPath]);
-      setFilters((prev) => ({ ...prev }));
-      return;
-    }
-    setActualValueList(currentFileData);
+    setActualValueList(currentFileData || []);
     setFilters((prev) => ({ ...prev }));
   }, [currentFileData, setActualValueList]);
 
@@ -135,7 +121,6 @@ function useDataList({
           d
         );
       }
-      // setFilters((prev) => ({ ...prev }));
     };
     eventBus.on(EVENT.DATA_ITEM_CHANGED, onChanged);
     return () => {
@@ -182,19 +167,23 @@ function useDataList({
       }
       const v = cloneDeep(actualValueListRef.current[i].data);
 
-      iterObject(v, (k, d) => {
+      iterObject(v, (_, d, path) => {
         if (typeof d === 'string' && projectTranslations[d]) {
-          v[k] = generateUUID();
+          const fieldTranslations = projectTranslations[get(v, path)];
+          set(
+            v,
+            path,
+            generateUUID()
+            // `${path.substring(path.lastIndexOf('.') + 1)}_` + generateUUID()
+          );
           eventBus.emit(
-            EVENT.UPDATE_TRANSLATION,
-            v[k],
-            projectConfigRef.current.i18n.reduce((r, k) => {
-              r[k] = '';
-              return r;
-            }, {})
+            EVENT.UPDATE_TERM_TRANSLATION,
+            get(v, path),
+            fieldTranslations
           );
         }
       });
+
       insertActualValueList(v, i + 1);
       setFilters((prev) => ({ ...prev }));
     };
@@ -229,14 +218,6 @@ function useDataList({
       eventBus.off(EVENT.DATA_LIST_SET, onSet);
     };
   }, [setActualValueList]);
-
-  useEffect(() => {
-    if (currentFileRef.current) {
-      cacheFileDataList[currentFileRef.current.fullPath] = actualValueList.map(
-        (item) => item.data
-      );
-    }
-  }, [actualValueList]);
 
   useEffect(() => {
     const onFilterChanged = (filterVal: any) => {

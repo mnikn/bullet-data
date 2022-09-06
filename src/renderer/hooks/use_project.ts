@@ -1,10 +1,17 @@
 import { FILE_PATH, PROJECT_PATH } from 'constatnts/storage_key';
-import { useCallback, useEffect, useState } from 'react';
-import { DEFAULT_PROJECT_CONFIG } from 'renderer/constants';
-import { EVENT, eventBus } from 'renderer/event';
-import { getBaseUrl, getProjectBaseUrl } from 'renderer/utils/file';
-import { parse } from 'json2csv';
 import csv from 'csvtojson';
+import { parse } from 'json2csv';
+import { get, set } from 'lodash';
+import { useEffect, useRef, useState } from 'react';
+import { DEFAULT_SCHEMA_CONFIG } from 'renderer/constants';
+import { EVENT, eventBus } from 'renderer/event';
+import {
+  getBaseUrl,
+  getConfigPath,
+  getProjectBaseUrl,
+} from 'renderer/utils/file';
+import { iterObject } from 'utils/object';
+import { generateUUID } from 'utils/uuid';
 
 export interface FileTreeFolder {
   type: 'folder';
@@ -21,14 +28,16 @@ export interface FileTreeFile {
 }
 
 function useProject() {
-  const [projectFileTree, setProjectFileTree] = useState<
-    (FileTreeFolder | FileTreeFile)[] | null
-  >(null);
+  const [projectFileTree, setProjectFileTree] = useState<any[] | null>(null);
+  const [projectFiles, setProjectFiles] = useState<any[]>([]);
+  const [projectFolders, setProjectFolders] = useState<any[]>([]);
   const [projectConfig, setProjectConfig] = useState<any>(null);
 
   const [currentLang, setCurrentLang] = useState<string>('');
 
-  const [projectTranslations, setProjectTranslations] = useState<any>({});
+  const [projectTranslations, setProjectTranslations] = useState<any>({
+    '___needInit': true
+  });
 
   useEffect(() => {
     const onRefresh = () => {
@@ -46,107 +55,108 @@ function useProject() {
   }, []);
 
   useEffect(() => {
+    const files = projectFiles.filter((item) => item.path.includes('.json'));
+    const buildFileTree = (root: any) => {
+      let childFolders = projectFolders.filter(
+        (item) => item.parentFolderId === root.id
+      );
+      childFolders = childFolders.map((folder: any) => {
+        return {
+          id: folder.id,
+          parentFolderId: folder.parentFolderId,
+          type: 'folder',
+          children: buildFileTree(folder),
+          partName: folder.path
+            .substr(
+              folder.path.indexOf(getBaseUrl(folder.path)) +
+                getBaseUrl(folder.path).length,
+              folder.path.length
+            )
+            .replace('\\', ''),
+          fullPath: folder.path,
+        };
+      });
+
+      const childFiles = files
+        .filter((item2) => item2.parentFolderId === root.id)
+        .map((item) => {
+          return {
+            id: item.id,
+            parentFolderId: item.parentFolderId,
+            partName: item.path
+              .substr(
+                item.path.indexOf(getBaseUrl(item.path)) +
+                  getBaseUrl(item.path).length,
+                item.path.length
+              )
+              .replace('\\', ''),
+            fullPath: item.path,
+            type: 'file',
+          };
+        });
+      return [...childFolders, ...childFiles];
+    };
+
+    const rootDirs = projectFolders
+      .filter((item) => !item.parentFolderId)
+      .map((r) => {
+        return {
+          parentFolderId: r.parentFolderId,
+          id: r.id,
+          type: 'folder',
+          children: buildFileTree(r),
+          fullPath: r.path,
+          partName: r.path
+            .substr(
+              r.path.indexOf(getBaseUrl(r.path)) + getBaseUrl(r.path).length,
+              r.path.length
+            )
+            .replace('\\', ''),
+        };
+      });
+
+    const rootFiles = projectFiles
+      .filter(
+        (item) =>
+          item.path.includes('.json') &&
+          getBaseUrl(item.path) === getProjectBaseUrl()
+      )
+      .map((item) => {
+        return {
+          id: item.id,
+          parentFolderId: item.parentFolderId,
+          partName: item.path
+            .substr(
+              item.path.indexOf(getBaseUrl(item.path)) +
+                getBaseUrl(item.path).length,
+              item.path.length
+            )
+            .replace('\\', ''),
+          fullPath: item.path,
+          type: 'file',
+        };
+      });
+
+    const tree = [...rootDirs, ...rootFiles];
+    setProjectFileTree(tree);
+  }, [projectFiles, projectFolders]);
+
+  useEffect(() => {
     let projectPath = localStorage.getItem(PROJECT_PATH);
     if (!projectPath) {
       return;
     }
     const baseUrl = getBaseUrl(projectPath);
-    window.electron.ipcRenderer.readFolder(
-      {
+
+    window.electron.ipcRenderer
+      .call('readFolderV2', {
         filePath: baseUrl,
-        action: 'read-project-config',
-      },
-      (val: any) => {
-        //console.log(val.dirs);
-        if (val.data || val.dirs) {
-          const allFiles = val.data.filter((item: string) =>
-            item.includes('.json')
-          );
-
-          let formatFiles = allFiles.map((item) => {
-            return item.substr(baseUrl.length + 1).split('\\');
-          });
-
-          // let formatFolders = val.dirs
-          //   .filter((item) => {
-          //     return !allFiles.find((a) => a.includes(item));
-          //   })
-          //   .map((item) => {
-          //     return item.substr(baseUrl.length + 1).split('\\');
-          //   });
-          // formatFiles = formatFiles.concat(formatFolders);
-
-          let fileGroups = {
-            type: 'folder',
-            partName: 'root',
-            children: [],
-          };
-
-          const fileGroupSet: any = {};
-
-          const buildFileGroups = (
-            parent: any,
-            path: string,
-            pathArr: any[],
-            expanded = false
-          ) => {
-            if (pathArr.length <= 0) {
-              return;
-            }
-            if (pathArr.length === 1) {
-              if (pathArr[0].includes('.json')) {
-                parent.children.push({
-                  type: 'file',
-                  partName: pathArr[0],
-                  currentPath: (path ? path + '\\' : '') + pathArr[0],
-                  fullPath:
-                    baseUrl + '\\' + (path ? path + '\\' : '') + pathArr[0],
-                });
-              } else {
-                parent.children.push({
-                  type: 'folder',
-                  partName: pathArr[0],
-                  currentPath: (path ? path + '\\' : '') + pathArr[0],
-                  children: [],
-                });
-              }
-              return;
-            }
-
-            const currentPath = (path ? path + '\\' : '') + pathArr[0];
-            let newGroup = {
-              type: 'folder',
-              partName: pathArr[0],
-              currentPath,
-              children: [],
-              expanded,
-            };
-            if (fileGroupSet[currentPath]) {
-              newGroup = fileGroupSet[currentPath];
-              newGroup.expanded = newGroup.expanded
-                ? newGroup.expanded
-                : expanded;
-            }
-            buildFileGroups(newGroup, currentPath, pathArr.slice(1), expanded);
-            if (!fileGroupSet[currentPath]) {
-              parent.children.push(newGroup);
-            }
-            fileGroupSet[currentPath] = newGroup;
-          };
-
-          formatFiles.forEach((d) => {
-            buildFileGroups(
-              fileGroups,
-              '',
-              d,
-              localStorage.getItem(FILE_PATH) === baseUrl + '\\' + d.join('\\')
-            );
-          });
-
-          setProjectFileTree(fileGroups.children);
-        }
-      }
-    );
+      })
+      .then((res) => {
+        const files = res.data.filter((item) => item.path.includes('.json'));
+        setProjectFolders(res.dirs);
+        setProjectFiles(files);
+      });
   }, []);
 
   useEffect(() => {
@@ -159,10 +169,26 @@ function useProject() {
       });
     };
 
+    const updateTranslateKeyAll = (key: string, val: any) => {
+      setProjectTranslations((prev: any) => {
+        const newTranslations = { ...prev };
+        newTranslations[key] = {
+          ...newTranslations[key],
+        };
+        projectConfig.i18n.forEach((lang) => {
+          newTranslations[key][lang] =
+            val?.[lang] || newTranslations[key]?.[lang] || '';
+        });
+        return newTranslations;
+      });
+    };
+
     eventBus.on(EVENT.UPDATE_TRANSLATION, updateProjectTranslations);
+    eventBus.on(EVENT.UPDATE_TERM_TRANSLATION, updateTranslateKeyAll);
     eventBus.on(EVENT.SET_TRANSLATION, setProjectTranslations);
     return () => {
       eventBus.off(EVENT.UPDATE_TRANSLATION, updateProjectTranslations);
+      eventBus.off(EVENT.UPDATE_TERM_TRANSLATION, updateTranslateKeyAll);
       eventBus.off(EVENT.SET_TRANSLATION, setProjectTranslations);
     };
   }, [projectConfig]);
@@ -229,9 +255,99 @@ function useProject() {
         data: ff,
       });
     };
+
+    const newFile = (targetFolder: any, fileName: string) => {
+      const filePath =
+        (targetFolder?.fullPath || getProjectBaseUrl()) +
+        '\\' +
+        fileName +
+        '.json';
+      const newFile = {
+        id: generateUUID(),
+        name: fileName,
+        parentFolderId: targetFolder?.id || null,
+        path: filePath,
+      };
+      setProjectFiles((prev) => {
+        return prev.concat(newFile);
+      });
+      window.electron.ipcRenderer
+        .call('saveFile', {
+          path: filePath,
+          data: '[]',
+        })
+        .then(() => {
+          return window.electron.ipcRenderer.call('saveFile', {
+            path: getConfigPath(newFile.path as string),
+            data: JSON.stringify(DEFAULT_SCHEMA_CONFIG, null, 2),
+          });
+        })
+        .then(() => {
+          eventBus.emit(EVENT.REFRESH_PROJECT_FILE_TREE);
+        });
+    };
+
+    const deleteFile = (file: any) => {
+      window.electron.ipcRenderer
+        .call('deleteFile', {
+          path: file.fullPath,
+        })
+        .then(() => {
+          return window.electron.ipcRenderer.call('deleteFile', {
+            path: getConfigPath(file.fullPath),
+          });
+        })
+        .then(() => {
+          setProjectFiles((prev) => {
+            return prev.filter((item) => item.id !== file.id);
+          });
+        });
+    };
+
+    const renameFile = (file: any, name: string) => {
+      const parentFolder = projectFolders.find(
+        (item) => item.id === file.parentFolderId
+      );
+      const finalSourcePath = file.fullPath;
+      const finalTargetPath =
+        (parentFolder?.path || getProjectBaseUrl()) + '\\' + name + '.json';
+      window.electron.ipcRenderer
+        .call('renameFile', {
+          sourcePath: finalSourcePath,
+          targetPath: finalTargetPath,
+        })
+        .then(() => {
+          return window.electron.ipcRenderer.call('renameFile', {
+            sourcePath: getConfigPath(finalSourcePath),
+            targetPath: getConfigPath(finalTargetPath),
+          });
+        })
+        .then(() => {
+          const matchFile = projectFiles.find((item) => {
+            return item.id === file.id;
+          });
+
+          if (matchFile) {
+            if (finalSourcePath === localStorage.getItem(FILE_PATH)) {
+              localStorage.setItem(FILE_PATH, finalTargetPath);
+            }
+            matchFile.path = finalTargetPath;
+            matchFile.partName = name + '.json';
+            setProjectFiles((prev) => {
+              return [...prev];
+            });
+          }
+        });
+    };
     eventBus.on(EVENT.SAVE_TRANSLATION, onSave);
+    eventBus.on(EVENT.NEW_FILE, newFile);
+    eventBus.on(EVENT.RENAME_FILE, renameFile);
+    eventBus.on(EVENT.DELETE_FILE, deleteFile);
     return () => {
+      eventBus.off(EVENT.NEW_FILE, newFile);
       eventBus.off(EVENT.SAVE_TRANSLATION, onSave);
+      eventBus.off(EVENT.RENAME_FILE, renameFile);
+      eventBus.off(EVENT.DELETE_FILE, deleteFile);
     };
   }, [projectTranslations, projectConfig]);
 
@@ -242,7 +358,14 @@ function useProject() {
     };
   }, []);
 
-  return { projectTranslations, projectFileTree, projectConfig, currentLang };
+  return {
+    projectTranslations,
+    projectFileTree,
+    projectFiles,
+    projectFolders,
+    projectConfig,
+    currentLang,
+  };
 }
 
 export default useProject;

@@ -11,7 +11,7 @@ import {
   SchemaFieldType,
   validateValue,
 } from 'models/schema';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { DEFAULT_SCHEMA_CONFIG } from 'renderer/constants';
 import { EVENT, eventBus } from 'renderer/event';
 import { getConfigPath } from 'renderer/utils/file';
@@ -86,69 +86,68 @@ function buildSchema(json: any, cacheSchemaMap: any = {}): SchemaField {
   return new SchemaFieldObject();
 }
 
-const fileDataCache: any = {};
-
 function useFile({
   currentFile,
   projectConfig,
+  projectTranslations,
 }: {
-  currentFile: FileTreeFile | null;
+  currentFile: any | null;
   projectConfig: any;
+  projectTranslations: any;
 }) {
-  const [currentFileData, setCurrentFileData] = useState<any[]>([]);
+  const [currentFileData, setCurrentFileData] = useState<any[] | null>(null);
   const [schemaConfig, setSchemaConfig] = useState<any>(null);
   const [schema, setSchema] = useState<SchemaField | null>(null);
   const [saving, setSaving] = useState(false);
+  const projectTransltionsRef = useRef<any>(projectTranslations);
+  projectTransltionsRef.current = projectTranslations;
+  const currentFileDataRef = useRef<any>(currentFileData);
+  currentFileDataRef.current = currentFileData;
+  const currentFileIdRef = useRef<any>(null);
 
   useEffect(() => {
     if (!projectConfig) {
       return;
     }
-    if (!currentFile || !currentFile.fullPath) {
-      setCurrentFileData([]);
+    if (projectTranslations.___needInit) {
+      return;
+    }
+
+    if (!currentFile || !currentFile.path) {
+      setCurrentFileData(null);
       setSchemaConfig(null);
       setSchema(null);
       return;
     }
 
     const readFile = async () => {
-      if (!currentFile || !currentFile.fullPath) {
+      if (!currentFile || !currentFile.path) {
         return;
       }
 
+      currentFileIdRef.current = currentFile.id;
       let newSchemaConfig: any = {};
-      if (
-        Object.keys(fileDataCache).includes(currentFile.fullPath) &&
-        fileDataCache[currentFile.fullPath].schemaConfig
-      ) {
-        newSchemaConfig = fileDataCache[currentFile.fullPath].schemaConfig;
-      } else {
-        const valuePath = currentFile.fullPath;
-        if (valuePath) {
-          const configUrl = getConfigPath(valuePath);
-          if (configUrl) {
-            const val = await window.electron.ipcRenderer.readJsonFile({
-              filePath: configUrl,
-              action: 'read-file-config',
-            });
+      const valuePath = currentFile.path;
+      if (valuePath) {
+        const configUrl = getConfigPath(valuePath);
+        if (configUrl) {
+          const val = await window.electron.ipcRenderer.readJsonFile({
+            filePath: configUrl,
+            action: 'read-file-config',
+          });
 
-            if (val.data) {
-              const v = JSON.parse(val.data);
-              newSchemaConfig = v;
-            }
-          } else {
-            newSchemaConfig = DEFAULT_SCHEMA_CONFIG;
+          if (val.data) {
+            const v = JSON.parse(val.data);
+            newSchemaConfig = v;
           }
         } else {
           newSchemaConfig = DEFAULT_SCHEMA_CONFIG;
         }
+      } else {
+        newSchemaConfig = DEFAULT_SCHEMA_CONFIG;
       }
 
       setSchemaConfig(newSchemaConfig);
-      fileDataCache[currentFile.fullPath] = {
-        ...fileDataCache[currentFile.fullPath],
-        schemaConfig: newSchemaConfig,
-      };
 
       const projectSchemaMap = Object.keys(projectConfig.schemas).reduce(
         (res: any, key) => {
@@ -160,32 +159,30 @@ function useFile({
       const newSchema = buildSchema(newSchemaConfig.schema, projectSchemaMap);
       setSchema(newSchema);
 
-      // set data
-      if (
-        Object.keys(fileDataCache).includes(currentFile.fullPath) &&
-        fileDataCache[currentFile.fullPath].data
-      ) {
-        setCurrentFileData(fileDataCache[currentFile.fullPath].data);
-        return;
-      }
-
       const val2 = await window.electron.ipcRenderer.readJsonFile({
-        filePath: currentFile.fullPath,
+        filePath: currentFile.path,
         action: 'read-data',
       });
       const data = JSON.parse(val2.data);
       const formatData = data.map((item: any) => {
-        return validateValue(item, item, newSchema, newSchemaConfig);
+        return validateValue(
+          item,
+          item,
+          newSchema,
+          newSchemaConfig,
+          projectTransltionsRef.current
+        );
       });
       setCurrentFileData(formatData);
-      fileDataCache[currentFile.fullPath] = {
-        ...fileDataCache[currentFile.fullPath],
-        data: formatData,
-      };
     };
 
-    readFile();
-  }, [currentFile, projectConfig]);
+    if (
+      currentFileDataRef.current === null ||
+      currentFileIdRef.current !== currentFile.id
+    ) {
+      readFile();
+    }
+  }, [currentFile, projectConfig, projectTranslations]);
 
   useEffect(() => {
     const onSave = async (valueList: any[]) => {
@@ -194,10 +191,16 @@ function useFile({
       }
       setSaving(true);
       const data = cloneDeep(valueList).map((item) => {
-        return validateValue(item, item, schema, schemaConfig);
+        return validateValue(
+          item,
+          item,
+          schema,
+          schemaConfig,
+          projectTransltionsRef.current
+        );
       }, []);
 
-      const valuePath = currentFile.fullPath;
+      const valuePath = currentFile.path;
       if (valuePath) {
         const configPath = getConfigPath(valuePath);
         await window.electron.ipcRenderer.writeJsonFile({
@@ -219,7 +222,7 @@ function useFile({
           data: JSON.stringify(data, null, 2),
         });
         if (val2?.res?.path) {
-          localStorage.setItem(currentFile.fullPath, val2.res.path);
+          localStorage.setItem(currentFile.path, val2.res.path);
           const configPath = getConfigPath(val2.res.path);
           await window.electron.ipcRenderer.writeJsonFile({
             action: 'save-config-file',
@@ -251,7 +254,7 @@ function useFile({
         });
         const newSchema = buildSchema(config.schema);
         setSchema(newSchema);
-        window.location.reload();
+        // window.location.reload();
       }
       // eventBus.emit(EVENT.SAVE_FILE, currentFileData);
     };

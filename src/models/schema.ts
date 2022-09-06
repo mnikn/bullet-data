@@ -43,7 +43,8 @@ export function validateValue(
   totalObjValue: any,
   value: any,
   schema: SchemaField,
-  schemaConfig: any
+  schemaConfig: any,
+  translations: any
 ): any {
   if (schema.config.enableWhen) {
     const fn = eval(schema.config.enableWhen);
@@ -59,7 +60,8 @@ export function validateValue(
           item,
           item,
           (schema as SchemaFieldArray).fieldSchema,
-          schemaConfig
+          schemaConfig,
+          translations
         );
       });
     } else {
@@ -76,7 +78,8 @@ export function validateValue(
             value[key],
             (schema as SchemaFieldObject).fields.find((f) => f.id === key)
               ?.data,
-            schemaConfig
+            schemaConfig,
+            translations
           );
         }
         return res2;
@@ -88,7 +91,8 @@ export function validateValue(
             null,
             (schema as SchemaFieldObject).fields.find((f) => f.id === key)
               ?.data,
-            schemaConfig
+            schemaConfig,
+            translations
           );
         }
         return res;
@@ -109,8 +113,14 @@ export function validateValue(
     //     }, '');
     //   }
     // }
-    if (schema.config.needI18n && !value) {
-      return generateUUID();
+    if (schema.config.needI18n) {
+      if (!value || typeof value !== 'string') {
+        return generateUUID();
+      }
+      if (!translations[value]) {
+        return generateUUID();
+      }
+      return value;
     }
 
     if (schema.config.type === 'code') {

@@ -1,7 +1,5 @@
 import { SchemaField } from 'models/schema';
 import { createContext } from 'react';
-import { DEFAULT_PROJECT_CONFIG } from './constants';
-import { FileTreeFile, FileTreeFolder } from './hooks/use_project';
 
 export default createContext<{
   currentLang: string;
@@ -9,10 +7,9 @@ export default createContext<{
   schemaConfig: any;
   schema: SchemaField | null;
   projectConfig: any;
-  projectFileTree: (FileTreeFile | FileTreeFolder)[] | null;
+  projectFileTree: any[] | null;
   projectTranslations: any;
-  currentFile: FileTreeFile | null;
-  recentOpenFiles: FileTreeFile[];
+  currentFile: any | null;
   actualValueList: any[];
 }>({
   currentLang: '',
@@ -23,6 +20,5 @@ export default createContext<{
   projectFileTree: null,
   projectTranslations: {},
   currentFile: null,
-  recentOpenFiles: [],
   actualValueList: [],
 });

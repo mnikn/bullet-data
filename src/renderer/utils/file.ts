@@ -13,9 +13,9 @@ export function getBaseUrl(filePath: string) {
 }
 
 export function findFileInTree(
-  tree: FileTreeFolder | FileTreeFile,
+  tree: any,
   path: string
-): FileTreeFile | null {
+): any | null {
   if (tree.type === 'file') {
     if (tree.currentPath === path) {
       return tree;
@@ -25,7 +25,7 @@ export function findFileInTree(
   }
   if (tree.type === 'folder') {
     return tree.children.reduce(
-      (res: FileTreeFile | null, t) => (res ? res : findFileInTree(t, path)),
+      (res: any | null, t) => (res ? res : findFileInTree(t, path)),
       null
     );
   }
@@ -33,7 +33,7 @@ export function findFileInTree(
 }
 
 export function findFolderInTree(
-  tree: FileTreeFolder | FileTreeFile,
+  tree: any,
   path: string
 ): FileTreeFolder | null {
   if (tree.type === 'file') {
