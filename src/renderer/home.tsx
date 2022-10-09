@@ -27,6 +27,8 @@ import Confimration from './components/confirmation';
 import { FieldContainer } from './components/field';
 import Context from './context';
 import { EVENT, eventBus } from './event';
+import FileSchemaConfig from './file_schema_config';
+import FilterConfigPanel from './filter_config_panel';
 import FilterPanel from './filter_panel';
 import './home.scss';
 import useDataList from './hooks/use_data_list';
@@ -473,7 +475,12 @@ const Home = () => {
             )}
           </div>
 
-          <SchemaConfig initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG} />
+          <FileSchemaConfig
+            initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
+          />
+          <FilterConfigPanel
+            initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
+          />
           <InitPanel />
           <Preview />
           <ProjectSchemaConfig />

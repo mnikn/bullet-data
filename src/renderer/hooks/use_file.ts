@@ -20,7 +20,7 @@ import { FileTreeFile } from './use_project';
 // const HIDDEN_ID = '$$__index';
 
 function buildSchema(json: any, cacheSchemaMap: any = {}): SchemaField {
-  switch (json.type) {
+  switch (json?.type) {
     case SchemaFieldType.Object: {
       const instance = new SchemaFieldObject();
       instance.setup(json.config);
@@ -149,7 +149,7 @@ function useFile({
 
       setSchemaConfig(newSchemaConfig);
 
-      const projectSchemaMap = Object.keys(projectConfig.schemas).reduce(
+      const projectSchemaMap = Object.keys(projectConfig?.schemas || {}).reduce(
         (res: any, key) => {
           res[key] = buildSchema(projectConfig.schemas[key]);
           return res;

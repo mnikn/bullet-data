@@ -110,6 +110,12 @@ function ActionMenu() {
                 },
               },
               {
+                title: 'Filter config',
+                fn: () => {
+                  eventBus.emit(EVENT.SHOW_FILE_FILTER_CONFIG);
+                },
+              },
+              {
                 title: 'Preview',
                 shortcut: 'Ctrl+L',
                 fn: () => {

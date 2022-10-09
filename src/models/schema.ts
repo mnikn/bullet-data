@@ -308,6 +308,13 @@ export abstract class SchemaField {
   }
 
   abstract get type(): SchemaFieldType;
+
+  public toJson(): any {
+    return {
+      type: this.type,
+      config: this.config,
+    };
+  }
 }
 
 export class SchemaFieldArray extends SchemaField {
@@ -322,6 +329,14 @@ export class SchemaFieldArray extends SchemaField {
   }
   get type(): SchemaFieldType {
     return SchemaFieldType.Array;
+  }
+
+  public toJson(): any {
+    return {
+      type: this.type,
+      config: this.config,
+      fieldSchema: this.fieldSchema.toJson(),
+    };
   }
 }
 
@@ -363,6 +378,20 @@ export class SchemaFieldObject extends SchemaField {
         return field.config.defaultValue;
       }
     }
+  }
+
+  public toJson(): any {
+    return {
+      type: this.type,
+      config: this.config,
+      fields: this.fields.reduce((res: any, f) => {
+        res[f.id] = {
+          name: f.name,
+          ...f.data.toJson(),
+        };
+        return res;
+      }, {}),
+    };
   }
 }
 
