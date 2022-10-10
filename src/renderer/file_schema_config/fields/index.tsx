@@ -3,6 +3,7 @@ import {
   SchemaField,
   SchemaFieldArray,
   SchemaFieldBoolean,
+  SchemaFieldFile,
   SchemaFieldNumber,
   SchemaFieldObject,
   SchemaFieldSelect,
@@ -21,6 +22,8 @@ import StringField from 'renderer/components/field/string_field';
 import ConfigBooleanField from './boolean';
 import ConfigNumberField from './number';
 import ConfigStringField from './string';
+import ConfigFileField from './file';
+import ConfigSelectField from './select';
 
 const ACITON_ICON_CLASS =
   'cursor-pointer font-bold text-2xl text-zinc-900 hover:text-zinc-500 transition-all z-10';
@@ -42,6 +45,10 @@ TypeSchema.config.options = [
   {
     label: 'select',
     value: SchemaFieldType.Select,
+  },
+  {
+    label: 'file',
+    value: SchemaFieldType.File,
   },
   {
     label: 'object',
@@ -119,8 +126,8 @@ function ConfigField({
                 isObjectField
                 onValueChange={(v, id, name) => {
                   item.data = v;
-                  item.id = id || '';
-                  item.name = name || '';
+                  item.id = id || item.id || '';
+                  item.name = name || item.name || '';
                   const instance = new SchemaFieldObject();
                   instance.fields = [...(schema as SchemaFieldObject).fields];
                   instance.config = {
@@ -207,6 +214,8 @@ function ConfigField({
                 f = new SchemaFieldObject();
               } else if (v === SchemaFieldType.Array) {
                 f = new SchemaFieldArray(new SchemaFieldString());
+              } else if (v === SchemaFieldType.File) {
+                f = new SchemaFieldArray(new SchemaFieldFile());
               }
               onValueChange(f, id, label);
             }}
@@ -229,6 +238,12 @@ function ConfigField({
     >
       {schema instanceof SchemaFieldString && (
         <ConfigStringField schema={schema} onValueChange={onValueChange} />
+      )}
+      {schema instanceof SchemaFieldFile && (
+        <ConfigFileField schema={schema} onValueChange={onValueChange} />
+      )}
+      {schema instanceof SchemaFieldSelect && (
+        <ConfigSelectField schema={schema} onValueChange={onValueChange} />
       )}
       {schema instanceof SchemaFieldNumber && (
         <ConfigNumberField schema={schema} onValueChange={onValueChange} />

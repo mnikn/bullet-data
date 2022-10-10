@@ -180,6 +180,14 @@ export function validateValue(
     }
   }
 
+  if (schema.type === SchemaFieldType.File) {
+    if (value !== null && value !== undefined) {
+      return value;
+    } else {
+      return null;
+    }
+  }
+
   return value;
 }
 
@@ -273,12 +281,7 @@ export const DEFAULT_CONFIG = {
     defaultValue: null,
     required: false,
     clearable: false,
-    options: [
-      {
-        label: 'None',
-        value: 'none',
-      },
-    ],
+    options: [],
   },
   SELECT_CONFIG_DEFAULT: {
     colSpan: 3,
@@ -289,6 +292,15 @@ export const DEFAULT_CONFIG = {
       },
     ],
     defaultValue: '',
+  },
+  FILE: {
+    colSpan: 3,
+    defaultValue: '',
+    enableWhen: null,
+    required: false,
+    customValidate: null,
+    customValidateErrorText: '',
+    type: 'img', // img
   },
 };
 
@@ -419,6 +431,8 @@ export class SchemaFieldBoolean extends SchemaField {
 }
 
 export class SchemaFieldFile extends SchemaField {
+  public config = DEFAULT_CONFIG.FILE;
+
   get type(): SchemaFieldType {
     return SchemaFieldType.File;
   }

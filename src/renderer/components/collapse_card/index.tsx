@@ -11,11 +11,13 @@ const CollapseCard = ({
   title = '',
   initialExpand = true,
   className,
+  rightActions,
 }: {
   children: ReactNode;
-  title: string;
+  title: ReactNode;
   initialExpand: boolean;
   className?: string;
+  rightActions?: ReactNode;
 }) => {
   const [expanded, setExpanded] = useState<boolean>(initialExpand);
   const handleExpandClick = () => {
@@ -46,6 +48,7 @@ const CollapseCard = ({
               onClick={handleExpandClick}
             />
           )}
+          {rightActions}
         </div>
       </div>
       <Collapse in={expanded} timeout="auto" unmountOnExit>

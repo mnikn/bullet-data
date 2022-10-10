@@ -1,11 +1,4 @@
-import {
-  CardContent,
-  CircularProgress,
-  Collapse,
-  IconButton,
-  Menu,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { CardContent, CircularProgress, Collapse, Menu } from '@mui/material';
 import { PROJECT_PATH } from 'constatnts/storage_key';
 import get from 'lodash/get';
 import {
@@ -40,7 +33,6 @@ import InitPanel from './init_panel';
 import Preview from './preview';
 import ProjectSchemaConfig from './project_schema_config';
 /* import FilterPanel from './filter_panel'; */
-import SchemaConfig from './schema_config';
 import Sidebar from './sidebar';
 import TranslationManageDialog from './translation_manage_dialog';
 
@@ -61,21 +53,7 @@ const DEFAULT_SCHEMA_CONFIG = {
   },
 };
 
-const ExpandMore = styled((props: any) => {
-  const { expand, ...other } = props;
-  return <IconButton {...other} />;
-})(({ theme, expand }) => ({
-  transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
-  marginLeft: 'auto',
-  marginRight: 'auto',
-  transition: theme.transitions.create('transform', {
-    duration: theme.transitions.duration.shortest,
-  }),
-}));
-
 const grid = 6;
-
-const HIDDEN_ID = '$$__index';
 
 // a little function to help us with reordering the result
 const reorder = (list: any[], startIndex: number, endIndex: number) => {
@@ -147,14 +125,22 @@ const Item = ({
       if (projectTranslations[v]) {
         return projectTranslations[v][currentLang] || '';
       }
-      return v;
+      if (v && v.includes('.png')) {
+        return `<img class="mx-2" style="width: 64px; height: 64px; object-fit: cover;" src="${v}" alt="" />`;
+      }
+      return v || '';
     }
   );
 
   return (
     <div className="flex flex-col bg-slate-300 w-full p-5 border-b-4 border-r-4 border-zinc-900">
       <div className="flex items-center">
-        <div className="font-bold text-lg text-zinc-900">{summary}</div>
+        <div
+          className="font-bold text-lg text-zinc-900"
+          dangerouslySetInnerHTML={{
+            __html: `<div class="flex items-center">${summary}</div>`,
+          }}
+        ></div>
         <div className="flex items-center ml-auto">
           <RiMore2Fill
             className={`${ACITON_ICON_CLASS} mr-4`}

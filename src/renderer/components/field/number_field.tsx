@@ -109,11 +109,13 @@ const StyledInput = styled.div`
 `;
 
 function NumberField({
+  className,
   label,
   schema,
   value,
   onValueChange,
 }: {
+  className?: string;
   label?: string;
   schema: SchemaFieldNumber;
   value: number;
@@ -183,7 +185,7 @@ function NumberField({
     }
   };
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className={classNames('w-full flex flex-col items-center', className)}>
       {label && <div className="text-sm font-bold mb-3">{label}</div>}
       <input
         className="text-md w-full outline-none p-2 focus:outline-2 focus:outline-zinc-900 transition-all"

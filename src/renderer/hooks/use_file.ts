@@ -4,6 +4,7 @@ import {
   SchemaField,
   SchemaFieldArray,
   SchemaFieldBoolean,
+  SchemaFieldFile,
   SchemaFieldNumber,
   SchemaFieldObject,
   SchemaFieldSelect,
@@ -79,6 +80,11 @@ function buildSchema(json: any, cacheSchemaMap: any = {}): SchemaField {
     }
     case SchemaFieldType.Select: {
       const instance = new SchemaFieldSelect();
+      instance.setup(json.config);
+      return instance;
+    }
+    case SchemaFieldType.File: {
+      const instance = new SchemaFieldFile();
       instance.setup(json.config);
       return instance;
     }
