@@ -50,8 +50,8 @@ const FileSchemaConfig = ({ initialValue }: { initialValue: any }) => {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 850,
-          height: 780,
+          width: '80%',
+          height: '80%',
           borderRadius: '0px',
         }}
       >

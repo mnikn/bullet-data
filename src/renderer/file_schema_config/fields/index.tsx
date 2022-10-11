@@ -24,6 +24,8 @@ import ConfigNumberField from './number';
 import ConfigStringField from './string';
 import ConfigFileField from './file';
 import ConfigSelectField from './select';
+import useListWithKey from 'renderer/hooks/utils/use_list_with_key';
+import { update } from 'lodash';
 
 const ACITON_ICON_CLASS =
   'cursor-pointer font-bold text-2xl text-zinc-900 hover:text-zinc-500 transition-all z-10';
@@ -58,7 +60,7 @@ TypeSchema.config.options = [
     label: 'array',
     value: SchemaFieldType.Array,
   },
-];
+] as any;
 
 const InitialExpandSchema = new SchemaFieldBoolean();
 const SummarySchema = new SchemaFieldString();
@@ -72,6 +74,8 @@ function ConfigField({
   isObjectField = false,
   onDelete,
   onValueChange,
+  onMoveItemUp,
+  onMoveItemDown,
 }: {
   className?: string;
   id?: string;
@@ -81,7 +85,14 @@ function ConfigField({
   isObjectField?: boolean;
   onDelete: (item: SchemaField) => void;
   onValueChange: (field: SchemaField, id?: string, label?: string) => void;
+  onMoveItemUp?: (item: any) => void;
+  onMoveItemDown?: (item: any) => void;
 }) {
+  const [formFields, { push, removeAt, updateAt, set }] = useListWithKey(
+    schema instanceof SchemaFieldObject
+      ? (schema as SchemaFieldObject).fields
+      : []
+  );
   const objectField =
     schema instanceof SchemaFieldObject ? (
       <div className="flex flex-col w-full items-center">
@@ -111,16 +122,19 @@ function ConfigField({
         </div>
         <div className="font-bold text-xl mb-2">Fields</div>
         <div
-          className="flex flex-col w-full overflow-auto"
+          className="flex flex-col w-full"
           style={{
             height: isRoot ? '400px' : '200px',
+            overflow: 'overlay',
           }}
         >
-          {(schema as SchemaFieldObject).fields.map((item) => {
+          {formFields.map((d, i) => {
+            const item = d.data;
             return (
               <ConfigField
                 className="mb-5"
                 id={item.id}
+                key={d.key}
                 label={item.name}
                 schema={item.data}
                 isObjectField
@@ -133,7 +147,8 @@ function ConfigField({
                   instance.config = {
                     ...(schema as SchemaFieldObject).config,
                   };
-                  onValueChange(instance, id, label);
+                  updateAt(i, instance.fields[i]);
+                  onValueChange(instance);
                 }}
                 onDelete={(childSchema) => {
                   const index = schema.fields.findIndex(
@@ -141,6 +156,32 @@ function ConfigField({
                   );
                   schema.fields = schema.fields.filter((_, j) => index !== j);
                   onValueChange(schema, id, label);
+                  removeAt(i);
+                }}
+                onMoveItemUp={() => {
+                  if (i !== 0) {
+                    const tmp = (schema as SchemaFieldObject).fields[i - 1];
+                    (schema as SchemaFieldObject).fields[i - 1] = (
+                      schema as SchemaFieldObject
+                    ).fields[i];
+                    (schema as SchemaFieldObject).fields[i] = tmp;
+                    onValueChange(schema, id, label);
+                    set((schema as SchemaFieldObject).fields);
+                  }
+                }}
+                onMoveItemDown={() => {
+                  if (
+                    (schema as SchemaFieldObject).fields.length > 1 &&
+                    i !== (schema as SchemaFieldObject).fields.length - 1
+                  ) {
+                    const tmp = (schema as SchemaFieldObject).fields[i + 1];
+                    (schema as SchemaFieldObject).fields[i + 1] = (
+                      schema as SchemaFieldObject
+                    ).fields[i];
+                    (schema as SchemaFieldObject).fields[i] = tmp;
+                    onValueChange(schema, id, label);
+                    set((schema as SchemaFieldObject).fields);
+                  }
                 }}
               />
             );
@@ -150,12 +191,14 @@ function ConfigField({
           className="flex-grow bg-slate-600 text-zinc-50 font-bold border-zinc-900 border-r-2 border-b-2 mr-4 hover:bg-slate-500 transition-all px-5 mb-2 mt-2 h-12"
           onClick={() => {
             const f = new SchemaFieldString();
-            schema.fields.push({
+            const d = {
               id: 'field_' + (schema.fields.length + 1),
               name: 'field_' + (schema.fields.length + 1),
               data: f,
-            });
+            };
+            schema.fields.push(d);
             onValueChange(schema, id, label);
+            push(d);
           }}
         >
           Add schema field
@@ -225,8 +268,22 @@ function ConfigField({
       initialExpand={false}
       rightActions={
         <div className="flex">
-          <RiArrowUpFill className={classNames(ACITON_ICON_CLASS, 'mr-2')} />
-          <RiArrowDownFill className={classNames(ACITON_ICON_CLASS, 'mr-2')} />
+          <RiArrowUpFill
+            className={classNames(ACITON_ICON_CLASS, 'mr-2')}
+            onClick={() => {
+              if (onMoveItemUp) {
+                onMoveItemUp(schema);
+              }
+            }}
+          />
+          <RiArrowDownFill
+            className={classNames(ACITON_ICON_CLASS, 'mr-2')}
+            onClick={() => {
+              if (onMoveItemDown) {
+                onMoveItemDown(schema);
+              }
+            }}
+          />
           <RiDeleteBin2Fill
             className={classNames(ACITON_ICON_CLASS, 'mr-2')}
             onClick={() => {

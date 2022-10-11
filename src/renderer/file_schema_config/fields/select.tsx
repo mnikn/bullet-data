@@ -1,3 +1,4 @@
+import { Grid } from '@mui/material';
 import {
   SchemaFieldArray,
   SchemaFieldNumber,
@@ -16,13 +17,17 @@ OptionsSchema.config.initialExpand = true;
   name: 'label',
   data: new SchemaFieldString(),
 });
-(OptionsSchema.fieldSchema as SchemaFieldObject).fields[0].data.config.colSpan = 6;
+(
+  OptionsSchema.fieldSchema as SchemaFieldObject
+).fields[0].data.config.colSpan = 6;
 (OptionsSchema.fieldSchema as SchemaFieldObject).fields.push({
   id: 'value',
   name: 'value',
   data: new SchemaFieldString(),
 });
-(OptionsSchema.fieldSchema as SchemaFieldObject).fields[1].data.config.colSpan = 6;
+(
+  OptionsSchema.fieldSchema as SchemaFieldObject
+).fields[1].data.config.colSpan = 6;
 OptionsSchema.fieldSchema.config.defaultValue = (
   OptionsSchema.fieldSchema as SchemaFieldObject
 ).configDefaultValue;
@@ -40,47 +45,55 @@ function ConfigSelectField({
   onValueChange: (schema: SchemaFieldSelect) => void;
 }) {
   return (
-    <div className="flex flex-col">
-      <NumberField
-        className="mb-5"
-        label={'colSpan'}
-        value={schema.config.colSpan}
-        schema={ColSchema}
-        onValueChange={(v) => {
-          schema.config.colSpan = v;
-          onValueChange(schema);
-        }}
-      />
-      <StringField
-        label={'enableWhen'}
-        className="mb-5"
-        value={schema.config.enableWhen}
-        schema={EnableWhenSchema}
-        onValueChange={(v) => {
-          schema.config.enableWhen = v;
-          onValueChange(schema);
-        }}
-      />
-      <FieldArray
-        className="flex-grow"
-        label={'options'}
-        value={schema.config.options}
-        schema={OptionsSchema}
-        onValueChange={(v) => {
-          schema.config.options = v;
-          onValueChange(schema);
-        }}
-      />
-      <StringField
-        label={'defaultValue'}
-        value={schema.config.defaultValue}
-        schema={DefaultValueSchema}
-        onValueChange={(v) => {
-          schema.config.defaultValue = v;
-          onValueChange(schema);
-        }}
-      />
-    </div>
+    <Grid container spacing={{ xs: 2, md: 5 }}>
+      <Grid item xs={12}>
+        <FieldArray
+          className="flex-grow"
+          label={'options'}
+          value={schema.config.options}
+          schema={OptionsSchema}
+          onValueChange={(v) => {
+            schema.config.options = v;
+            onValueChange(schema);
+          }}
+        />
+      </Grid>
+      <Grid item xs={4}>
+        <NumberField
+          className="mb-5"
+          label={'colSpan'}
+          value={schema.config.colSpan}
+          schema={ColSchema}
+          onValueChange={(v) => {
+            schema.config.colSpan = v;
+            onValueChange(schema);
+          }}
+        />
+      </Grid>
+      <Grid item xs={4}>
+        <StringField
+          label={'defaultValue'}
+          value={schema.config.defaultValue}
+          schema={DefaultValueSchema}
+          onValueChange={(v) => {
+            schema.config.defaultValue = v;
+            onValueChange(schema);
+          }}
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <StringField
+          label={'enableWhen'}
+          className="mb-5"
+          value={schema.config.enableWhen}
+          schema={EnableWhenSchema}
+          onValueChange={(v) => {
+            schema.config.enableWhen = v;
+            onValueChange(schema);
+          }}
+        />
+      </Grid>
+    </Grid>
   );
 }
 
