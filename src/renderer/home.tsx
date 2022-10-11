@@ -29,6 +29,7 @@ import useExplorer from './hooks/use_explorer';
 import useFile from './hooks/use_file';
 import useProject from './hooks/use_project';
 import useShortcut from './hooks/use_shortcut';
+import I18nConfigPanel from './i18n_config_panel';
 import InitPanel from './init_panel';
 import Preview from './preview';
 import ProjectSchemaConfig from './project_schema_config';
@@ -243,6 +244,9 @@ const Home = () => {
 
   useEffect(() => {
     const onClose = async () => {
+      window.electron.ipcRenderer.close();
+      return;
+
       if (!schema || !currentFile) {
         return;
       }
@@ -469,7 +473,7 @@ const Home = () => {
           />
           <InitPanel />
           <Preview />
-          <ProjectSchemaConfig />
+          <I18nConfigPanel />
           <TranslationManageDialog />
           {confirmationVisible && (
             <Confimration

@@ -1,6 +1,7 @@
 import { Grid } from '@mui/material';
 import {
   SchemaFieldArray,
+  SchemaFieldBoolean,
   SchemaFieldNumber,
   SchemaFieldObject,
   SchemaFieldSelect,
@@ -9,6 +10,7 @@ import {
 import { FieldArray } from 'renderer/components/field';
 import NumberField from 'renderer/components/field/number_field';
 import StringField from 'renderer/components/field/string_field';
+import BooleanField from 'renderer/components/field/boolean_field';
 
 const OptionsSchema = new SchemaFieldArray(new SchemaFieldObject());
 OptionsSchema.config.initialExpand = true;
@@ -34,6 +36,7 @@ OptionsSchema.fieldSchema.config.defaultValue = (
 OptionsSchema.config.colSpan = 12;
 const ColSchema = new SchemaFieldNumber();
 const EnableWhenSchema = new SchemaFieldString();
+const ClearableSchema = new SchemaFieldBoolean();
 EnableWhenSchema.config.colSpan = 12;
 const DefaultValueSchema = new SchemaFieldString();
 
@@ -77,6 +80,17 @@ function ConfigSelectField({
           schema={DefaultValueSchema}
           onValueChange={(v) => {
             schema.config.defaultValue = v;
+            onValueChange(schema);
+          }}
+        />
+      </Grid>
+      <Grid item xs={1}>
+        <BooleanField
+          label={'clearable'}
+          value={schema.config.clearable}
+          schema={ClearableSchema}
+          onValueChange={(v) => {
+            schema.config.clearable = v;
             onValueChange(schema);
           }}
         />

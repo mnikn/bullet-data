@@ -1,13 +1,5 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {
-  Button,
-  Card,
-  CardContent,
-  Collapse,
-  Grid,
-  Select,
-  Stack,
-} from '@mui/material';
+import { Button, Collapse, Grid, Stack } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import {
   SchemaField,
@@ -22,14 +14,12 @@ import {
   useContext,
   useEffect,
   useLayoutEffect,
-  useMemo,
   useState,
 } from 'react';
-import StringField from './components/field/string_field';
 import NumberField from './components/field/number_field';
 import SelectField from './components/field/select_field';
+import StringField from './components/field/string_field';
 import Context from './context';
-import { PRIMARY_COLOR1, PRIMARY_COLOR2 } from './style';
 import { EVENT, eventBus } from './event';
 
 function findChildSchema(
@@ -182,6 +172,7 @@ const FilterPanel = ({
             fieldSchema = new SchemaFieldSelect();
             fieldSchema.setup({
               clearable: true,
+              options: originSchema.config.options,
             });
             filterSchema = new SchemaFieldSelect();
             filterSchema.setup({
@@ -217,7 +208,7 @@ const FilterPanel = ({
         position: 'fixed',
         left: '58%',
         transform: 'translateX(-50%)',
-        zIndex: 5,
+        zIndex: 100,
       }}
     >
       <CollapseCard initialExpand={false}>
@@ -226,11 +217,11 @@ const FilterPanel = ({
           direction="row"
           className="w-4/6 p-10 items-center text-zinc-50"
           sx={{
-            width: '800px',
+            width: '1000px',
           }}
         >
           <Grid container spacing={4} direction="row">
-            {(filterConfig || [])
+            {filterConfig
               .filter((item: any) => !!item.schema)
               .map((item: any, i: number) => {
                 return (
@@ -346,6 +337,7 @@ const FilterPanel = ({
                       >
                         <SelectField
                           schema={item.filterSchema}
+                          label={'Filter type'}
                           value={
                             typeof filterValue[item.prop]?.filterType !==
                             'undefined'

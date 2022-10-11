@@ -13,7 +13,9 @@ import StringField from 'renderer/components/field/string_field';
 const MinLenSchema = new SchemaFieldNumber();
 const MaxLenSchema = new SchemaFieldNumber();
 const ColSchema = new SchemaFieldNumber();
-const DefaultValueSchema = new SchemaFieldString();
+ColSchema.config.defaultValue = 3;
+const DefaultValueSchema = new SchemaFieldNumber();
+DefaultValueSchema.config.defaultValue = 0;
 const TypeSchema = new SchemaFieldSelect();
 TypeSchema.config = { ...TypeSchema.config };
 TypeSchema.config.options = [
@@ -60,7 +62,7 @@ function ConfigNumberField({
         />
       </Grid>
       <Grid item xs={4}>
-        <StringField
+        <NumberField
           label={'defaultValue'}
           value={schema.config.defaultValue}
           schema={DefaultValueSchema}

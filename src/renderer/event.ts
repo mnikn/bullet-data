@@ -7,6 +7,7 @@ export const EVENT = {
   SHOW_PROJECT_CONFIG: 'show_project_config',
   SHOW_FILE_SCHEMA_CONFIG: 'show_file_schema_config',
   SHOW_FILE_FILTER_CONFIG: 'show_file_filter_config',
+  SHOW_I18N_CONFIG: 'show_i18n_config',
   SHOW_FILE_PREVIEW: 'show_file_preview',
   SHOW_NAME_DIALOG: 'show_name_dialog',
   SHOW_TRANSLATION_MANAGER_DIALOG: 'show_translation_manager_dialog',

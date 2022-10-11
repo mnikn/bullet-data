@@ -14,7 +14,7 @@ function FieldSelect({
 }) {
   const onChange = (e: any) => {
     if (onValueChange) {
-      onValueChange(e.value);
+      onValueChange(e?.value || null);
     }
   };
 
@@ -28,6 +28,7 @@ function FieldSelect({
         value={schema.config.options.find((d) => d.value === value)}
         onChange={onChange}
         options={schema.config.options}
+        isClearable={schema.config.clearable}
         styles={{
           input: (provided) => ({
             ...provided,

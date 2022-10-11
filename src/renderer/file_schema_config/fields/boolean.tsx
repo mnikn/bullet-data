@@ -10,7 +10,9 @@ import SelectField from 'renderer/components/field/select_field';
 import StringField from 'renderer/components/field/string_field';
 
 const ColSchema = new SchemaFieldNumber();
+ColSchema.config.defaultValue = 1;
 const DefaultValueSchema = new SchemaFieldBoolean();
+DefaultValueSchema.config.defaultValue = false;
 const EnableWhenSchema = new SchemaFieldString();
 
 function ConfigBooleanField({

@@ -14,6 +14,7 @@ function InitPanel() {
   return (
     <Modal open>
       <Box
+        className="bg-slate-400"
         sx={{
           position: 'absolute',
           top: '50%',
@@ -21,10 +22,7 @@ function InitPanel() {
           transform: 'translate(-50%, -50%)',
           width: 480,
           height: 240,
-          bgcolor: PRIMARY_COLOR2_LIGHT1,
           borderRadius: '0px',
-          clipPath:
-            'polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%)',
           p: 4,
           outline: 'none',
         }}

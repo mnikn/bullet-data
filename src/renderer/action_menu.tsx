@@ -75,9 +75,9 @@ function ActionMenu() {
                 },
               },
               {
-                title: 'Project settings',
+                title: 'I18n settings',
                 fn: () => {
-                  eventBus.emit(EVENT.SHOW_PROJECT_CONFIG);
+                  eventBus.emit(EVENT.SHOW_I18N_CONFIG);
                 },
               },
               {

@@ -115,17 +115,15 @@ const TranslationManageDialog = () => {
       }}
     >
       <Box
+        className="bg-slate-400"
         sx={{
           position: 'absolute',
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          width: 720,
-          height: 620,
-          bgcolor: PRIMARY_COLOR2_LIGHT1,
+          width: '80%',
+          height: '80%',
           borderRadius: '0px',
-          clipPath:
-            'polygon(5% 0, 95% 0, 100% 5%, 100% 95%, 95% 100%, 5% 100%, 0 95%, 0 5%)',
           p: 4,
         }}
       >
@@ -184,13 +182,17 @@ const TranslationManageDialog = () => {
             </Table>
           </TableContainer>
 
-          <Stack spacing={2} direction="row">
-            <Button
-              sx={{
-                flexGrow: 1,
-                clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
+          <div className="flex h-12 flex-shrink-0">
+            <button
+              className="flex-grow bg-rose-600 text-zinc-50 font-bold border-zinc-900 border-r-2 border-b-2 mr-4 hover:bg-rose-500 transition-all"
+              onClick={() => {
+                setVisible(false);
               }}
-              variant="contained"
+            >
+              Cancel
+            </button>
+            <button
+              className="flex-grow bg-slate-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-slate-200 transition-all"
               onClick={async () => {
                 const valueList = actualValueList.map((item) => item.data);
                 form.forEach((item) => {
@@ -204,21 +206,8 @@ const TranslationManageDialog = () => {
               }}
             >
               Confirm
-            </Button>
-            <Button
-              sx={{
-                flexGrow: 1,
-                clipPath: 'polygon(0 0, 90% 0, 100% 100%, 10% 100%)',
-              }}
-              variant="contained"
-              onClick={() => {
-                setVisible(false);
-              }}
-              color="secondary"
-            >
-              Cancel
-            </Button>
-          </Stack>
+            </button>
+          </div>
         </Stack>
       </Box>
     </Modal>

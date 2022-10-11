@@ -14,6 +14,7 @@ import StringField from 'renderer/components/field/string_field';
 const MinLenSchema = new SchemaFieldNumber();
 const MaxLenSchema = new SchemaFieldNumber();
 const ColSchema = new SchemaFieldNumber();
+ColSchema.config.defaultValue = 3;
 const NeedI18nSchema = new SchemaFieldBoolean();
 const DefaultValueSchema = new SchemaFieldString();
 const TypeSchema = new SchemaFieldSelect();

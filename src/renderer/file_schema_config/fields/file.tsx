@@ -1,12 +1,13 @@
 import {
   SchemaFieldFile,
   SchemaFieldNumber,
-  SchemaFieldSelect
+  SchemaFieldSelect,
 } from 'models/schema';
 import NumberField from 'renderer/components/field/number_field';
 import SelectField from 'renderer/components/field/select_field';
 
 const ColSchema = new SchemaFieldNumber();
+ColSchema.config.defaultValue = 3;
 const TypeSchema = new SchemaFieldSelect();
 TypeSchema.config = { ...TypeSchema.config };
 TypeSchema.config.options = [
@@ -14,7 +15,8 @@ TypeSchema.config.options = [
     label: 'img',
     value: 'img',
   },
-];
+] as any;
+TypeSchema.config.defaultValue = 'img';
 
 function ConfigFileField({
   schema,

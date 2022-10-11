@@ -22,47 +22,43 @@ const Confimration = ({
       aria-labelledby="draggable-dialog-title"
       PaperProps={{
         sx: {
-          background: PRIMARY_COLOR2,
-          color: '#fff',
-          clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
+          background: '#464D54',
           paddingLeft: '60px',
           paddingRight: '60px',
+          color: '#ffffff',
         },
       }}
     >
-      <DialogTitle>
-        File not save
-      </DialogTitle>
+      <DialogTitle>File not save</DialogTitle>
       <DialogContent>
         <DialogContentText
           sx={{
-            color: '#fff',
+            color: '#ffffff',
+            fontWeight: 'bold',
           }}
         >
           File has been changed without save. Exit anyway?
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button
-          variant="contained"
+        <button
+          className="flex-grow bg-slate-300 text-zinc-900 font-bold border-zinc-900 border-r-2 border-b-2 hover:bg-slate-200 transition-all p-2"
           onClick={() => {
             onAction(false);
             close();
           }}
-          color="primary"
         >
           Cancel
-        </Button>
-        <Button
+        </button>
+        <button
+          className="flex-grow bg-rose-600 text-zinc-50 font-bold border-zinc-900 border-r-2 border-b-2 mr-4 hover:bg-rose-500 transition-all p-2"
           onClick={() => {
             onAction(true);
             close();
           }}
-          variant="contained"
-          color="error"
         >
           Yes
-        </Button>
+        </button>
       </DialogActions>
     </Dialog>
   );
