@@ -54,8 +54,12 @@ export const FieldContainer = ({
       <Grid container spacing={{ xs: 2, md: 5 }}>
         {(schema as SchemaFieldObject).fields.map((item, i) => {
           if (item.data.config.enableWhen) {
-            const fn = eval(item.data.config.enableWhen);
-            if (!fn(value)) {
+            try {
+              const fn = eval(item.data.config.enableWhen);
+              if (!fn(value)) {
+                return null;
+              }
+            } catch (err) {
               return null;
             }
           }

@@ -11,6 +11,7 @@ import StringField from 'renderer/components/field/string_field';
 
 const ColSchema = new SchemaFieldNumber();
 const DefaultValueSchema = new SchemaFieldBoolean();
+const EnableWhenSchema = new SchemaFieldString();
 
 function ConfigBooleanField({
   schema,
@@ -27,6 +28,15 @@ function ConfigBooleanField({
         schema={ColSchema}
         onValueChange={(v) => {
           schema.config.colSpan = v;
+          onValueChange(schema);
+        }}
+      />
+      <StringField
+        label={'enableWhen'}
+        value={schema.config.enableWhen}
+        schema={EnableWhenSchema}
+        onValueChange={(v) => {
+          schema.config.enableWhen = v;
           onValueChange(schema);
         }}
       />

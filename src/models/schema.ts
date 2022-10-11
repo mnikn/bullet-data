@@ -47,10 +47,15 @@ export function validateValue(
   translations: any
 ): any {
   if (schema.config.enableWhen) {
-    const fn = eval(schema.config.enableWhen);
-    if (!fn(totalObjValue)) {
+    try {
+      const fn = eval(schema.config.enableWhen);
+      if (!fn(totalObjValue)) {
+        return undefined;
+        // return schema.config.defaultValue;
+      }
+    } catch (err) {
+      console.error(err);
       return undefined;
-      // return schema.config.defaultValue;
     }
   }
   if (schema.type === SchemaFieldType.Array) {

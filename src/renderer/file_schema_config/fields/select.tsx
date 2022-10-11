@@ -7,23 +7,30 @@ import {
 } from 'models/schema';
 import { FieldArray } from 'renderer/components/field';
 import NumberField from 'renderer/components/field/number_field';
+import StringField from 'renderer/components/field/string_field';
 
 const OptionsSchema = new SchemaFieldArray(new SchemaFieldObject());
+OptionsSchema.config.initialExpand = true;
 (OptionsSchema.fieldSchema as SchemaFieldObject).fields.push({
   id: 'label',
   name: 'label',
   data: new SchemaFieldString(),
 });
+(OptionsSchema.fieldSchema as SchemaFieldObject).fields[0].data.config.colSpan = 6;
 (OptionsSchema.fieldSchema as SchemaFieldObject).fields.push({
   id: 'value',
   name: 'value',
   data: new SchemaFieldString(),
 });
+(OptionsSchema.fieldSchema as SchemaFieldObject).fields[1].data.config.colSpan = 6;
 OptionsSchema.fieldSchema.config.defaultValue = (
   OptionsSchema.fieldSchema as SchemaFieldObject
 ).configDefaultValue;
 OptionsSchema.config.colSpan = 12;
 const ColSchema = new SchemaFieldNumber();
+const EnableWhenSchema = new SchemaFieldString();
+EnableWhenSchema.config.colSpan = 12;
+const DefaultValueSchema = new SchemaFieldString();
 
 function ConfigSelectField({
   schema,
@@ -44,6 +51,16 @@ function ConfigSelectField({
           onValueChange(schema);
         }}
       />
+      <StringField
+        label={'enableWhen'}
+        className="mb-5"
+        value={schema.config.enableWhen}
+        schema={EnableWhenSchema}
+        onValueChange={(v) => {
+          schema.config.enableWhen = v;
+          onValueChange(schema);
+        }}
+      />
       <FieldArray
         className="flex-grow"
         label={'options'}
@@ -51,6 +68,15 @@ function ConfigSelectField({
         schema={OptionsSchema}
         onValueChange={(v) => {
           schema.config.options = v;
+          onValueChange(schema);
+        }}
+      />
+      <StringField
+        label={'defaultValue'}
+        value={schema.config.defaultValue}
+        schema={DefaultValueSchema}
+        onValueChange={(v) => {
+          schema.config.defaultValue = v;
           onValueChange(schema);
         }}
       />

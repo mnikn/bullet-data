@@ -31,6 +31,8 @@ TypeSchema.config.options = [
     value: 'code',
   },
 ];
+const EnableWhenSchema = new SchemaFieldString();
+EnableWhenSchema.config.colSpan = 12;
 
 function ConfigStringField({
   schema,
@@ -56,6 +58,15 @@ function ConfigStringField({
         schema={ColSchema}
         onValueChange={(v) => {
           schema.config.colSpan = v;
+          onValueChange(schema);
+        }}
+      />
+      <StringField
+        label={'enableWhen'}
+        value={schema.config.enableWhen}
+        schema={EnableWhenSchema}
+        onValueChange={(v) => {
+          schema.config.enableWhen = v;
           onValueChange(schema);
         }}
       />
