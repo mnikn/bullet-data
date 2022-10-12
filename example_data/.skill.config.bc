@@ -1,0 +1,100 @@
+{
+  "schema": {
+    "type": "object",
+    "config": {
+      "colSpan": 12,
+      "enableWhen": null,
+      "initialExpand": false,
+      "summary": "#{{___index}} {{id}}-{{name}} {{type}}",
+      "defaultValue": {
+        "id": "",
+        "name": "24d48210233d-423d-b947-c1789a35535d",
+        "desc": "",
+        "type": ""
+      }
+    },
+    "fields": {
+      "id": {
+        "name": "id",
+        "type": "string",
+        "config": {
+          "colSpan": 3,
+          "defaultValue": "",
+          "enableWhen": null,
+          "required": false,
+          "customValidate": null,
+          "customValidateErrorText": "",
+          "helperText": "",
+          "type": "singleline",
+          "template": null,
+          "minLen": 0,
+          "maxLen": 9007199254740991,
+          "height": "200px",
+          "needI18n": false,
+          "codeLang": ""
+        }
+      },
+      "name": {
+        "name": "name",
+        "type": "string",
+        "config": {
+          "colSpan": 3,
+          "defaultValue": "",
+          "enableWhen": null,
+          "required": false,
+          "customValidate": null,
+          "customValidateErrorText": "",
+          "helperText": "",
+          "type": "singleline",
+          "template": null,
+          "minLen": 0,
+          "maxLen": 9007199254740991,
+          "height": "200px",
+          "needI18n": true,
+          "codeLang": ""
+        }
+      },
+      "desc": {
+        "name": "desc",
+        "type": "string",
+        "config": {
+          "colSpan": 6,
+          "defaultValue": "",
+          "enableWhen": null,
+          "required": false,
+          "customValidate": null,
+          "customValidateErrorText": "",
+          "helperText": "",
+          "type": "multiline",
+          "template": null,
+          "minLen": 0,
+          "maxLen": 9007199254740991,
+          "height": "200px",
+          "needI18n": false,
+          "codeLang": ""
+        }
+      },
+      "type": {
+        "name": "type",
+        "type": "select",
+        "config": {
+          "enableWhen": null,
+          "colSpan": 3,
+          "defaultValue": "attack",
+          "required": false,
+          "clearable": false,
+          "options": [
+            {
+              "label": "attack",
+              "value": "attack"
+            },
+            {
+              "label": "assist",
+              "value": "assist"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

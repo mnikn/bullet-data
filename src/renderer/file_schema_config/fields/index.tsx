@@ -26,6 +26,7 @@ import ConfigFileField from './file';
 import ConfigSelectField from './select';
 import useListWithKey from 'renderer/hooks/utils/use_list_with_key';
 import { update } from 'lodash';
+import NumberField from 'renderer/components/field/number_field';
 
 const ACITON_ICON_CLASS =
   'cursor-pointer font-bold text-2xl text-zinc-900 hover:text-zinc-500 transition-all z-10';
@@ -64,6 +65,7 @@ TypeSchema.config.options = [
 
 const InitialExpandSchema = new SchemaFieldBoolean();
 const SummarySchema = new SchemaFieldString();
+const ColSpanSchema = new SchemaFieldNumber();
 
 function ConfigField({
   className,
@@ -115,6 +117,15 @@ function ConfigField({
               schema={SummarySchema}
               onValueChange={(v) => {
                 schema.config.summary = v;
+                onValueChange(schema);
+              }}
+            />
+            <NumberField
+              label={'colSpan'}
+              value={schema.config.colSpan}
+              schema={ColSpanSchema}
+              onValueChange={(v) => {
+                schema.config.colSpan = v;
                 onValueChange(schema);
               }}
             />
@@ -329,6 +340,15 @@ function ConfigField({
                 schema={SummarySchema}
                 onValueChange={(v) => {
                   schema.config.summary = v;
+                  onValueChange(schema);
+                }}
+              />
+              <NumberField
+                label={'colSpan'}
+                value={schema.config.colSpan}
+                schema={ColSpanSchema}
+                onValueChange={(v) => {
+                  schema.config.colSpan = v;
                   onValueChange(schema);
                 }}
               />

@@ -25,8 +25,8 @@ TypeSchema.config.options = [
     value: 'singleline',
   },
   {
-    label: 'multilne',
-    value: 'multilne',
+    label: 'multiline',
+    value: 'multiline',
   },
   {
     label: 'code',

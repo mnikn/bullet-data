@@ -83,6 +83,43 @@ function I18nConfigPanel() {
                     />
 
                     <div className="ml-auto">
+                      <RiArrowUpFill
+                        className={classNames(ACITON_ICON_CLASS, 'mr-2')}
+                        onClick={() => {
+                          seti18nList((prev) => {
+                            const targetIndex = Math.max(i - 1, 0);
+                            return prev.map((item, j) => {
+                              if (j === i) {
+                                return prev[targetIndex];
+                              }
+                              if (j === targetIndex) {
+                                return prev[i];
+                              }
+                              return item;
+                            }, []);
+                          });
+                        }}
+                      />
+                      <RiArrowDownFill
+                        className={classNames(ACITON_ICON_CLASS, 'mr-2')}
+                        onClick={() => {
+                          seti18nList((prev) => {
+                            const targetIndex = Math.min(
+                              i + 1,
+                              prev.length - 1
+                            );
+                            return prev.map((item, j) => {
+                              if (j === i) {
+                                return prev[targetIndex];
+                              }
+                              if (j === targetIndex) {
+                                return prev[i];
+                              }
+                              return item;
+                            }, []);
+                          });
+                        }}
+                      />
                       <RiDeleteBin2Fill
                         className={classNames(ACITON_ICON_CLASS, 'mr-2')}
                         onClick={() => {

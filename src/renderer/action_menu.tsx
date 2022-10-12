@@ -147,6 +147,7 @@ function ActionMenu() {
         <div className="flex items-center ml-auto">
           {projectConfig?.i18n?.length > 0 && i18nSelectionSchema && (
             <FieldSelect
+              className="z-50"
               schema={i18nSelectionSchema}
               value={currentLang}
               onValueChange={(v) => {

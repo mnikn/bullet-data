@@ -126,10 +126,10 @@ const Item = ({
       if (projectTranslations[v]) {
         return projectTranslations[v][currentLang] || '';
       }
-      if (v && v.includes('.png')) {
+      if (v != null && v.includes && v.includes('.png')) {
         return `<img class="mx-2" style="width: 64px; height: 64px; object-fit: cover;" src="${v}" alt="" />`;
       }
-      return v || '';
+      return v != null ? v : '';
     }
   );
 

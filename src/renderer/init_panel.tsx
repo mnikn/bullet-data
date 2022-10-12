@@ -1,8 +1,8 @@
 import { Box, Button, Modal, Stack } from '@mui/material';
 import { PROJECT_PATH } from 'constatnts/storage_key';
+import { parse } from 'json2csv';
 import { useState } from 'react';
-import { EVENT, eventBus } from './event';
-import { PRIMARY_COLOR2_LIGHT1 } from './style';
+import { getProjectBaseUrl } from './utils/file';
 
 function InitPanel() {
   const [visible] = useState(!localStorage.getItem(PROJECT_PATH));
@@ -34,8 +34,26 @@ function InitPanel() {
               clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
             }}
             variant="contained"
-            onClick={() => {
-              eventBus.emit(EVENT.SHOW_PROJECT_CONFIG);
+            onClick={async () => {
+              const val2 = await window.electron.ipcRenderer.saveFileDialog({
+                action: 'save-value-file',
+                data: JSON.stringify({ i18n: ['en'] }, null, 2),
+                extensions: ['bp'],
+              });
+              if (val2?.res?.path) {
+                localStorage.setItem(PROJECT_PATH, val2.res.path);
+                const options = { fields: ['keys', 'en'] };
+                const csv = parse([], options);
+                window.electron.ipcRenderer
+                  .call('writeFile', {
+                    filePath: getProjectBaseUrl() + '\\' + 'translations.csv',
+                    data: csv,
+                  })
+                  .then(() => {
+                    window.location.reload();
+                  });
+              }
+              window.location.reload();
             }}
           >
             New Project

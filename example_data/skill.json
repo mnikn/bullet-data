@@ -1,41 +1,8 @@
 [
   {
     "id": "fire_ball",
-    "name": {
-      "en": "Fire Ball",
-      "zh": "火球术"
-    },
-    "desc": {
-      "en": "Emit a big fire ball.",
-      "zh": "发出巨大的火球."
-    },
-    "type": "attack",
-    "damage_val": 10
-  },
-  {
-    "id": "mass_destruction",
-    "name": {
-      "en": "Mass Destruction",
-      "zh": "大肆破坏"
-    },
-    "type": "special",
-    "desc": {
-      "en": "Make a mass Destruction!",
-      "zh": "大肆破坏吧!"
-    },
-    "process_script": "player.fuck_all_enemy()"
-  },
-  {
-    "id": "mud_wall",
-    "name": {
-      "en": "Mud Wall",
-      "zh": "土墙术"
-    },
-    "type": "defense",
-    "desc": {
-      "en": "Generate a mud wall to defense.",
-      "zh": "构建一个土墙防御."
-    },
-    "defense_val": 3
+    "name": "dd40e6ca7959-423c-ae01-ad3cec035ae7",
+    "desc": "",
+    "type": "attack"
   }
 ]

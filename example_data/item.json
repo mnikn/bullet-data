@@ -1,23 +1,20 @@
 [
   {
-    "id": "iron_sword",
-    "name": "铁剑",
-    "money": 100,
-    "num": 2,
-    "desc": "一把普通的铁剑."
+    "id": "viking_sword",
+    "name": "a0e427b447b7-436b-a61d-69011c3796f6",
+    "type": "weapon",
+    "desc": "04c2d811fbbe-4ccf-a683-dce2475bef52"
   },
   {
-    "id": "sliver_sowrd",
-    "name": "银剑",
-    "money": 1000,
-    "num": 1,
-    "desc": "一把看起来很贵的银剑."
+    "id": "iron_armor",
+    "name": "4a539b5e4c07-4f26-8494-e1eaab870641",
+    "type": "armor",
+    "desc": "b025946339d0-458a-bda0-661a2900950f"
   },
   {
-    "id": "gold_sowrd",
-    "name": "金剑",
-    "money": 10000,
-    "num": 1,
-    "desc": "一把绝对买不起的金剑."
+    "id": " life_potion",
+    "name": "9996d1c90087-4bfc-910f-0c2aaf3bae38",
+    "type": "consume",
+    "desc": "1c59ddc0a215-43f3-a083-8e33781cd6ad"
   }
 ]
