@@ -1,19 +1,11 @@
-import { Stack, TextField } from '@mui/material';
-import styled from 'styled-components';
-import { SchemaFieldString } from 'models/schema';
-import { useContext, useEffect, useRef, useState } from 'react';
-import Context from '../../context';
-import {
-  PRIMARY_COLOR1,
-  PRIMARY_COLOR2,
-  PRIMARY_COLOR2_LIGHT1,
-  PRIMARY_COLOR2_LIGHT2,
-  SECOND_COLOR1,
-} from '../../style';
+import { Stack } from '@mui/material';
 import classNames from 'classnames';
+import { uniq } from 'lodash';
+import { SchemaFieldString } from 'models/schema';
+import { useContext, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
 import { EVENT, eventBus } from 'renderer/event';
-import { get, uniq } from 'lodash';
+import Context from '../../context';
 
 const CodeFieldSchema = new SchemaFieldString();
 
@@ -48,7 +40,7 @@ const Editor = ({
   return (
     <div className="flex flex-grow w-full">
       <MonacoEditor
-        className="flex-grow mr-2"
+        className="flex-grow"
         height={schema.config.height}
         language={schema.config.codeLang}
         theme="vs-dark"
