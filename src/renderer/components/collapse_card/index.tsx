@@ -14,7 +14,7 @@ const CollapseCard = ({
   rightActions,
 }: {
   children: ReactNode;
-  title: ReactNode;
+  title: string | ReactNode;
   initialExpand: boolean;
   className?: string;
   rightActions?: ReactNode;
@@ -36,6 +36,7 @@ const CollapseCard = ({
       <div className="flex items-center">
         <div className="font-bold text-lg text-zinc-900">{title}</div>
         <div className="flex items-center ml-auto">
+          {rightActions}
           {!expanded && (
             <RiArrowDownSLine
               className={ACITON_ICON_CLASS}
@@ -48,7 +49,6 @@ const CollapseCard = ({
               onClick={handleExpandClick}
             />
           )}
-          {rightActions}
         </div>
       </div>
       <Collapse in={expanded} timeout="auto" unmountOnExit>

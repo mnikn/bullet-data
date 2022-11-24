@@ -47,15 +47,10 @@ export function validateValue(
   translations: any
 ): any {
   if (schema.config.enableWhen) {
-    try {
-      const fn = eval(schema.config.enableWhen);
-      if (!fn(totalObjValue)) {
-        return undefined;
-        // return schema.config.defaultValue;
-      }
-    } catch (err) {
-      console.error(err);
+    const fn = eval(schema.config.enableWhen);
+    if (!fn(totalObjValue)) {
       return undefined;
+      // return schema.config.defaultValue;
     }
   }
   if (schema.type === SchemaFieldType.Array) {
@@ -185,14 +180,6 @@ export function validateValue(
     }
   }
 
-  if (schema.type === SchemaFieldType.File) {
-    if (value !== null && value !== undefined) {
-      return value;
-    } else {
-      return null;
-    }
-  }
-
   return value;
 }
 
@@ -242,7 +229,7 @@ export const DEFAULT_CONFIG = {
     template: null, // only type=code work
     minLen: 0,
     maxLen: Number.MAX_SAFE_INTEGER,
-    height: '300px',
+    height: '200px',
     needI18n: false,
     codeLang: '',
   },
@@ -283,10 +270,15 @@ export const DEFAULT_CONFIG = {
   SELECT: {
     enableWhen: null,
     colSpan: 3,
-    defaultValue: '',
+    defaultValue: null,
     required: false,
     clearable: false,
-    options: [],
+    options: [
+      {
+        label: 'None',
+        value: 'none',
+      },
+    ],
   },
   SELECT_CONFIG_DEFAULT: {
     colSpan: 3,
@@ -297,15 +289,6 @@ export const DEFAULT_CONFIG = {
       },
     ],
     defaultValue: '',
-  },
-  FILE: {
-    colSpan: 3,
-    defaultValue: '',
-    enableWhen: null,
-    required: false,
-    customValidate: null,
-    customValidateErrorText: '',
-    type: 'img', // img
   },
 };
 
@@ -326,10 +309,10 @@ export abstract class SchemaField {
 
   abstract get type(): SchemaFieldType;
 
-  public toJson(): any {
+  toJson() {
     return {
-      type: this.type,
       config: this.config,
+      type: this.type,
     };
   }
 }
@@ -346,14 +329,6 @@ export class SchemaFieldArray extends SchemaField {
   }
   get type(): SchemaFieldType {
     return SchemaFieldType.Array;
-  }
-
-  public toJson(): any {
-    return {
-      type: this.type,
-      config: this.config,
-      fieldSchema: this.fieldSchema.toJson(),
-    };
   }
 }
 
@@ -397,15 +372,13 @@ export class SchemaFieldObject extends SchemaField {
     }
   }
 
-  public toJson(): any {
+  toJson() {
     return {
       type: this.type,
       config: this.config,
-      fields: this.fields.reduce((res: any, f) => {
-        res[f.id] = {
-          name: f.name,
-          ...f.data.toJson(),
-        };
+      fields: this.fields.reduce((res: any, item) => {
+        res[item.id] = item.data.toJson();
+        res[item.id].name = item.name;
         return res;
       }, {}),
     };
@@ -436,8 +409,6 @@ export class SchemaFieldBoolean extends SchemaField {
 }
 
 export class SchemaFieldFile extends SchemaField {
-  public config = { ...DEFAULT_CONFIG.FILE };
-
   get type(): SchemaFieldType {
     return SchemaFieldType.File;
   }

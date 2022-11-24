@@ -131,7 +131,6 @@ function useFile({
         return;
       }
 
-      currentFileIdRef.current = currentFile.id;
       let newSchemaConfig: any = {};
       const valuePath = currentFile.path;
       if (valuePath) {
@@ -162,7 +161,7 @@ function useFile({
         },
         {}
       );
-      const newSchema = buildSchema(newSchemaConfig.schema, projectSchemaMap);
+      const newSchema = buildSchema(newSchemaConfig, projectSchemaMap);
       setSchema(newSchema);
 
       const val2 = await window.electron.ipcRenderer.readJsonFile({
@@ -179,6 +178,7 @@ function useFile({
           projectTransltionsRef.current
         );
       });
+
       setCurrentFileData(formatData);
     };
 
@@ -250,19 +250,19 @@ function useFile({
 
   useEffect(() => {
     const schemaChanged = async (config: any) => {
-      setSchemaConfig(config);
+      const jsonConfig = config.toJson();
+      setSchemaConfig(jsonConfig);
       const configPath = getConfigPath(localStorage.getItem(FILE_PATH) || '');
       if (configPath) {
         await window.electron.ipcRenderer.writeJsonFile({
           action: 'save-config-file',
           filePath: configPath,
-          data: JSON.stringify(config, null, 2),
+          data: JSON.stringify(jsonConfig, null, 2),
         });
-        const newSchema = buildSchema(config.schema);
+        const newSchema = buildSchema(jsonConfig);
         setSchema(newSchema);
         // window.location.reload();
       }
-      // eventBus.emit(EVENT.SAVE_FILE, currentFileData);
     };
     eventBus.on(EVENT.FILE_SCHEMA_CHANGED, schemaChanged);
     return () => {

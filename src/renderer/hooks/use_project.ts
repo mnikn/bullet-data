@@ -1,8 +1,7 @@
 import { FILE_PATH, PROJECT_PATH } from 'constatnts/storage_key';
 import csv from 'csvtojson';
 import { parse } from 'json2csv';
-import { get, set } from 'lodash';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { DEFAULT_SCHEMA_CONFIG } from 'renderer/constants';
 import { EVENT, eventBus } from 'renderer/event';
 import {
@@ -10,7 +9,6 @@ import {
   getConfigPath,
   getProjectBaseUrl,
 } from 'renderer/utils/file';
-import { iterObject } from 'utils/object';
 import { generateUUID } from 'utils/uuid';
 
 export interface FileTreeFolder {
@@ -36,7 +34,7 @@ function useProject() {
   const [currentLang, setCurrentLang] = useState<string>('');
 
   const [projectTranslations, setProjectTranslations] = useState<any>({
-    '___needInit': true
+    ___needInit: true,
   });
 
   useEffect(() => {
@@ -353,8 +351,10 @@ function useProject() {
 
   useEffect(() => {
     eventBus.on(EVENT.SWITCH_LANG, setCurrentLang);
+    eventBus.on(EVENT.UPDATE_PROJECT_CONFIG, setProjectConfig);
     return () => {
       eventBus.off(EVENT.SWITCH_LANG, setCurrentLang);
+      eventBus.off(EVENT.UPDATE_PROJECT_CONFIG, setProjectConfig);
     };
   }, []);
 

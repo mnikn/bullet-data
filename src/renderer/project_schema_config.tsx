@@ -1,15 +1,13 @@
-import CloseIcon from '@mui/icons-material/Close';
-import { Box, Button, IconButton, Modal, Stack } from '@mui/material';
+import { Box, Modal, Stack } from '@mui/material';
 import { PROJECT_PATH } from 'constatnts/storage_key';
+import { parse } from 'json2csv';
 import { useContext, useEffect, useState } from 'react';
 import MonacoEditor from 'react-monaco-editor';
+import { DEFAULT_PROJECT_CONFIG } from './constants';
 import Context from './context';
 import { EVENT, eventBus } from './event';
-import { PRIMARY_COLOR1, PRIMARY_COLOR2_LIGHT1 } from './style';
 import { getProjectBaseUrl } from './utils/file';
 import { registerDependencyProposals } from './utils/schema_config';
-import { parse } from 'json2csv';
-import { DEFAULT_PROJECT_CONFIG } from './constants';
 
 function ProjectSchemaConfig() {
   const [visible, setVisible] = useState(false);
@@ -55,8 +53,16 @@ function ProjectSchemaConfig() {
           borderRadius: '0px',
         }}
       >
-        <Stack className="items-center" spacing={1} sx={{ height: '100%' }}>
-          <Stack className="items-center" spacing={2} sx={{ flexGrow: 1 }}>
+        <Stack
+          className="items-center w-full"
+          spacing={1}
+          sx={{ height: '100%' }}
+        >
+          <Stack
+            className="items-center w-full"
+            spacing={2}
+            sx={{ flexGrow: 1 }}
+          >
             <div className="text-slate-900 font-bold text-2xl mb-2">
               New Project Schema Config
             </div>
@@ -83,7 +89,7 @@ function ProjectSchemaConfig() {
                       path: localStorage.getItem(PROJECT_PATH),
                       data: JSON.stringify(v, null, 2),
                     });
-                    window.location.reload();
+                    eventBus.emit(EVENT.UPDATE_PROJECT_CONFIG, v);
                   } else {
                     const val2 =
                       await window.electron.ipcRenderer.saveFileDialog({
@@ -103,6 +109,7 @@ function ProjectSchemaConfig() {
                           data: csv,
                         })
                         .then(() => {
+                          eventBus.emit(EVENT.UPDATE_PROJECT_CONFIG, v);
                           window.location.reload();
                         });
                     }

@@ -5,7 +5,6 @@ import {
   SchemaField,
   SchemaFieldArray,
   SchemaFieldBoolean,
-  SchemaFieldFile,
   SchemaFieldNumber,
   SchemaFieldObject,
   SchemaFieldSelect,
@@ -22,7 +21,6 @@ import { generateUUID } from 'utils/uuid';
 import Context from '../../context';
 import CollapseCard from '../collapse_card';
 import FieldBoolean from './boolean_field';
-import FieldFile from './file_field';
 import FieldNumber from './number_field';
 import FieldSelect from './select_field';
 import FieldString from './string_field';
@@ -54,12 +52,8 @@ export const FieldContainer = ({
       <Grid container spacing={{ xs: 2, md: 5 }}>
         {(schema as SchemaFieldObject).fields.map((item, i) => {
           if (item.data.config.enableWhen) {
-            try {
-              const fn = eval(item.data.config.enableWhen);
-              if (!fn(value)) {
-                return null;
-              }
-            } catch (err) {
+            const fn = eval(item.data.config.enableWhen);
+            if (!fn(value)) {
               return null;
             }
           }
@@ -68,7 +62,7 @@ export const FieldContainer = ({
               <Grid item xs={item.data.config.colSpan} key={item.id}>
                 <FieldNumber
                   label={item.name || item.id}
-                  value={get(value, item.id)}
+                  value={value?.[item?.id]}
                   schema={item.data as SchemaFieldNumber}
                   onValueChange={(v) => objectValueChange(v, item.id)}
                 />
@@ -80,7 +74,7 @@ export const FieldContainer = ({
                 <FieldString
                   label={item.name || item.id}
                   schema={item.data as SchemaFieldString}
-                  value={get(value, item.id)}
+                  value={value?.[item?.id]}
                   onValueChange={(v) => objectValueChange(v, item.id)}
                 />
               </Grid>
@@ -91,7 +85,7 @@ export const FieldContainer = ({
                 <FieldBoolean
                   label={item.name || item.id}
                   schema={item.data as SchemaFieldBoolean}
-                  value={get(value, item.id)}
+                  value={value?.[item?.id]}
                   onValueChange={(v) => objectValueChange(v, item.id)}
                 />
               </Grid>
@@ -102,18 +96,7 @@ export const FieldContainer = ({
                 <FieldSelect
                   label={item.name || item.id}
                   schema={item.data as SchemaFieldSelect}
-                  value={get(value, item.id)}
-                  onValueChange={(v) => objectValueChange(v, item.id)}
-                />
-              </Grid>
-            );
-          } else if (item.data.type === SchemaFieldType.File) {
-            return (
-              <Grid item xs={item.data.config.colSpan} key={item.id}>
-                <FieldFile
-                  label={item.name || item.id}
-                  schema={item.data as SchemaFieldFile}
-                  value={get(value, item.id)}
+                  value={value?.[item?.id]}
                   onValueChange={(v) => objectValueChange(v, item.id)}
                 />
               </Grid>
@@ -141,7 +124,7 @@ export const FieldContainer = ({
                 >
                   <FieldContainer
                     schema={item.data || item.id}
-                    value={get(value, item.id)}
+                    value={value?.[item?.id]}
                     onValueChange={(v) => objectValueChange(v, item.id)}
                   />
                 </CollapseCard>
@@ -153,7 +136,7 @@ export const FieldContainer = ({
                 key={item.id}
                 label={item.name || item.id}
                 schema={item.data as SchemaFieldArray}
-                value={get(value, item.id)}
+                value={value?.[item?.id]}
                 onValueChange={(v) => objectValueChange(v, item.id)}
               />
             );
@@ -202,35 +185,23 @@ export const FieldContainer = ({
         />
       </Grid>
     );
-  } else if (schema.type === SchemaFieldType.File) {
-    return (
-      <Grid item xs={schema.config.colSpan}>
-        <FieldFile
-          schema={schema as SchemaFieldFile}
-          value={value}
-          onValueChange={(v) => onValueChange(v)}
-        />
-      </Grid>
-    );
   }
   return null;
 };
 
 export const FieldArray = ({
-  className,
   label,
   schema,
   value,
   onValueChange,
 }: {
-  className?: string;
   label?: string;
   schema: SchemaFieldArray;
   value: any[];
   onValueChange?: (value: any) => void;
 }) => {
   const [list, setList] = useState<any[]>(
-    (value || []).map((item) => {
+    value.map((item) => {
       return {
         id: generateUUID(),
         value: item,
@@ -299,7 +270,7 @@ export const FieldArray = ({
   };
 
   return (
-    <Grid className={className} item xs={schema.config.colSpan}>
+    <Grid item xs={schema.config.colSpan}>
       <CollapseCard
         title={label || ''}
         initialExpand={schema.config.initialExpand}

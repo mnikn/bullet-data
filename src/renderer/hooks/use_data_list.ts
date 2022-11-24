@@ -230,6 +230,13 @@ function useDataList({
     };
   }, []);
 
+  useEffect(() => {
+    if (schema === null || currentFileData == null) {
+      return;
+    }
+    eventBus.emit(EVENT.SAVE_FILE, actualValueListRef.current);
+  }, [schema]);
+
   return {
     actualValueList,
     displayValueList,

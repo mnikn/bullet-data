@@ -1,8 +1,7 @@
 import { Box, Button, Modal, Stack } from '@mui/material';
 import { PROJECT_PATH } from 'constatnts/storage_key';
-import { parse } from 'json2csv';
 import { useState } from 'react';
-import { getProjectBaseUrl } from './utils/file';
+import { EVENT, eventBus } from './event';
 
 function InitPanel() {
   const [visible] = useState(!localStorage.getItem(PROJECT_PATH));
@@ -14,7 +13,7 @@ function InitPanel() {
   return (
     <Modal open>
       <Box
-        className="bg-slate-400"
+        className="bg-slate-500"
         sx={{
           position: 'absolute',
           top: '50%',
@@ -31,29 +30,11 @@ function InitPanel() {
           <Button
             sx={{
               flexGrow: 1,
-              clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
+              borderRadius: '0',
             }}
             variant="contained"
-            onClick={async () => {
-              const val2 = await window.electron.ipcRenderer.saveFileDialog({
-                action: 'save-value-file',
-                data: JSON.stringify({ i18n: ['en'] }, null, 2),
-                extensions: ['bp'],
-              });
-              if (val2?.res?.path) {
-                localStorage.setItem(PROJECT_PATH, val2.res.path);
-                const options = { fields: ['keys', 'en'] };
-                const csv = parse([], options);
-                window.electron.ipcRenderer
-                  .call('writeFile', {
-                    filePath: getProjectBaseUrl() + '\\' + 'translations.csv',
-                    data: csv,
-                  })
-                  .then(() => {
-                    window.location.reload();
-                  });
-              }
-              window.location.reload();
+            onClick={() => {
+              eventBus.emit(EVENT.SHOW_PROJECT_CONFIG);
             }}
           >
             New Project
@@ -61,7 +42,7 @@ function InitPanel() {
           <Button
             sx={{
               flexGrow: 1,
-              clipPath: 'polygon(10% 0%, 100% 0%, 90% 100%, 0% 100%)',
+              borderRadius: '0',
             }}
             variant="contained"
             onClick={async () => {

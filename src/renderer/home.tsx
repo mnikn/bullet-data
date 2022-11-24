@@ -1,4 +1,11 @@
-import { CardContent, CircularProgress, Collapse, Menu } from '@mui/material';
+import {
+  CardContent,
+  CircularProgress,
+  Collapse,
+  IconButton,
+  Menu,
+} from '@mui/material';
+import { styled } from '@mui/material/styles';
 import { PROJECT_PATH } from 'constatnts/storage_key';
 import get from 'lodash/get';
 import {
@@ -21,7 +28,6 @@ import { FieldContainer } from './components/field';
 import Context from './context';
 import { EVENT, eventBus } from './event';
 import FileSchemaConfig from './file_schema_config';
-import FilterConfigPanel from './filter_config_panel';
 import FilterPanel from './filter_panel';
 import './home.scss';
 import useDataList from './hooks/use_data_list';
@@ -29,11 +35,11 @@ import useExplorer from './hooks/use_explorer';
 import useFile from './hooks/use_file';
 import useProject from './hooks/use_project';
 import useShortcut from './hooks/use_shortcut';
-import I18nConfigPanel from './i18n_config_panel';
 import InitPanel from './init_panel';
 import Preview from './preview';
 import ProjectSchemaConfig from './project_schema_config';
 /* import FilterPanel from './filter_panel'; */
+import SchemaConfig from './schema_config';
 import Sidebar from './sidebar';
 import TranslationManageDialog from './translation_manage_dialog';
 
@@ -54,7 +60,21 @@ const DEFAULT_SCHEMA_CONFIG = {
   },
 };
 
+const ExpandMore = styled((props: any) => {
+  const { expand, ...other } = props;
+  return <IconButton {...other} />;
+})(({ theme, expand }) => ({
+  transform: !expand ? 'rotate(0deg)' : 'rotate(180deg)',
+  marginLeft: 'auto',
+  marginRight: 'auto',
+  transition: theme.transitions.create('transform', {
+    duration: theme.transitions.duration.shortest,
+  }),
+}));
+
 const grid = 6;
+
+const HIDDEN_ID = '$$__index';
 
 // a little function to help us with reordering the result
 const reorder = (list: any[], startIndex: number, endIndex: number) => {
@@ -126,22 +146,14 @@ const Item = ({
       if (projectTranslations[v]) {
         return projectTranslations[v][currentLang] || '';
       }
-      if (v != null && v.includes && v.includes('.png')) {
-        return `<img class="mx-2" style="width: 64px; height: 64px; object-fit: cover;" src="${v}" alt="" />`;
-      }
-      return v != null ? v : '';
+      return v;
     }
   );
 
   return (
     <div className="flex flex-col bg-slate-300 w-full p-5 border-b-4 border-r-4 border-zinc-900">
       <div className="flex items-center">
-        <div
-          className="font-bold text-lg text-zinc-900"
-          dangerouslySetInnerHTML={{
-            __html: `<div class="flex items-center">${summary}</div>`,
-          }}
-        ></div>
+        <div className="font-bold text-lg text-zinc-900">{summary}</div>
         <div className="flex items-center ml-auto">
           <RiMore2Fill
             className={`${ACITON_ICON_CLASS} mr-4`}
@@ -244,9 +256,6 @@ const Home = () => {
 
   useEffect(() => {
     const onClose = async () => {
-      window.electron.ipcRenderer.close();
-      return;
-
       if (!schema || !currentFile) {
         return;
       }
@@ -468,12 +477,9 @@ const Home = () => {
           <FileSchemaConfig
             initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
           />
-          <FilterConfigPanel
-            initialValue={schemaConfig || DEFAULT_SCHEMA_CONFIG}
-          />
           <InitPanel />
           <Preview />
-          <I18nConfigPanel />
+          <ProjectSchemaConfig />
           <TranslationManageDialog />
           {confirmationVisible && (
             <Confimration
