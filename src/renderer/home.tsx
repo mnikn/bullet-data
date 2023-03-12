@@ -379,7 +379,7 @@ const Home = () => {
                             width: '100%',
                             flexGrow: 1,
                             overflow: 'auto',
-                            height: '400px',
+                            height: '700px',
                             // background: snapshot.isDraggingOver
                             //   ? PRIMARY_COLOR1_LIGHT1
                             //   : '#464D54',

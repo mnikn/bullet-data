@@ -269,7 +269,7 @@ function ConfigField({
               } else if (v === SchemaFieldType.Array) {
                 f = new SchemaFieldArray(new SchemaFieldString());
               } else if (v === SchemaFieldType.File) {
-                f = new SchemaFieldArray(new SchemaFieldFile());
+                f = new SchemaFieldFile();
               }
               onValueChange(f, id, label);
             }}
