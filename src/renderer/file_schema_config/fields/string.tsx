@@ -32,9 +32,11 @@ TypeSchema.config.options = [
     label: 'code',
     value: 'code',
   },
-];
+] as any;
 const EnableWhenSchema = new SchemaFieldString();
 EnableWhenSchema.config.colSpan = 12;
+
+const HeightSchema = new SchemaFieldString();
 
 function ConfigStringField({
   schema,
@@ -118,6 +120,17 @@ function ConfigStringField({
           schema={MaxLenSchema}
           onValueChange={(v) => {
             schema.config.maxLen = v;
+            onValueChange(schema);
+          }}
+        />
+      </Grid>
+      <Grid item xs={3}>
+        <StringField
+          label={'height'}
+          value={schema.config.height}
+          schema={HeightSchema}
+          onValueChange={(v) => {
+            schema.config.height = v;
             onValueChange(schema);
           }}
         />

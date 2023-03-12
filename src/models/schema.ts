@@ -242,7 +242,7 @@ export const DEFAULT_CONFIG = {
     template: null, // only type=code work
     minLen: 0,
     maxLen: Number.MAX_SAFE_INTEGER,
-    height: '200px',
+    height: '300px',
     needI18n: false,
     codeLang: '',
   },
